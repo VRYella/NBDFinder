@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import re, io
 from datetime import datetime
-from motifs_clean_no_zero_length import (
+from motifs import (
     all_motifs,
     find_gquadruplex, find_relaxed_gquadruplex, find_bulged_gquadruplex, find_gtriplex,
     find_bipartite_gquadruplex, find_multimeric_gquadruplex,
