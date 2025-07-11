@@ -4,37 +4,24 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import re, io
 from datetime import datetime
+
 from motifs import (
-    all_motifs,
-    find_gquadruplex, find_relaxed_gquadruplex, find_bulged_gquadruplex, find_gtriplex,
-    find_bipartite_gquadruplex, find_multimeric_gquadruplex,
-    find_imotif, find_hotspots
+    all_motifs, find_hotspots
 )
 from utils import parse_fasta, wrap
 
-EXAMPLE_FASTA = ">Example\nATCGATCGATCGAAAATTTTATTTAAATTTAAATTTGGGTTAGGGTTAGGGTTAGGGCCCCCTCCCCCTCCCCCTCCCC\nATCGATCGCGCGCGCGATCGCACACACACAGCTGCTGCTGCTTGGGAAAGGGGAAGGGTTAGGGAAAGGGGTTT\nGGGTTTAGGGGGGAGGGGCTGCTGCTGCATGCGGGAAGGGAGGGTAGAGGGTCCGGTAGGAACCCCTAACCCCTAA\nGAAAGAAGAAGAAGAAGAAGAAAGGAAGGAAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGG"
+EXAMPLE_FASTA = ">Example\nATCGATCGATCGAAAATTTTATTTAAATTTAAATTTGGGTTAGGGTTAGGGTTAGGGCCCCCTCCCCCTCCCCCTCCCC\nATCGATCGCGCGCGCGATCGCACACACACAGCTGCTGCTGCTTGGGAAAGGGGAAGGGTTAGGGAAAGGGGTTT\nGGGTTTAGGGGGGAGGGGCTGCTGCTGCATGCGGGAAGGGAGGGTAGAGGGTCCGGTAGGAACCCCTAACCCCTAA\nGAAAGAAGAAGAAGAAGAAGAAAGGAAGGAAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGG"
 
 st.set_page_config(page_title="Non-B DNA Motif Finder", layout="wide")
 
-if 'seq' not in st.session_state:
-    st.session_state['seq'] = ""
-if 'df' not in st.session_state:
-    st.session_state['df'] = pd.DataFrame()
-if 'motif_results' not in st.session_state:
-    st.session_state['motif_results'] = []
-if 'analysis_status' not in st.session_state:
-    st.session_state['analysis_status'] = ""
-if 'stop_analysis' not in st.session_state:
-    st.session_state['stop_analysis'] = False
+# Session states
+for key in ['seq', 'df', 'motif_results', 'analysis_status', 'stop_analysis']:
+    if key not in st.session_state:
+        st.session_state[key] = "" if key == 'seq' else (False if 'stop' in key else [])
 
 PAGES = [
-    "Home",
-    "Upload & Analyze",
-    "Results",
-    "Visualization",
-    "Download",
-    "Additional Information",
-    "Motif Definitions Glossary"
+    "Home", "Upload & Analyze", "Results", "Visualization",
+    "Download", "Additional Information", "Motif Definitions Glossary"
 ]
 
 st.sidebar.title("Navigation")
@@ -51,15 +38,7 @@ def collect_all_motifs(seq, status_callback=None, stop_flag=None):
 
 if page == "Home":
     st.markdown("""
-    <style>
-    .home-header {
-        font-size: 2.5em;
-        font-weight: bold;
-        color: #1A5276;
-        text-align: center;
-        margin-bottom: 20px;
-    }
-    </style>
+    <style>.home-header { font-size: 2.5em; font-weight: bold; color: #1A5276; text-align: center; margin-bottom: 20px; }</style>
     <div class='home-header'>Welcome to Non-B DNA Motif Finder</div>
     """, unsafe_allow_html=True)
     try:
@@ -67,10 +46,9 @@ if page == "Home":
     except Exception:
         st.warning("Logo image (nbd.PNG) not found. Place it in the app folder.")
     st.markdown("""
-    This application allows you to identify and visualize various non-B DNA motifs including:
-    - Canonical and non-canonical G-quadruplexes
-    - i-Motifs, Z-DNA, Cruciforms, and more
-    
+    This application identifies and visualizes diverse non-B DNA structures including:
+    - Curved DNA, Z-DNA, Slipped DNA, R-loops
+    - Cruciforms, Triplex DNA, G4s, i-Motifs, and Hybrid Structures
     Upload a sequence or use the example to begin.
     """)
 
@@ -180,14 +158,14 @@ Developed by Dr. Venkata Rajesh Yella & Chandrika Gummadi.
 elif page == "Motif Definitions Glossary":
     st.markdown("<h2 style='color:#1A5276;'>Motif Definitions Glossary</h2>", unsafe_allow_html=True)
     st.markdown("""
-- **G-Quadruplex (G4):** Four runs of guanines forming a square planar structure stabilized by Hoogsteen hydrogen bonding.
-- **i-Motif:** Cytosine-rich regions that form intercalated four-stranded structures in acidic pH.
-- **Z-DNA:** Left-handed DNA helix often found in alternating purine-pyrimidine sequences.
-- **Cruciform:** Hairpin-like structures in palindromic sequences.
-- **Triplex DNA:** Three-stranded structures often formed by homopurine or homopyrimidine sequences.
-- **Sticky DNA:** Repetitive purine/pyrimidine tracts that hybridize with themselves.
-- **Bent DNA:** PolyA or PolyT tracts that locally bend the helix.
-- **APR:** A-Phased Repeats associated with nucleosome positioning.
-- **Mirror Repeats:** Symmetric sequences within the same DNA strand.
-- **Hybrid Structures:** Junctions of G4, i-Motif, triplex, and cruciform motifs co-localized in sequence.
+- **Curved DNA / APRs:** A-phased Repeats that introduce curvature.
+- **Z-DNA:** Left-handed helix in alternating purine-pyrimidine tracts.
+- **Slipped DNA:** Tandem repeats undergoing strand misalignment.
+- **R-Loops:** RNA-DNA hybrids formed at transcription termination.
+- **Cruciforms & Hairpins:** Palindromic sequences forming secondary structures.
+- **Triplexes & H-DNA:** Triple-stranded DNA formed by Hoogsteen base pairing.
+- **G-Quadruplexes:** Stacked G-tetrads stabilized by monovalent cations.
+- **i-Motifs:** C-rich complementary to G4s, form in acidic environments.
+- **Hybrids:** Overlapping regions supporting >1 structure.
+- **Non-B Clusters:** Hotspots containing ≥3 motif types in 100 bp.
     """)
