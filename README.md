@@ -1,1 +1,1 @@
-# NBDFinder
+# Non-B-DNA-Finder
