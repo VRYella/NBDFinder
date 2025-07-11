@@ -7,28 +7,26 @@ def overlapping_finditer(pattern, seq):
         yield m
 
 def find_gquadruplex(seq):
-    # Allow loops of length 0–7 (so uninterrupted G runs are detected)
-    pattern = r"(?=(G{3,}(?:[ATGC]{0,7}G{3,}){3}))"
+    pattern = r"(G{3,}(?:[ATGC]{1,7}G{3,}){3})"
     return [
-        dict(Class="Quadruplex", Subtype="Canonical_G-Quadruplex", Start=m.start()+1, End=m.start()+len(m.group(0)), Length=len(m.group(0)),
+        dict(Class="Quadruplex", Subtype="Canonical_G-Quadruplex", Start=m.start()+1, End=m.end(), Length=len(m.group(0)),
              Sequence=wrap(m.group(0)), ScoreMethod="G4Hunter", Score=f"{g4hunter_score(m.group(0)):.2f}")
         for m in overlapping_finditer(pattern, seq)
     ]
 
 def find_relaxed_gquadruplex(seq):
-    pattern = r"(?=(G{3,}(?:[ATGC]{0,12}G{3,}){3}))"
+    pattern = r"(G{3,}(?:[ATGC]{1,12}G{3,}){3})"
     return [
-        dict(Class="Quadruplex", Subtype="Relaxed_G-Quadruplex", Start=m.start()+1, End=m.start()+len(m.group(0)), Length=len(m.group(0)),
+        dict(Class="Quadruplex", Subtype="Relaxed_G-Quadruplex", Start=m.start()+1, End=m.end(), Length=len(m.group(0)),
              Sequence=wrap(m.group(0)), ScoreMethod="G4Hunter", Score=f"{g4hunter_score(m.group(0)):.2f}")
         for m in overlapping_finditer(pattern, seq)
     ]
 
 def find_bulged_gquadruplex(seq):
-    # Allow up to 3 non-Gs in G runs
-    pattern = r"(?=(G{3,}[ATGC]{0,3}G{3,}[ATGC]{0,3}G{3,}[ATGC]{0,3}G{3,}))"
+    pattern = r"(G{3,}[ATGC]{0,3}G{3,}[ATGC]{0,3}G{3,}[ATGC]{0,3}G{3,})"
     return [
-        dict(Class="Quadruplex", Subtype="Bulged_G-Quadruplex", Start=m.start()+1, End=m.start()+len(m.group(1)), Length=len(m.group(1)),
-             Sequence=wrap(m.group(1)), ScoreMethod="G4Hunter (bulge)", Score=f"{g4hunter_score(m.group(1)):.2f}")
+        dict(Class="Quadruplex", Subtype="Bulged_G-Quadruplex", Start=m.start()+1, End=m.end(), Length=len(m.group(0)),
+             Sequence=wrap(m.group(0)), ScoreMethod="G4Hunter (bulge)", Score=f"{g4hunter_score(m.group(0)):.2f}")
         for m in overlapping_finditer(pattern, seq)
     ]
 
