@@ -5,7 +5,7 @@ import seaborn as sns
 import re, io
 from datetime import datetime
 from motifs import all_motifs, find_hotspots
-from utils import parse_fasta, wrap
+from utils import parse_fasta, wrap, gc_content, reverse_complement, g4hunter_score, zseeker_score
 
 # Example sequence
 EXAMPLE_FASTA = """>Example
