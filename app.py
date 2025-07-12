@@ -89,7 +89,7 @@ if page == "Home":
     """, unsafe_allow_html=True)
     
     try:
-        st.image("nbd.png", use_container_width=True)
+        st.image("nbd.PNG", use_container_width=True)
     except FileNotFoundError:
         st.warning("Logo image not found. Using placeholder text.")
         st.markdown("### DNA Structure Analysis Tool")
