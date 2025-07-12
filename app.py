@@ -6,8 +6,12 @@ import seaborn as sns
 import re
 import io
 from datetime import datetime
-from motifs import all_motifs, find_hotspots
-from utils import parse_fasta, wrap, gc_content
+try:
+    from .motifs import all_motifs, find_hotspots  # Relative import (if in package)
+    from .utils import parse_fasta, wrap, gc_content
+except ImportError:
+    from motifs import all_motifs, find_hotspots  # Absolute import
+    from utils import parse_fasta, wrap, gc_content
 
 # Configure page
 st.set_page_config(
