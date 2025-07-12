@@ -7,3 +7,4 @@ seaborn
 plotly
 numba
 xlsxwriter
+biopython
