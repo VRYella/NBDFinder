@@ -12,7 +12,26 @@ try:
 except ImportError:
     from motifs import all_motifs, find_hotspots  # Absolute import
     from utils import parse_fasta, wrap, gc_content
+import os
+import sys
+from pathlib import Path
+import streamlit as st
 
+# Debugging
+current_dir = Path(__file__).parent
+st.write(f"Working directory: {current_dir}")
+st.write(f"Files present: {os.listdir(current_dir)}")
+
+# Ensure the directory is in Python path
+sys.path.append(str(current_dir))
+
+try:
+    from motifs import all_motifs, find_hotspots
+    from utils import parse_fasta, wrap, gc_content
+except ImportError as e:
+    st.error(f"Critical Import Error: {str(e)}")
+    st.error("Please ensure motifs.py and utils.py exist in the same directory.")
+    st.stop()
 # Configure page
 st.set_page_config(
     page_title="Non-B DNA Motif Finder",
