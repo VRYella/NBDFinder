@@ -1,14 +1,40 @@
 import re
 import numpy as np
-from utils import wrap, gc_content, reverse_complement, g4hunter_score
+from typing import List, Dict, Iterator
+from utils import wrap, gc_content, reverse_complement
 
-def overlapping_finditer(pattern, seq):
+def overlapping_finditer(pattern: str, seq: str) -> Iterator[re.Match]:
     """Find all overlapping matches of a pattern in sequence"""
     regex = re.compile(pattern, re.IGNORECASE)
     for m in regex.finditer(seq):
         yield m
 
-def all_motifs(seq):
+def g4hunter_score(seq: str) -> float:
+    """Quantifies G-quadruplex forming potential (Bedrat et al. 2016)"""
+    vals = []
+    i = 0
+    while i < len(seq):
+        s = seq[i]
+        if s == 'G':
+            run_len = 1
+            while i + run_len < len(seq) and seq[i + run_len] == 'G':
+                run_len += 1
+            score = min(run_len, 4)
+            vals.extend([score] * run_len)
+            i += run_len
+        elif s == 'C':
+            run_len = 1
+            while i + run_len < len(seq) and seq[i + run_len] == 'C':
+                run_len += 1
+            score = -min(run_len, 4)
+            vals.extend([score] * run_len)
+            i += run_len
+        else:
+            vals.append(0)
+            i += 1
+    return np.mean(vals) if vals else 0.0
+
+def all_motifs(seq: str) -> List[Dict]:
     """Run all motif detection functions and return combined, validated results"""
     if not seq or not re.match("^[ATGC]+$", seq, re.IGNORECASE):
         return []
@@ -21,30 +47,24 @@ def all_motifs(seq):
         find_relaxed_gquadruplex(seq) + find_bulged_gquadruplex(seq) +
         find_bipartite_gquadruplex(seq) + find_multimeric_gquadruplex(seq) +
         find_imotif(seq) + find_hybrids(seq)
-    
-    # Validate and filter results
+    )
     return [m for m in results if validate_motif(m, len(seq))]
 
-def validate_motif(motif, seq_len):
+def validate_motif(motif: Dict, seq_len: int) -> bool:
     """Scientific validation of motif features"""
-    if not (0 < motif['Start'] <= motif['End'] <= seq_len):
-        return False
-    if motif['Length'] != (motif['End'] - motif['Start'] + 1):
-        return False
-    if not re.match("^[ATGC]+$", motif['Sequence']):
-        return False
-    return True
+    return (0 < motif['Start'] <= motif['End'] <= seq_len and
+            motif['Length'] == (motif['End'] - motif['Start'] + 1) and
+            re.match("^[ATGC]+$", motif['Sequence']))
 
 # 1. CURVED DNA (A-Phased Repeats)
-def find_apr(seq):
+def find_apr(seq: str) -> List[Dict]:
     """Detect A-Phased Repeats with curvature scoring (Brukner et al. 1995)"""
-    pattern = r"(?=((?:A{3,6}[ATGC]{2,5}){3,})"
+    pattern = r"(?=((?:A{3,6}[ATGC]{2,5}){3,}))"
     results = []
     for m in overlapping_finditer(pattern, seq):
         seq_fragment = m.group(1)
-        # Score based on repeat number and A-tract length
         a_count = seq_fragment.count('A') + seq_fragment.count('T')
-        score = min(1.0, 0.2 * len(re.findall(r"A{3,6}", seq_fragment)) + (a_count/len(seq_fragment))
+        score = min(1.0, 0.2 * len(re.findall(r"A{3,6}", seq_fragment)) + (a_count/len(seq_fragment)))
         results.append({
             "Class": "Curved_DNA",
             "Subtype": "A-Phased_Repeat",
@@ -58,7 +78,7 @@ def find_apr(seq):
     return results
 
 # 2. BENT DNA (Poly-A/T)
-def find_bent_dna(seq):
+def find_bent_dna(seq: str) -> List[Dict]:
     """Detect poly-A/T tracts with bending propensity (Haran & Mohanty 2009)"""
     pattern = r"(?=(A{4,}|T{4,}))"
     return [{
@@ -69,8 +89,13 @@ def find_bent_dna(seq):
         "Length": len(m.group(1)),
         "Sequence": wrap(m.group(1)),
         "ScoreMethod": "Bending_Propensity",
-        "Score": f"{min(1.0, len(m.group(1))/10):.2f}"  # 0-1 scale based on length
+        "Score": f"{min(1.0, len(m.group(1))/10):.2f}"
     } for m in overlapping_finditer(pattern, seq)]
+
+# [Rest of the motif detection functions...]
+# (Include all other functions exactly as shown in your original code,
+# but with type hints added to function signatures)
+
 
 # 3. Z-DNA (Ho et al. 2010)
 def find_zdna(seq):
@@ -364,7 +389,7 @@ def find_hybrids(seq):
     return hybrids
 
 # 12. HOTSPOTS (Non-B Clusters)
-def find_hotspots(seq, motif_hits, window=100, min_count=3):
+def find_hotspots(seq: str, motif_hits: List[Dict], window: int = 100, min_count: int = 3) -> List[Dict]:
     """Identify genomic hotspots with multiple non-B motifs"""
     hotspots = []
     positions = [(hit['Start'], hit['End']) for hit in motif_hits]
@@ -375,7 +400,6 @@ def find_hotspots(seq, motif_hits, window=100, min_count=3):
         count = sum(s <= region_end and e >= region_start for s,e in positions)
         
         if count >= min_count:
-            # Calculate hotspot score based on motif density and types
             motifs_in_region = [m for m in motif_hits 
                               if m['Start'] <= region_end and m['End'] >= region_start]
             type_diversity = len({m['Subtype'] for m in motifs_in_region})
@@ -389,18 +413,17 @@ def find_hotspots(seq, motif_hits, window=100, min_count=3):
                 "Score": f"{score:.2f}"
             })
     
-    # Merge overlapping hotspots
     return merge_hotspots(hotspots)
 
-def merge_hotspots(hotspots):
+def merge_hotspots(hotspots: List[Dict]) -> List[Dict]:
     """Merge adjacent or overlapping hotspots"""
-    if not hotspots: return []
+    if not hotspots:
+        return []
     
     merged = [hotspots[0]]
     for current in hotspots[1:]:
         last = merged[-1]
         if current['RegionStart'] <= last['RegionEnd']:
-            # Merge with previous hotspot
             last['RegionEnd'] = max(last['RegionEnd'], current['RegionEnd'])
             last['MotifCount'] += current['MotifCount']
             last['TypeDiversity'] = max(last['TypeDiversity'], current['TypeDiversity'])
@@ -408,3 +431,14 @@ def merge_hotspots(hotspots):
         else:
             merged.append(current)
     return merged
+
+if __name__ == "__main__":
+    test_seq = "GGGTGGGTGGGTGGGATATATATAGGGCCCTAGGGCCCTAGGGCCCT"
+    print("Testing motif detection...")
+    motifs = all_motifs(test_seq)
+    print(f"Found {len(motifs)} motifs")
+    if motifs:
+        print("Sample motif:", motifs[0])
+    
+    hotspots = find_hotspots(test_seq, motifs, window=20, min_count=2)
+    print(f"Found {len(hotspots)} hotspots")
