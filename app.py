@@ -88,7 +88,7 @@ st.caption("Comprehensive detection of 12 non-canonical DNA structure types")
 # Load and display the image on the home page
 try:
     nbd_image = Image.open("nbd.PNG")
-    st.image(nbd_image, caption="Non-B DNA Structures Overview", use_column_width=True)
+    st.image(nbd_image, caption="Non-B DNA Structures Overview", use_container_width=True)
 except FileNotFoundError:
     st.warning("Image nbd.PNG not found. Please ensure it's in the same directory.")
 except Exception as e:
