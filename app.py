@@ -7,6 +7,7 @@ import re
 import io
 from datetime import datetime
 from typing import List, Dict
+from PIL import Image  # Added for image handling
 
 try:
     from motifs import all_motifs, find_hotspots
@@ -82,6 +83,15 @@ page = st.sidebar.radio("Go to", list(PAGES.keys()))
 # Main title
 st.title("Non-B DNA Motif Finder")
 st.caption("Comprehensive detection of 12 non-canonical DNA structure types")
+
+# Load and display the image on the home page
+try:
+    nbd_image = Image.open("nbd.PNG")
+    st.image(nbd_image, caption="Non-B DNA Structures Overview", use_column_width=True)
+except FileNotFoundError:
+    st.warning("Image nbd.PNG not found. Please ensure it's in the same directory.")
+except Exception as e:
+    st.error(f"Error loading image: {str(e)}")
 
 # Page: Home
 if page == "Home":
