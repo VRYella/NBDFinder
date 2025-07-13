@@ -3,7 +3,26 @@ import numpy as np
 from typing import List, Dict, Tuple
 from collections import defaultdict, Counter
 import random
-from scipy.stats import percentileofscore
+
+try:
+    from scipy.stats import percentileofscore
+except ImportError:
+    # Fallback implementation if scipy is not available
+    def percentileofscore(a, score, kind='rank'):
+        """Simplified percentile calculation without scipy"""
+        a = np.asarray(a)
+        if len(a) == 0:
+            return 0.0
+        if kind == 'rank':
+            return (sum(a <= score) / len(a) * 100
+        elif kind == 'strict':
+            return (sum(a < score) / len(a)) * 100
+        elif kind == 'weak':
+            return (sum(a <= score) / len(a)) * 100
+        elif kind == 'mean':
+            return (sum(a < score) + sum(a <= score)) / (2 * len(a)) * 100
+        else:
+            raise ValueError("kind must be 'rank', 'strict', 'weak' or 'mean'")
 
 def parse_fasta(fasta_str: str) -> str:
     """Parse FASTA string to DNA sequence"""
