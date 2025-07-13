@@ -1,66 +1,80 @@
 import re
 import numpy as np
+from typing import List, Dict, Tuple
+from collections import defaultdict, Counter
+import random
+from scipy.stats import percentileofscore
 
-# --- FASTA Parsing ---
 def parse_fasta(fasta_str: str) -> str:
-    lines = fasta_str.strip().splitlines()
-    seq = [line.strip() for line in lines if not line.startswith(">")]
-    return "".join(seq).upper().replace(" ", "").replace("U", "T")
+    """Parse FASTA string to DNA sequence"""
+    lines = [line.strip() for line in fasta_str.split('\n') if not line.startswith(">")]
+    return "".join(lines).upper().replace(" ", "").replace("U", "T")
 
-# --- Sequence Wrapping ---
-def wrap(seq: str, width=60) -> str:
+def wrap(seq: str, width: int = 60) -> str:
+    """Format sequence with line breaks"""
     return "\n".join([seq[i:i+width] for i in range(0, len(seq), width)])
 
-# --- GC Content Calculation ---
 def gc_content(seq: str) -> float:
+    """Calculate GC content percentage"""
     seq = seq.upper()
-    g = seq.count('G')
-    c = seq.count('C')
-    return 100.0 * (g + c) / max(1, len(seq))
+    return 100 * (seq.count('G') + seq.count('C')) / max(1, len(seq))
 
-# --- Reverse Complement ---
 def reverse_complement(seq: str) -> str:
+    """Generate reverse complement"""
     comp = str.maketrans("ATGC", "TACG")
     return seq.translate(comp)[::-1]
 
-# --- G4Hunter Score ---
-def g4hunter_score(seq: str) -> float:
-    vals = []
-    i = 0
-    while i < len(seq):
-        s = seq[i]
-        if s == 'G':
-            run_len = 1
-            while i + run_len < len(seq) and seq[i + run_len] == 'G':
-                run_len += 1
-            score = min(run_len, 4)
-            vals.extend([score] * run_len)
-            i += run_len
-        elif s == 'C':
-            run_len = 1
-            while i + run_len < len(seq) and seq[i + run_len] == 'C':
-                run_len += 1
-            score = -min(run_len, 4)
-            vals.extend([score] * run_len)
-            i += run_len
+def is_palindrome(seq: str) -> bool:
+    """Check for perfect palindromes"""
+    return seq == reverse_complement(seq)
+
+def calculate_tm(seq: str) -> float:
+    """Calculate DNA melting temperature"""
+    if len(seq) < 14:
+        return 2*(seq.count('A') + seq.count('T')) + 4*(seq.count('G') + seq.count('C'))
+    return 64.9 + 41*(seq.count('G') + seq.count('C') - 16.4)/len(seq)
+
+def shuffle_sequence(seq: str) -> str:
+    """Create randomized sequence preserving composition"""
+    return ''.join(random.sample(seq, len(seq)))
+
+def kmer_conservation(seq: str, k: int = 6, n_shuffles: int = 1000) -> Dict[str, Tuple[float, float]]:
+    """
+    Calculate k-mer conservation scores
+    Returns: {kmer: (log2_ratio, p_value)}
+    """
+    # Count observed kmers
+    kmer_counts = Counter(seq[i:i+k] for i in range(len(seq)-k+1))
+    total_kmers = len(seq) - k + 1
+    
+    # Generate null distribution
+    null_counts = defaultdict(list)
+    for _ in range(n_shuffles):
+        shuffled = shuffle_sequence(seq)
+        for kmer, count in Counter(shuffled[i:i+k] for i in range(len(shuffled)-k+1)).items():
+            null_counts[kmer].append(count)
+    
+    # Calculate conservation metrics
+    results = {}
+    for kmer, observed in kmer_counts.items():
+        expected = (1/4)**k * total_kmers
+        log2_ratio = np.log2((observed + 1e-6)/(expected + 1e-6))  # Pseudocounts
+        
+        # Calculate p-value from null distribution
+        if kmer in null_counts:
+            p_value = 1 - percentileofscore(null_counts[kmer], observed)/100
         else:
-            vals.append(0)
-            i += 1
-    return np.mean(vals) if vals else 0.0
+            p_value = 1.0
+            
+        results[kmer] = (log2_ratio, p_value)
+    
+    return results
 
-# --- Z-DNA Seeker Score ---
-def zseeker_score(seq: str) -> float:
-    dinucs = re.findall(r"(GC|CG|GT|TG|AC|CA)", seq.upper())
-    return len(dinucs) / max(1, len(seq) / 2) if len(seq) >= 2 else 0.0
-
-# --- Dinucleotide Entropy (optional advanced use) ---
-def dinucleotide_entropy(seq: str) -> float:
-    from collections import Counter
-    seq = seq.upper()
-    dinucs = [seq[i:i+2] for i in range(len(seq) - 1)]
-    total = len(dinucs)
-    if total == 0:
-        return 0.0
-    freqs = Counter(dinucs)
-    probs = [count / total for count in freqs.values()]
-    return -sum(p * np.log2(p) for p in probs)
+def motif_conservation(motif_seq: str, conservation_scores: Dict) -> float:
+    """Calculate average conservation for a motif"""
+    scores = []
+    for i in range(len(motif_seq)-5):
+        kmer = motif_seq[i:i+6]
+        if kmer in conservation_scores:
+            scores.append(conservation_scores[kmer][0])
+    return np.mean(scores) if scores else 0.0
