@@ -17,10 +17,7 @@ import sys
 from pathlib import Path
 import streamlit as st
 
-# Debugging
-current_dir = Path(__file__).parent
-st.write(f"Working directory: {current_dir}")
-st.write(f"Files present: {os.listdir(current_dir)}")
+
 
 # Ensure the directory is in Python path
 sys.path.append(str(current_dir))
