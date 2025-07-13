@@ -207,7 +207,11 @@ elif page == "Results":
     if st.session_state.df.empty or not hasattr(st.session_state, 'seq'):
         st.info("No results available. Please run analysis first.")
     else:
-        df = st.session_state.df
+        # Convert Score column to numeric first
+        df = st.session_state.df.copy()
+        df['Score'] = pd.to_numeric(df['Score'], errors='coerce')  # Convert to float
+        df = df.dropna(subset=['Score'])  # Remove rows with invalid scores
+        
         full_sequence = st.session_state.seq
         
         # Add sequence snippets to dataframe
@@ -223,7 +227,10 @@ elif page == "Results":
             col2.metric("Unique Types", df['Subtype'].nunique())
             seq_coverage = sum(df['Length']) / len(full_sequence) * 100
             col3.metric("Sequence Coverage", f"{seq_coverage:.1f}%")
-            col4.metric("Top Score", f"{df['Score'].max():.2f}")
+            
+            # Safely calculate max score
+            max_score = df['Score'].max() if not df.empty else 0
+            col4.metric("Top Score", f"{max_score:.2f}")
             
             st.progress(min(100, int(seq_coverage)), 
                        text=f"Sequence covered by motifs: {seq_coverage:.1f}%")
