@@ -19,9 +19,6 @@ import streamlit as st
 
 
 
-# Ensure the directory is in Python path
-sys.path.append(str(current_dir))
-
 try:
     from motifs import all_motifs, find_hotspots
     from utils import parse_fasta, wrap, gc_content
