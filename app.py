@@ -77,7 +77,7 @@ PAGES = {
 
 # Sidebar navigation
 st.sidebar.title("🧬 Navigation")
-page = st.sidebar.radio("Go to", list(PAGES.keys()) 
+page = st.sidebar.radio("Go to", list(PAGES.keys())) 
 
 # Main title
 st.title("Non-B DNA Motif Finder")
