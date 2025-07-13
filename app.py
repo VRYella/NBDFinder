@@ -243,20 +243,23 @@ elif page == "Results":
         )
 
         # Visualization section
-        st.subheader("📈 Distribution Analysis")
-        tab1, tab2, tab3 = st.tabs(["By Type", "By Length", "By Score"])
-        
-        with tab1:
-            fig, ax = plt.subplots(figsize=(10, 6))
-            sns.countplot(
-                data=df,
-                y='Class',
-                order=df['Class'].value_counts().index,
-                palette=MOTIF_CLASSES.values()
-            )
-            ax.set_title("Motif Count by Class")
-            st.pyplot(fig)
-        
+        # In your Results page section, replace the dataframe display code with:
+
+# Main results table
+st.subheader("🧬 Detected Motifs")
+show_cols = ['Class', 'Subtype', 'Start', 'End', 'Length', 'Score', 'Sequence']
+st.dataframe(
+    df[show_cols],
+    use_container_width=True,
+    height=400,
+    column_config={
+        "Score": st.column_config.ProgressColumn(
+            "Score",
+            format="%.2f",
+            min_value=0,
+            max_value=max(1, df['Score'].max())
+    }
+)
         with tab2:
             fig, ax = plt.subplots(figsize=(10, 6))
             sns.boxplot(
