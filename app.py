@@ -38,7 +38,7 @@ st.set_page_config(
     layout="wide",
     page_icon="🧬",
     menu_items={
-        'About': "Non-B DNA Motif Finder v2.0 | Developed by Dr. Venkata Rajesh Yella"
+        'About': "Non-B DNA Motif Finder | Developed by Dr. Venkata Rajesh Yella"
     }
 )
 
@@ -104,7 +104,7 @@ if page == "Home":
     
     # Display logo or title
     try:
-        st.image("dna_structure.PNG", use_container_width=True, 
+        st.image("nbd.PNG", use_container_width=True, 
                 caption="Non-B DNA structural diversity")
     except:
         st.markdown("""
