@@ -9,3 +9,4 @@ numba
 xlsxwriter
 biopython
 plotly
+scipy
