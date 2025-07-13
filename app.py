@@ -204,178 +204,135 @@ elif page == "Upload & Analyze":
 elif page == "Results":
     st.header("Analysis Results")
     
-    if st.session_state.df.empty or not hasattr(st.session_state, 'seq'):
-        st.info("No results available. Please run analysis first.")
-    else:
-        # Convert Score column to numeric first
-        df = st.session_state.df.copy()
-        df['Score'] = pd.to_numeric(df['Score'], errors='coerce')  # Convert to float
-        df = df.dropna(subset=['Score'])  # Remove rows with invalid scores
-        
-        full_sequence = st.session_state.seq
-        
-        # Add sequence snippets to dataframe
-        df['Sequence'] = df.apply(
-            lambda row: full_sequence[row['Start']-1:row['End']], 
-            axis=1
-        )
-        
-        # Summary statistics with expandable details
-        with st.expander("📊 Summary Statistics", expanded=True):
-            col1, col2, col3, col4 = st.columns(4)
-            col1.metric("Total Motifs", len(df))
-            col2.metric("Unique Types", df['Subtype'].nunique())
-            seq_coverage = sum(df['Length']) / len(full_sequence) * 100
-            col3.metric("Sequence Coverage", f"{seq_coverage:.1f}%")
-            
-            # Safely calculate max score
-            max_score = df['Score'].max() if not df.empty else 0
-            col4.metric("Top Score", f"{max_score:.2f}")
-            
-            st.progress(min(100, int(seq_coverage)), 
-                       text=f"Sequence covered by motifs: {seq_coverage:.1f}%")
-
-        # Main results table with sequence display
-        st.subheader("🧬 Detected Motifs")
-        show_cols = st.multiselect(
-            "Select columns to display:",
-            df.columns.tolist(),
-            default=['Class', 'Subtype', 'Start', 'End', 'Length', 'Score', 'Sequence']
-        )
-        
-        st.dataframe(
-            df[show_cols],
-            use_container_width=True,
-            height=400,
-            column_config={
-                "Score": st.column_config.ProgressColumn(
-                    "Score",
-                    help="Prediction confidence",
-                    format="%.2f",
-                    min_value=0,
-                    max_value=1,
-                ),
-                "Sequence": st.column_config.TextColumn(
-                    "Sequence",
-                    help="Actual DNA sequence of motif",
-                    width="medium"
-                )
-            }
-        )
-
-        # Interactive motif explorer
-        st.subheader("🔍 Motif Explorer")
-        selected_idx = st.selectbox(
-            "Select a motif to inspect:",
-            range(len(df)),
-            format_func=lambda x: f"{df.iloc[x]['Class']} ({df.iloc[x]['Start']}-{df.iloc[x]['End']}) - Score: {df.iloc[x]['Score']:.2f}"
-        )
-        
-        selected = df.iloc[selected_idx]
-        context_size = st.slider("Context nucleotides to show", 0, 50, 10)
-        
-        # Display sequence with highlighted motif
-        start_pos = max(0, selected['Start']-1 - context_size)
-        end_pos = min(len(full_sequence), selected['End'] + context_size)
-        context_seq = full_sequence[start_pos:end_pos]
-        motif_start = selected['Start']-1 - start_pos
-        motif_end = selected['End'] - start_pos
-        
-        st.markdown("**Sequence Context:**")
-        st.code(
-            f"{context_seq[:motif_start]}"
-            f"\033[91m{context_seq[motif_start:motif_end]}\033[0m"
-            f"{context_seq[motif_end:]}",
-            language='text'
-        )
-        
-        # Motif details in columns
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.markdown("**Position**")
-            st.info(f"{selected['Start']}-{selected['End']}")
-            st.markdown("**Length**")
-            st.info(f"{selected['Length']} bp")
-        with col2:
-            st.markdown("**Type**")
-            st.info(f"{selected['Class']} ({selected['Subtype']})")
-            st.markdown("**Score**")
-            st.info(f"{selected['Score']:.2f}")
-        with col3:
-            st.markdown("**Full Sequence**")
-            st.text(wrap(selected['Sequence'], width=30))
-
-        # Visualization section
-        st.subheader("📈 Distribution Analysis")
-        tab1, tab2, tab3 = st.tabs(["By Type", "By Length", "Score Distribution"])
-        
-        with tab1:
-            fig = px.bar(
-                df['Subtype'].value_counts().reset_index(),
-                x='count',
-                y='Subtype',
-                orientation='h',
-                title="Motif Count by Type"
-            )
-            st.plotly_chart(fig, use_container_width=True)
-        
-        with tab2:
-            fig = px.box(
-                df,
-                x='Length',
-                y='Class',
-                title="Motif Length Distribution"
-            )
-            st.plotly_chart(fig, use_container_width=True)
-            
-        with tab3:
-            fig = px.histogram(
-                df,
-                x='Score',
-                color='Class',
-                nbins=20,
-                title="Score Distribution by Class"
-            )
-            st.plotly_chart(fig, use_container_width=True)
-
-        # Hotspot analysis
-        st.subheader("🔥 Hotspot Regions")
-        if st.session_state.hotspots:
-            hotspot_df = pd.DataFrame(st.session_state.hotspots)
-            
-            # Interactive hotspot explorer
-            min_hotspot_score = st.slider(
-                "Minimum hotspot score",
-                0.0, 1.0, 0.5
-            )
-            filtered_hotspots = hotspot_df[hotspot_df['Score'].astype(float) >= min_hotspot_score]
-            
-            st.dataframe(
-                filtered_hotspots.sort_values('Score', ascending=False),
-                use_container_width=True
-            )
-            
-            # Enhanced visualization
-            fig = px.scatter(
-                filtered_hotspots,
-                x='RegionStart',
-                y='Score',
-                size='MotifCount',
-                color='TypeDiversity',
-                hover_data=['RegionStart', 'RegionEnd', 'MotifCount'],
-                title="Hotspot Distribution"
-            )
-            st.plotly_chart(fig, use_container_width=True)
+    try:
+        if st.session_state.df.empty or not hasattr(st.session_state, 'seq'):
+            st.info("No results available. Please run analysis first.")
         else:
-            st.info("No hotspot regions detected")
+            # Create a copy to avoid modifying original data
+            df = st.session_state.df.copy()
+            
+            # Convert Score column to numeric safely
+            try:
+                df['Score'] = pd.to_numeric(df['Score'], errors='coerce')
+                df = df.dropna(subset=['Score'])
+            except Exception as e:
+                st.error(f"Error processing scores: {str(e)}")
+                df['Score'] = 0  # Default value if conversion fails
+            
+            full_sequence = st.session_state.seq
+            
+            # Add sequence snippets to dataframe with bounds checking
+            df['Sequence'] = df.apply(
+                lambda row: full_sequence[max(0, row['Start']-1):min(len(full_sequence), row['End'])], 
+                axis=1
+            )
+            
+            # Summary statistics
+            with st.expander("📊 Summary Statistics", expanded=True):
+                cols = st.columns(4)
+                with cols[0]:
+                    st.metric("Total Motifs", len(df))
+                with cols[1]:
+                    st.metric("Unique Types", df['Subtype'].nunique())
+                with cols[2]:
+                    seq_coverage = sum(df['Length']) / len(full_sequence) * 100
+                    st.metric("Sequence Coverage", f"{seq_coverage:.1f}%")
+                with cols[3]:
+                    max_score = df['Score'].max() if not df.empty else 0
+                    st.metric("Top Score", f"{max_score:.2f}")
+                
+                st.progress(min(100, int(seq_coverage)), 
+                           text=f"Sequence coverage: {seq_coverage:.1f}%")
 
-        # Add sequence download option
-        st.download_button(
-            label="Download All Motif Sequences",
-            data=df.to_csv(index=False),
-            file_name="motif_sequences.csv",
-            mime="text/csv"
-        )
+            # Main results table
+            st.subheader("🧬 Detected Motifs")
+            show_cols = ['Class', 'Subtype', 'Start', 'End', 'Length', 'Score', 'Sequence']
+            st.dataframe(
+                df[show_cols],
+                use_container_width=True,
+                height=400,
+                column_config={
+                    "Score": st.column_config.ProgressColumn(
+                        "Score",
+                        format="%.2f",
+                        min_value=0,
+                        max_value=max(1, df['Score'].max()),
+                    "Sequence": st.column_config.TextColumn(
+                        "Sequence",
+                        width="medium")
+                }
+            )
+
+            # Visualization section with matplotlib fallback
+            st.subheader("📈 Distribution Analysis")
+            tab1, tab2 = st.tabs(["By Type", "By Length"])
+            
+            with tab1:
+                try:
+                    import plotly.express as px
+                    fig = px.bar(
+                        df['Subtype'].value_counts().reset_index(),
+                        x='count',
+                        y='Subtype',
+                        orientation='h',
+                        title="Motif Count by Type"
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+                except ImportError:
+                    # Fallback to matplotlib if Plotly not available
+                    fig, ax = plt.subplots(figsize=(10, 4))
+                    sns.countplot(
+                        data=df,
+                        y='Subtype',
+                        order=df['Subtype'].value_counts().index,
+                        ax=ax
+                    )
+                    ax.set_title("Motif Count by Type")
+                    st.pyplot(fig)
+            
+            with tab2:
+                try:
+                    fig = px.box(
+                        df,
+                        x='Length',
+                        y='Class',
+                        title="Motif Length Distribution"
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+                except ImportError:
+                    fig, ax = plt.subplots(figsize=(10, 4))
+                    sns.boxplot(data=df, x='Length', y='Class')
+                    ax.set_title("Motif Length Distribution")
+                    st.pyplot(fig)
+
+            # Hotspot analysis
+            st.subheader("🔥 Hotspot Regions")
+            if hasattr(st.session_state, 'hotspots') and st.session_state.hotspots:
+                hotspot_df = pd.DataFrame(st.session_state.hotspots)
+                st.dataframe(
+                    hotspot_df.sort_values('Score', ascending=False),
+                    use_container_width=True
+                )
+                
+                # Simple matplotlib visualization for hotspots
+                fig, ax = plt.subplots(figsize=(12, 2))
+                for _, row in hotspot_df.iterrows():
+                    ax.axvspan(
+                        row['RegionStart'], 
+                        row['RegionEnd'], 
+                        alpha=0.3, 
+                        color='red'
+                    )
+                ax.set_xlim(0, len(full_sequence))
+                ax.set_xlabel("Sequence Position (bp)")
+                ax.set_title("Hotspot Locations")
+                st.pyplot(fig)
+            else:
+                st.info("No hotspot regions detected")
+
+    except Exception as e:
+        st.error(f"An error occurred while displaying results: {str(e)}")
+        st.error("Please check the logs for more details.")
 # Page: Visualization
 elif page == "Visualization":
     st.header("Motif Visualization")
