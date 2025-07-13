@@ -6,27 +6,16 @@ import seaborn as sns
 import re
 import io
 from datetime import datetime
-
-try:
-    from .motifs import all_motifs, find_hotspots  # Relative import (if in package)
-    from .utils import parse_fasta, wrap, gc_content
-except ImportError:
-    from motifs import all_motifs, find_hotspots  # Absolute import
-    from utils import parse_fasta, wrap, gc_content
-import os
-import sys
-from pathlib import Path
-import streamlit as st
-
-
+from typing import List, Dict
 
 try:
     from motifs import all_motifs, find_hotspots
-    from utils import parse_fasta, wrap, gc_content
+    from utils import parse_fasta, wrap, gc_content, reverse_complement
 except ImportError as e:
     st.error(f"Critical Import Error: {str(e)}")
     st.error("Please ensure motifs.py and utils.py exist in the same directory.")
     st.stop()
+
 # Configure page
 st.set_page_config(
     page_title="Non-B DNA Motif Finder",
@@ -37,12 +26,16 @@ st.set_page_config(
     }
 )
 
-# Example sequence
-EXAMPLE_FASTA = """>Example
+# Example sequence with diverse motifs
+EXAMPLE_FASTA = """>Example_Sequence
 ATCGATCGATCGAAAATTTTATTTAAATTTAAATTTGGGTTAGGGTTAGGGTTAGGGCCCCCTCCCCCTCCCCCTCCCC
 ATCGATCGCGCGCGCGATCGCACACACACAGCTGCTGCTGCTTGGGAAAGGGGAAGGGTTAGGGAAAGGGGTTT
 GGGTTTAGGGGGGAGGGGCTGCTGCTGCATGCGGGAAGGGAGGGTAGAGGGTCCGGTAGGAACCCCTAACCCCTAA
-GAAAGAAGAAGAAGAAGAAGAAAGGAAGGAAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGG"""
+GAAAGAAGAAGAAGAAGAAGAAAGGAAGGAAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGG
+CGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGC
+GAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAA
+CTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCT
+"""
 
 # Initialize session state
 if 'seq' not in st.session_state:
@@ -56,6 +49,22 @@ if 'analysis_status' not in st.session_state:
 if 'hotspots' not in st.session_state:
     st.session_state.hotspots = []
 
+# Define all 12 motif classes with colors
+MOTIF_CLASSES = {
+    "Curved_DNA": "#FF9AA2",
+    "Z-DNA": "#FFB7B2",
+    "Slipped_DNA": "#FFDAC1",
+    "Cruciform": "#E2F0CB",
+    "Triplex_DNA": "#B5EAD7",
+    "G-Triplex": "#C7CEEA",
+    "G4": "#A2D7D8",
+    "i-Motif": "#B5EAD7",
+    "R-Loop": "#FFD3B6",
+    "Sticky_DNA": "#DCB8CB",
+    "A-Phased_Repeat": "#A2C8CC",
+    "Mirror_Repeat": "#D4A5A5"
+}
+
 # App pages
 PAGES = {
     "Home": "Introduction and overview",
@@ -68,72 +77,43 @@ PAGES = {
 
 # Sidebar navigation
 st.sidebar.title("🧬 Navigation")
-page = st.sidebar.radio("Go to", list(PAGES.keys()), 
-                       help=PAGES[list(PAGES.keys())[0]])
-
-st.sidebar.markdown("---")
-st.sidebar.info(
-    "**Scientific Methods:**\n"
-    "- G4Hunter algorithm (Bedrat et al. 2016)\n"
-    "- Z-DNA predictor (Ho et al. 2010)\n"
-    "- R-loop detection (Sanz et al. 2016)"
-)
+page = st.sidebar.radio("Go to", list(PAGES.keys()) 
 
 # Main title
 st.title("Non-B DNA Motif Finder")
-st.caption("Advanced detection of non-canonical DNA structures")
+st.caption("Comprehensive detection of 12 non-canonical DNA structure types")
 
 # Page: Home
 if page == "Home":
     st.markdown("""
-    <style>
-        .feature-card {
-            background-color: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-    </style>
-    """, unsafe_allow_html=True)
+    ## Welcome to the Non-B DNA Motif Finder
     
-    # Display logo or title
-    try:
-        st.image("nbd.PNG", use_container_width=True, 
-                caption="Non-B DNA structural diversity")
-    except:
-        st.markdown("""
-        <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="color: #1A5276;">🧬 Non-B DNA Motif Finder</h1>
-            <p>Advanced detection of non-canonical DNA structures</p>
-        </div>
-        """, unsafe_allow_html=True)
+    This tool identifies **12 classes** of non-canonical DNA structures using published algorithms:
+    """)
+    
+    # Display motif classes with colors
+    cols = st.columns(4)
+    for i, (motif, color) in enumerate(MOTIF_CLASSES.items()):
+        with cols[i % 4]:
+            st.markdown(f"""
+            <div style="background-color:{color}; padding:10px; border-radius:5px; margin-bottom:10px;">
+                <b>{motif.replace('_', ' ')}</b>
+            </div>
+            """, unsafe_allow_html=True)
     
     st.markdown("""
-    <div class="feature-card">
-    <h3>🔬 Scientific Detection Methods</h3>
-    <p>This tool identifies 12 classes of non-B DNA structures using published algorithms:</p>
-    <ul>
-        <li><b>G-Quadruplexes:</b> G4Hunter scoring (Bedrat et al. 2016)</li>
-        <li><b>Z-DNA:</b> Alternating purine-pyrimidine detection</li>
-        <li><b>R-loops:</b> GC-skew and G-cluster analysis</li>
-        <li><b>i-Motifs:</b> C-rich sequence detection</li>
-    </ul>
-    </div>
-    """, unsafe_allow_html=True)
+    ### Key Features:
+    - **Comprehensive Detection**: 12 non-B DNA structure types
+    - **Scientific Validation**: Published algorithms and thresholds
+    - **Interactive Visualization**: Genome browser-style display
+    - **Export Capabilities**: CSV, Excel, and image exports
     
-    st.markdown("""
-    <div class="feature-card">
-    <h3>📊 Analysis Pipeline</h3>
-    <ol>
-        <li>Sequence input (FASTA or raw sequence)</li>
-        <li>Parallel motif scanning</li>
-        <li>Structure validation</li>
-        <li>Hotspot identification</li>
-        <li>Interactive visualization</li>
-    </ol>
-    </div>
-    """, unsafe_allow_html=True)
+    ### How to Use:
+    1. Upload or paste your DNA sequence
+    2. Run the analysis
+    3. Explore results through interactive visualizations
+    4. Download data for further analysis
+    """)
 
 # Page: Upload & Analyze
 elif page == "Upload & Analyze":
@@ -150,14 +130,14 @@ elif page == "Upload & Analyze":
                 try:
                     seq = parse_fasta(fasta_file.read().decode("utf-8"))
                     st.session_state.seq = seq
-                    st.success(f"Loaded sequence: {len(seq)} bp")
+                    st.success(f"Loaded sequence: {len(seq):,} bp")
                 except Exception as e:
                     st.error(f"Error reading file: {str(e)}")
         
         elif input_method == "Example Sequence":
             if st.button("Load Example"):
                 st.session_state.seq = parse_fasta(EXAMPLE_FASTA)
-                st.success(f"Example loaded: {len(st.session_state.seq)} bp")
+                st.success(f"Example loaded: {len(st.session_state.seq):,} bp")
                 st.code(EXAMPLE_FASTA, language="fasta")
         
         elif input_method == "Paste Sequence":
@@ -166,7 +146,7 @@ elif page == "Upload & Analyze":
             if seq_input:
                 try:
                     st.session_state.seq = parse_fasta(seq_input)
-                    st.success(f"Sequence parsed: {len(st.session_state.seq)} bp")
+                    st.success(f"Sequence parsed: {len(st.session_state.seq):,} bp")
                 except Exception as e:
                     st.error(f"Invalid sequence: {str(e)}")
     
@@ -180,7 +160,7 @@ elif page == "Upload & Analyze":
             st.metric("Sequence Length", f"{len(st.session_state.seq):,} bp")
         
         if st.button("Run Full Analysis", type="primary"):
-            with st.spinner("Analyzing sequence..."):
+            with st.spinner("Analyzing sequence for 12 motif types..."):
                 try:
                     # Run motif detection
                     st.session_state.motif_results = all_motifs(st.session_state.seq)
@@ -193,7 +173,7 @@ elif page == "Upload & Analyze":
                     )
                     
                     if st.session_state.motif_results:
-                        st.success(f"Found {len(st.session_state.motif_results)} motifs")
+                        st.success(f"Found {len(st.session_state.motif_results)} motifs across {st.session_state.df['Class'].nunique()} classes")
                         st.session_state.analysis_status = "Complete"
                     else:
                         st.warning("No motifs detected")
@@ -205,117 +185,111 @@ elif page == "Upload & Analyze":
 elif page == "Results":
     st.header("Analysis Results")
     
-    try:
-        if st.session_state.df.empty or not hasattr(st.session_state, 'seq'):
-            st.info("No results available. Please run analysis first.")
-        else:
-            # Create a copy to avoid modifying original data
-            df = st.session_state.df.copy()
+    if st.session_state.df.empty:
+        st.info("No results available. Please run analysis first.")
+    else:
+        df = st.session_state.df.copy()
+        
+        # Convert Score column to numeric safely
+        df['Score'] = pd.to_numeric(df['Score'], errors='coerce')
+        df = df.dropna(subset=['Score'])
+        
+        # Summary statistics
+        with st.expander("📊 Summary Statistics", expanded=True):
+            cols = st.columns(4)
+            cols[0].metric("Total Motifs", len(df))
+            cols[1].metric("Unique Types", df['Subtype'].nunique())
+            seq_coverage = sum(df['Length']) / len(st.session_state.seq) * 100
+            cols[2].metric("Sequence Coverage", f"{seq_coverage:.1f}%")
+            max_score = df['Score'].max()
+            cols[3].metric("Top Score", f"{max_score:.2f}")
             
-            # Convert Score column to numeric safely
-            try:
-                df['Score'] = pd.to_numeric(df['Score'], errors='coerce')
-                df = df.dropna(subset=['Score'])
-            except Exception as e:
-                st.error(f"Error processing scores: {str(e)}")
-                df['Score'] = 0  # Default value if conversion fails
-            
-            full_sequence = st.session_state.seq
-            
-            # Add sequence snippets to dataframe with bounds checking
-            df['Sequence'] = df.apply(
-                lambda row: full_sequence[max(0, row['Start']-1):min(len(full_sequence), row['End'])], 
-                axis=1
+            st.progress(
+                min(100, int(seq_coverage)),
+                text=f"Sequence coverage: {seq_coverage:.1f}%"
             )
-            
-            # Summary statistics
-            with st.expander("📊 Summary Statistics", expanded=True):
-                cols = st.columns(4)
-                cols[0].metric("Total Motifs", len(df))
-                cols[1].metric("Unique Types", df['Subtype'].nunique())
-                seq_coverage = sum(df['Length']) / len(full_sequence) * 100
-                cols[2].metric("Sequence Coverage", f"{seq_coverage:.1f}%")
-                max_score = df['Score'].max() if not df.empty else 0
-                cols[3].metric("Top Score", f"{max_score:.2f}")
-                
-                st.progress(
-                    min(100, int(seq_coverage)),
-                    text=f"Sequence coverage: {seq_coverage:.1f}%"
-                )
 
-            # Main results table
-            st.subheader("🧬 Detected Motifs")
-            show_cols = ['Class', 'Subtype', 'Start', 'End', 'Length', 'Score', 'Sequence']
+        # Main results table
+        st.subheader("🧬 Detected Motifs")
+        show_cols = ['Class', 'Subtype', 'Start', 'End', 'Length', 'Score', 'Sequence']
+        st.dataframe(
+            df[show_cols],
+            use_container_width=True,
+            height=400,
+            column_config={
+                "Score": st.column_config.ProgressColumn(
+                    "Score",
+                    format="%.2f",
+                    min_value=0,
+                    max_value=max(1, df['Score'].max())
+                )
+            }
+        )
+
+        # Visualization section
+        st.subheader("📈 Distribution Analysis")
+        tab1, tab2, tab3 = st.tabs(["By Type", "By Length", "By Score"])
+        
+        with tab1:
+            fig, ax = plt.subplots(figsize=(10, 6))
+            sns.countplot(
+                data=df,
+                y='Class',
+                order=df['Class'].value_counts().index,
+                palette=MOTIF_CLASSES.values()
+            )
+            ax.set_title("Motif Count by Class")
+            st.pyplot(fig)
+        
+        with tab2:
+            fig, ax = plt.subplots(figsize=(10, 6))
+            sns.boxplot(
+                data=df, 
+                x='Length', 
+                y='Class',
+                palette=MOTIF_CLASSES.values()
+            )
+            ax.set_title("Motif Length Distribution")
+            st.pyplot(fig)
+            
+        with tab3:
+            fig, ax = plt.subplots(figsize=(10, 6))
+            sns.violinplot(
+                data=df,
+                x='Score',
+                y='Class',
+                palette=MOTIF_CLASSES.values()
+            )
+            ax.set_title("Score Distribution by Class")
+            st.pyplot(fig)
+
+        # Hotspot analysis
+        st.subheader("🔥 Hotspot Regions")
+        if st.session_state.hotspots:
+            hotspot_df = pd.DataFrame(st.session_state.hotspots)
             st.dataframe(
-                df[show_cols],
-                use_container_width=True,
-                height=400,
-                column_config={
-                    "Score": st.column_config.ProgressColumn(
-                        "Score",
-                        format="%.2f",
-                        min_value=0,
-                        max_value=max(1, df['Score'].max())
-                    ),
-                    "Sequence": st.column_config.TextColumn(
-                        "Sequence",
-                        width="medium"
-                    )
-                }
+                hotspot_df.sort_values('Score', ascending=False),
+                use_container_width=True
             )
-
-            # Visualization section
-            st.subheader("📈 Distribution Analysis")
-            tab1, tab2 = st.tabs(["By Type", "By Length"])
             
-            with tab1:
-                fig, ax = plt.subplots(figsize=(10, 4))
-                sns.countplot(
-                    data=df,
-                    y='Subtype',
-                    order=df['Subtype'].value_counts().index,
-                    ax=ax
+            fig, ax = plt.subplots(figsize=(12, 3))
+            for _, row in hotspot_df.iterrows():
+                ax.axvspan(
+                    row['RegionStart'], 
+                    row['RegionEnd'], 
+                    alpha=0.3, 
+                    color='red'
                 )
-                ax.set_title("Motif Count by Type")
-                st.pyplot(fig)
-            
-            with tab2:
-                fig, ax = plt.subplots(figsize=(10, 4))
-                sns.boxplot(data=df, x='Length', y='Class')
-                ax.set_title("Motif Length Distribution")
-                st.pyplot(fig)
+            ax.set_xlim(0, len(st.session_state.seq))
+            ax.set_xlabel("Sequence Position (bp)")
+            ax.set_title("Hotspot Locations")
+            st.pyplot(fig)
+        else:
+            st.info("No hotspot regions detected")
 
-            # Hotspot analysis
-            st.subheader("🔥 Hotspot Regions")
-            if hasattr(st.session_state, 'hotspots') and st.session_state.hotspots:
-                hotspot_df = pd.DataFrame(st.session_state.hotspots)
-                st.dataframe(
-                    hotspot_df.sort_values('Score', ascending=False),
-                    use_container_width=True
-                )
-                
-                fig, ax = plt.subplots(figsize=(12, 2))
-                for _, row in hotspot_df.iterrows():
-                    ax.axvspan(
-                        row['RegionStart'], 
-                        row['RegionEnd'], 
-                        alpha=0.3, 
-                        color='red'
-                    )
-                ax.set_xlim(0, len(full_sequence))
-                ax.set_xlabel("Sequence Position (bp)")
-                ax.set_title("Hotspot Locations")
-                st.pyplot(fig)
-            else:
-                st.info("No hotspot regions detected")
-
-    except Exception as e:
-        st.error(f"An error occurred while displaying results: {str(e)}")
-        st.error("Please check the logs for more details.")
-
-#Page: Visualizations
+# Page: Visualization
 elif page == "Visualization":
-    st.header("Motif Visualization")
+    st.header("Interactive Motif Visualization")
     
     if st.session_state.df.empty:
         st.info("No results to visualize. Please run analysis first.")
@@ -327,32 +301,40 @@ elif page == "Visualization":
         st.sidebar.subheader("Visualization Settings")
         show_classes = st.sidebar.multiselect(
             "Select motif classes to display:",
-            df['Class'].unique(),
-            default=df['Class'].unique()
+            sorted(df['Class'].unique()),
+            default=sorted(df['Class'].unique())
         )
         
         min_score = st.sidebar.slider(
             "Minimum confidence score:",
-            0.0, 1.0, 0.7
+            0.0, 1.0, 0.5
+        )
+        
+        position_range = st.sidebar.slider(
+            "Sequence position range:",
+            0, seq_len, (0, min(5000, seq_len))
         )
         
         # Filter data
         viz_df = df[
             (df['Class'].isin(show_classes)) & 
-            (df['Score'].astype(float) >= min_score)
-        ]
+            (df['Score'] >= min_score) &
+            (df['Start'] >= position_range[0]) & 
+            (df['End'] <= position_range[1])
+        ].copy()
         
         if viz_df.empty:
             st.warning("No motifs match the selected filters")
         else:
             # Create motif map
-            st.subheader("Motif Map")
-            fig, ax = plt.subplots(figsize=(12, 6))
+            st.subheader("Genome Browser View")
             
-            # Assign y-positions for each subtype
+            # Calculate y-positions
             subtypes = sorted(viz_df['Subtype'].unique())
             y_pos = {subtype: i+1 for i, subtype in enumerate(subtypes)}
-            colors = sns.color_palette("husl", len(subtypes))
+            
+            # Create figure
+            fig, ax = plt.subplots(figsize=(15, 8))
             
             # Plot each motif
             for _, row in viz_df.iterrows():
@@ -360,29 +342,33 @@ elif page == "Visualization":
                     y_pos[row['Subtype']],
                     row['Start'],
                     row['End'],
-                    linewidth=8,
-                    color=colors[subtypes.index(row['Subtype'])],
-                    alpha=0.7
+                    linewidth=10,
+                    color=MOTIF_CLASSES[row['Class']],
+                    alpha=0.8
+                )
+                # Add score as text
+                ax.text(
+                    (row['Start'] + row['End'])/2,
+                    y_pos[row['Subtype']] + 0.1,
+                    f"{row['Score']:.2f}",
+                    ha='center',
+                    fontsize=8
                 )
             
             # Customize plot
             ax.set_yticks(list(y_pos.values()))
             ax.set_yticklabels(list(y_pos.keys()))
-            ax.set_xlim(0, seq_len)
+            ax.set_xlim(position_range[0], position_range[1])
             ax.set_xlabel("Sequence Position (bp)")
-            ax.set_title("Non-B DNA Motif Distribution")
+            ax.set_title(f"Non-B DNA Motifs ({position_range[0]:,}-{position_range[1]:,} bp)")
             plt.tight_layout()
             st.pyplot(fig)
             
-            # Add legend
-            st.markdown("**Color Legend:**")
-            cols = st.columns(4)
-            for i, subtype in enumerate(subtypes):
-                with cols[i % 4]:
-                    st.markdown(
-                        f"<span style='color:{colors[i]}'>■ {subtype}</span>", 
-                        unsafe_allow_html=True
-                    )
+            # Add interactive table below visualization
+            st.dataframe(
+                viz_df[['Class', 'Subtype', 'Start', 'End', 'Length', 'Score']],
+                height=300
+            )
 
 # Page: Download
 elif page == "Download":
@@ -391,16 +377,19 @@ elif page == "Download":
     if st.session_state.df.empty:
         st.info("No results available to download")
     else:
+        # Prepare data
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
         # CSV Download
         csv = st.session_state.df.to_csv(index=False).encode('utf-8')
         st.download_button(
-            label="Download CSV",
+            label="Download CSV (All Motifs)",
             data=csv,
-            file_name="nonb_motifs.csv",
+            file_name=f"nonb_motifs_{timestamp}.csv",
             mime="text/csv"
         )
         
-        # Excel Download
+        # Excel Download with multiple sheets
         excel_buffer = io.BytesIO()
         with pd.ExcelWriter(excel_buffer, engine='xlsxwriter') as writer:
             st.session_state.df.to_excel(writer, index=False, sheet_name='Motifs')
@@ -408,71 +397,82 @@ elif page == "Download":
                 pd.DataFrame(st.session_state.hotspots).to_excel(
                     writer, index=False, sheet_name='Hotspots'
                 )
+            # Add sequence info
+            pd.DataFrame({
+                'Sequence Info': [
+                    f"Length: {len(st.session_state.seq)} bp",
+                    f"GC Content: {gc_content(st.session_state.seq):.1f}%",
+                    f"Motifs Found: {len(st.session_state.df)}",
+                    f"Analysis Date: {timestamp}"
+                ]
+            }).to_excel(writer, index=False, sheet_name='Summary')
             writer.close()
+            
             st.download_button(
-                label="Download Excel",
+                label="Download Excel Workbook",
                 data=excel_buffer.getvalue(),
-                file_name="nonb_results.xlsx",
+                file_name=f"nonb_results_{timestamp}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
         
         # FASTA Download
-        if st.session_state.seq:
-            fasta_content = f">Analyzed_sequence\n{wrap(st.session_state.seq)}"
-            st.download_button(
-                label="Download Sequence",
-                data=fasta_content,
-                file_name="sequence.fasta",
-                mime="text/plain"
-            )
+        fasta_content = f">Analyzed_sequence\n{wrap(st.session_state.seq)}"
+        st.download_button(
+            label="Download Sequence (FASTA)",
+            data=fasta_content,
+            file_name=f"sequence_{timestamp}.fasta",
+            mime="text/plain"
+        )
 
 # Page: Documentation
 elif page == "Documentation":
     st.header("Scientific Documentation")
     
-    with st.expander("Detection Methods", expanded=True):
+    with st.expander("All 12 Motif Types", expanded=True):
         st.markdown("""
-        ### G-Quadruplex Detection (G4Hunter)
-        **Algorithm:**  
-        Scores sequences based on G-richness and G-run arrangement:
+        | Motif Type | Detection Method | Key References |
+        |------------|------------------|----------------|
+        | Curved DNA | A-tract phasing | Brukner et al. 1995 |
+        | Z-DNA | Alternating Pu/Py | Ho et al. 2010 |
+        | Slipped DNA | Direct repeats | Bacolla et al. 2006 |
+        | Cruciform | Inverted repeats | Lilley 1985 |
+        | Triplex DNA | Mirror repeats | Mirkin 1994 |
+        | G-Triplex | Three G-runs | Karsisiotis 2011 |
+        | G4 | G4Hunter | Bedrat et al. 2016 |
+        | i-Motif | C-rich sequences | Zeraati et al. 2018 |
+        | R-Loop | GC skew + G-clusters | Sanz et al. 2016 |
+        | Sticky DNA | (GAA/TTC)n | Potaman et al. 2003 |
+        | A-Phased Repeats | 10.5bp spacing | Trifonov 1980 |
+        | Mirror Repeats | Self-complementary | Frank-Kamenetskii 1990 |
+        """)
+    
+    with st.expander("Scoring Systems"):
+        st.markdown("""
+        ### G4Hunter Score
         ```
-        Score = mean([G-run scores] + [loop penalties])
+        score = mean(G-run contributions) - mean(C-run penalties)
         ```
         **Thresholds:**
         - Canonical: ≥1.2
         - Relaxed: ≥0.8
-        - Bulged: ≥1.0 with penalty
+        - Bulged: ≥1.0
         
-        **Reference:**  
-        Bedrat et al. (2016) *Nucleic Acids Research*
-        """)
-    
-    with st.expander("Motif Definitions"):
-        st.markdown("""
-        | Motif Type | Pattern | Biological Significance |
-        |------------|---------|-------------------------|
-        | G4 | G≥3N1-7G≥3N1-7G≥3N1-7G≥3 | Gene regulation, telomere maintenance |
-        | i-Motif | C≥3N0-7C≥3N0-7C≥3N0-7C≥3 | pH sensing, promoter regulation |
-        | Z-DNA | (CG/GC/GT/TG/AC/CA)≥6 | Immune response, transcription |
-        | R-loop | G-cluster + GC-rich region | Transcription termination, replication |
-        """)
-    
-    with st.expander("Analysis Pipeline"):
-        st.markdown("""
-        ```mermaid
-        graph TD
-            A[Input Sequence] --> B(Preprocessing)
-            B --> C[Parallel Motif Scanning]
-            C --> D[Structure Validation]
-            D --> E[Hotspot Identification]
-            E --> F[Visualization]
-            F --> G[Results Export]
+        ### Z-DNA Score
+        ```
+        score = (CG_pairs/5) + (total_alternating/15)
+        ```
+        
+        ### i-Motif Score
+        ```
+        score = (sum(C_tracts)/16) + (C_content/2)
         ```
         """)
     
     st.markdown("""
     ## References
-    1. Bedrat et al. (2016) *Nucleic Acids Research*  
-    2. Ho et al. (2010) *Nature Chemical Biology*  
-    3. Zeraati et al. (2018) *Nature Chemistry*
+    1. Bedrat et al. (2016) Nucleic Acids Research  
+    2. Ho et al. (2010) Nature Chemical Biology  
+    3. Zeraati et al. (2018) Nature Chemistry  
+    4. Bacolla et al. (2006) Nucleic Acids Research  
+    5. Mirkin & Frank-Kamenetskii (1994) Annual Review of Biophysics
     """)
