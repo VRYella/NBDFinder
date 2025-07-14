@@ -134,17 +134,27 @@ def find_rez(seq, start_pos, max_len=500):
     return [{'seq': window, 'end': len(window)}] if gc_content(window) >= 40 else []
 
 def find_cruciform(seq):
+    """Detect cruciform-forming inverted repeats (non-palindromic with spacer)"""
     results = []
-    for m in overlapping_finditer(r"(?=(([ATGC]{6,})\s*?\2))", seq):
-        stem = m.group(2)
-        stem_len = len(stem)
-        if stem_len < 6: continue
-        score = min(1.0, (stem_len/15) + ((stem.count('A') + stem.count('T')) / stem_len * 0.3))
-        results.append({
-            "Class": "Cruciform", "Subtype": "Inverted_Repeat", "Start": m.start()+1,
-            "End": m.start()+2*stem_len, "Length": 2*stem_len, "Sequence": wrap(m.group(1)),
-            "ScoreMethod": "nBST_IR", "Score": f"{score:.2f}"})
+    pattern = r"(?=([ATGC]{6,})([ATGC]{0,10})\2[::-1])"  # Pseudocode pattern
+
+    # Better: Use a loop to find inverted repeats manually
+    for i in range(len(seq) - 12):
+        for arm_len in range(6, 15):  # arms of 6 to 14
+            arm = seq[i:i+arm_len]
+            spacer = seq[i+arm_len:i+arm_len+5]
+            rev = reverse_complement(arm)
+            end = i + arm_len + 5 + arm_len
+            if end <= len(seq) and seq[i+arm_len+5:end] == rev:
+                full_seq = seq[i:end]
+                score = min(1.0, (arm_len / 15) + ((arm.count('A') + arm.count('T')) / arm_len * 0.3))
+                results.append({
+                    "Class": "Cruciform", "Subtype": "Inverted_Repeat", "Start": i+1,
+                    "End": end, "Length": end - i, "Sequence": wrap(full_seq),
+                    "ScoreMethod": "nBST_IR", "Score": f"{score:.2f}"
+                })
     return results
+
 def find_hdna(seq):
     return [{
         "Class": "Triplex_DNA", "Subtype": "H-DNA_Pyrimidine", "Start": m.start()+1,
