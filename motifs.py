@@ -296,3 +296,41 @@ def merge_hotspots(hotspots):
         else:
             merged.append(current)
     return merged
+
+# ========== NEW: NON-OVERLAPPING MOTIF SELECTION ==========
+
+def select_best_nonoverlapping_motifs(motifs: List[Dict], motif_priority: List[str] = None) -> List[Dict]:
+    """
+    Given a list of motif dicts, return a non-overlapping list, keeping the best motif in overlapping regions.
+    Priority: motif type > best score > longest motif.
+    motif_priority: list from highest to lowest priority, using motif 'Subtype' field.
+    """
+    if motif_priority is None:
+        motif_priority = [
+            'Multimeric_G4', 'Bipartite_G4', 'Dimeric_G4', 'Canonical_G4', 
+            'Relaxed_G4', 'Non_canonical_G4', 'Bulged_G4', 'Three_G-Runs'
+        ]
+    # Map subtype to rank (lower is higher priority)
+    subtype_rank = {subtype: i for i, subtype in enumerate(motif_priority)}
+    def motif_key(m):
+        # Lower rank is better; if subtype not in priority, assign lowest priority
+        rank = subtype_rank.get(m.get('Subtype'), len(subtype_rank))
+        try:
+            score = float(m.get('Score', 0))
+        except ValueError:
+            score = 0.0
+        length = m.get('Length', 0)
+        return (rank, -score, -length)  # Lower rank, higher score, longer
+
+    # Sort all motifs by best-to-worst (for tie-breaking)
+    sorted_motifs = sorted(motifs, key=motif_key)
+    selected = []
+    occupied = set()
+    for m in sorted_motifs:
+        region = set(range(m['Start'], m['End']+1))
+        if occupied.isdisjoint(region):
+            selected.append(m)
+            occupied.update(region)
+    return selected
+
+# ========== END NEW SECTION ==========
