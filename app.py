@@ -9,30 +9,24 @@ from datetime import datetime
 from typing import List, Dict
 from PIL import Image
 
-# Custom module imports with error handling
 try:
     from motifs import (
         all_motifs, 
         find_hotspots,
         parse_fasta, wrap, gc_content, reverse_complement,
-        select_best_nonoverlapping_motifs  # <-- NEW!
+        select_best_nonoverlapping_motifs
     )
 except ImportError as e:
     st.error(f"Critical Import Error: {str(e)}")
-    st.error("Please ensure motifs.py exists in the same directory with all required functions.")
     st.stop()
 
-# Configure page
 st.set_page_config(
     page_title="Non-B DNA Motif Finder",
     layout="wide",
     page_icon="🧬",
-    menu_items={
-        'About': "Non-B DNA Motif Finder | Developed by Dr. Venkata Rajesh Yella"
-    }
+    menu_items={'About': "Non-B DNA Motif Finder | Developed by Dr. Venkata Rajesh Yella"}
 )
 
-# Example sequence
 EXAMPLE_FASTA = """>Example_Sequence
 ATCGATCGATCGAAAATTTTATTTAAATTTAAATTTGGGTTAGGGTTAGGGTTAGGGCCCCCTCCCCCTCCCCCTCCCC
 ATCGATCGCGCGCGCGATCGCACACACACAGCTGCTGCTGCTTGGGAAAGGGGAAGGGTTAGGGAAAGGGGTTT
@@ -43,7 +37,6 @@ GAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAA
 CTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCT
 """
 
-# Initialize session state
 for k, v in {
     'seq': "",
     'df': pd.DataFrame(),
@@ -80,20 +73,17 @@ PAGES = {
     "Documentation": "Scientific methods and references"
 }
 
-# Sidebar navigation
 st.sidebar.title("Navigation")
 page = st.sidebar.radio("Go to", list(PAGES.keys()))
 
 st.title("Non-B DNA Motif Finder")
 st.caption("Comprehensive detection of 12 non-canonical DNA structure types")
 
-# Home Page
 if page == "Home":
     st.markdown("""
     ## Welcome to the Non-B DNA Motif Finder
     This tool identifies **12 classes** of non-canonical DNA structures using published algorithms:
     """)
-    # Color legend
     cols = st.columns(4)
     for i, (motif, color) in enumerate(MOTIF_CLASSES.items()):
         with cols[i % 4]:
@@ -116,10 +106,9 @@ if page == "Home":
     try:
         nbd_image = Image.open("nbd.PNG")
         st.image(nbd_image, caption="Non-B DNA Structures Overview", use_container_width=True)
-    except Exception as e:
+    except Exception:
         st.info("Non-B DNA structure summary image not found.")
 
-# Upload & Analyze Page
 elif page == "Upload & Analyze":
     st.header("Sequence Input")
     with st.expander("Input Options", expanded=True):
@@ -160,11 +149,9 @@ elif page == "Upload & Analyze":
                 try:
                     st.session_state.motif_results = all_motifs(st.session_state.seq)
                     st.session_state.df = pd.DataFrame(st.session_state.motif_results)
-                    # Compute non-overlapping set
                     st.session_state.motif_results_nonoverlap = select_best_nonoverlapping_motifs(
                         st.session_state.motif_results
                     )
-                    # Find hotspots
                     st.session_state.hotspots = find_hotspots(
                         st.session_state.motif_results,
                         len(st.session_state.seq)
@@ -179,28 +166,18 @@ elif page == "Upload & Analyze":
                     st.error(f"Analysis failed: {str(e)}")
                     st.session_state.analysis_status = "Error"
 
-# Results Page
 elif page == "Results":
     st.header("Analysis Results")
-    if st.session_state.df.empty:
+    if not st.session_state.motif_results_nonoverlap:
+        st.session_state.motif_results_nonoverlap = select_best_nonoverlapping_motifs(
+            st.session_state.motif_results
+        )
+    df = pd.DataFrame(st.session_state.motif_results_nonoverlap)
+    if df.empty:
         st.info("No results available. Please run analysis first.")
     else:
-        mode = st.radio(
-            "Motif selection mode:",
-            ["Show all motifs (overlapping)", "Show non-overlapping (best per region)"]
-        )
-        if mode == "Show all motifs (overlapping)":
-            df = st.session_state.df.copy()
-        else:
-            if not st.session_state.motif_results_nonoverlap:
-                st.session_state.motif_results_nonoverlap = select_best_nonoverlapping_motifs(
-                    st.session_state.motif_results
-                )
-            df = pd.DataFrame(st.session_state.motif_results_nonoverlap)
-        # Clean up Score
         df['Score'] = pd.to_numeric(df['Score'], errors='coerce')
         df = df.dropna(subset=['Score'])
-        # Summary
         with st.expander("📊 Summary Statistics", expanded=True):
             cols = st.columns(4)
             cols[0].metric("Total Motifs", len(df))
@@ -213,7 +190,6 @@ elif page == "Results":
                 min(100, int(seq_coverage)),
                 text=f"Sequence coverage: {seq_coverage:.1f}%"
             )
-        # Table
         st.subheader("🧬 Detected Motifs")
         show_cols = ['Class', 'Subtype', 'Start', 'End', 'Length', 'Score', 'Sequence']
         st.dataframe(
@@ -228,7 +204,6 @@ elif page == "Results":
                 )
             }
         )
-        # Distribution
         st.subheader("📈 Distribution Analysis")
         tab1, tab2, tab3, tab4 = st.tabs(["By Type", "By Length", "By Score", "Motif Density"])
         with tab1:
@@ -262,7 +237,6 @@ elif page == "Results":
             ax.set_title("Score Distribution by Class")
             st.pyplot(fig)
         with tab4:
-            # Density plot
             fig, ax = plt.subplots(figsize=(12, 3))
             pos = []
             for _, row in df.iterrows():
@@ -274,7 +248,6 @@ elif page == "Results":
                 ax.set_ylabel("Motif Density")
                 ax.set_title("Motif Density Along Sequence")
             st.pyplot(fig)
-        # Hotspot analysis
         st.subheader("🔥 Hotspot Regions")
         if st.session_state.hotspots:
             hotspot_df = pd.DataFrame(st.session_state.hotspots)
@@ -297,24 +270,18 @@ elif page == "Results":
         else:
             st.info("No hotspot regions detected")
 
-# Visualization Page
 elif page == "Visualization":
     st.header("Interactive Motif Visualization")
-    if st.session_state.df.empty:
+    if not st.session_state.motif_results_nonoverlap:
+        st.session_state.motif_results_nonoverlap = select_best_nonoverlapping_motifs(
+            st.session_state.motif_results
+        )
+    df = pd.DataFrame(st.session_state.motif_results_nonoverlap)
+    if df.empty:
         st.info("No results to visualize. Please run analysis first.")
     else:
-        mode = st.radio(
-            "Motif visualization mode:",
-            ["Show all motifs (overlapping)", "Show non-overlapping (best-scoring/priority)"]
-        )
-        if mode == "Show all motifs (overlapping)":
-            df = st.session_state.df
-        else:
-            if not st.session_state.motif_results_nonoverlap:
-                st.session_state.motif_results_nonoverlap = select_best_nonoverlapping_motifs(
-                    st.session_state.motif_results
-                )
-            df = pd.DataFrame(st.session_state.motif_results_nonoverlap)
+        df['Score'] = pd.to_numeric(df['Score'], errors='coerce')
+        df = df.dropna(subset=['Score'])
         seq_len = len(st.session_state.seq)
         st.sidebar.subheader("Visualization Settings")
         show_classes = st.sidebar.multiselect(
@@ -324,7 +291,7 @@ elif page == "Visualization":
         )
         min_score = st.sidebar.slider(
             "Minimum confidence score:",
-            0.0, 1.0, 0.5
+            float(df['Score'].min()), float(df['Score'].max()), float(df['Score'].min())
         )
         position_range = st.sidebar.slider(
             "Sequence position range:",
@@ -339,7 +306,6 @@ elif page == "Visualization":
         if viz_df.empty:
             st.warning("No motifs match the selected filters")
         else:
-            # Browser plot
             st.subheader("Genome Browser View")
             subtypes = sorted(viz_df['Subtype'].unique())
             y_pos = {subtype: i+1 for i, subtype in enumerate(subtypes)}
@@ -367,12 +333,10 @@ elif page == "Visualization":
             ax.set_title(f"Non-B DNA Motifs ({position_range[0]:,}-{position_range[1]:,} bp)")
             plt.tight_layout()
             st.pyplot(fig)
-            # Table
             st.dataframe(
                 viz_df[['Class', 'Subtype', 'Start', 'End', 'Length', 'Score']],
                 height=300
             )
-            # Color legend
             st.markdown(
                 "<div style='display:flex;flex-wrap:wrap;gap:10px;'>"
                 + "".join(
@@ -382,54 +346,67 @@ elif page == "Visualization":
                 + "</div>", unsafe_allow_html=True
             )
 
-# Download Page
 elif page == "Download":
     st.header("Download Results")
-    if st.session_state.df.empty:
-        st.info("No results available to download")
-    else:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        # CSV Download
-        csv = st.session_state.df.to_csv(index=False).encode('utf-8')
-        st.download_button(
-            label="Download CSV (All Motifs)",
-            data=csv,
-            file_name=f"nonb_motifs_{timestamp}.csv",
-            mime="text/csv"
+    # Non-overlapping by default
+    if not st.session_state.motif_results_nonoverlap:
+        st.session_state.motif_results_nonoverlap = select_best_nonoverlapping_motifs(
+            st.session_state.motif_results
         )
-        # Excel Download
-        excel_buffer = io.BytesIO()
-        with pd.ExcelWriter(excel_buffer, engine='xlsxwriter') as writer:
-            st.session_state.df.to_excel(writer, index=False, sheet_name='Motifs')
-            if st.session_state.hotspots:
-                pd.DataFrame(st.session_state.hotspots).to_excel(
-                    writer, index=False, sheet_name='Hotspots'
-                )
-            pd.DataFrame({
-                'Sequence Info': [
-                    f"Length: {len(st.session_state.seq)} bp",
-                    f"GC Content: {gc_content(st.session_state.seq):.1f}%",
-                    f"Motifs Found: {len(st.session_state.df)}",
-                    f"Analysis Date: {timestamp}"
-                ]
-            }).to_excel(writer, index=False, sheet_name='Summary')
-            writer.close()
-            st.download_button(
-                label="Download Excel Workbook",
-                data=excel_buffer.getvalue(),
-                file_name=f"nonb_results_{timestamp}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    df = pd.DataFrame(st.session_state.motif_results_nonoverlap)
+    df['Score'] = pd.to_numeric(df['Score'], errors='coerce')
+    df = df.dropna(subset=['Score'])
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    csv = df.to_csv(index=False).encode('utf-8')
+    st.download_button(
+        label="Download CSV (Non-overlapping Motifs)",
+        data=csv,
+        file_name=f"nonb_motifs_nonoverlap_{timestamp}.csv",
+        mime="text/csv"
+    )
+    st.markdown("For advanced analysis, you may download all motifs (overlapping):")
+    all_df = pd.DataFrame(st.session_state.motif_results)
+    all_df['Score'] = pd.to_numeric(all_df['Score'], errors='coerce')
+    all_df = all_df.dropna(subset=['Score'])
+    all_csv = all_df.to_csv(index=False).encode('utf-8')
+    st.download_button(
+        label="Download CSV (All Motifs - Overlapping)",
+        data=all_csv,
+        file_name=f"nonb_motifs_ALL_{timestamp}.csv",
+        mime="text/csv"
+    )
+    # Excel
+    excel_buffer = io.BytesIO()
+    with pd.ExcelWriter(excel_buffer, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False, sheet_name='Motifs')
+        if st.session_state.hotspots:
+            pd.DataFrame(st.session_state.hotspots).to_excel(
+                writer, index=False, sheet_name='Hotspots'
             )
-        # FASTA Download
-        fasta_content = f">Analyzed_sequence\n{wrap(st.session_state.seq)}"
+        pd.DataFrame({
+            'Sequence Info': [
+                f"Length: {len(st.session_state.seq)} bp",
+                f"GC Content: {gc_content(st.session_state.seq):.1f}%",
+                f"Motifs Found: {len(df)}",
+                f"Analysis Date: {timestamp}"
+            ]
+        }).to_excel(writer, index=False, sheet_name='Summary')
+        writer.close()
         st.download_button(
-            label="Download Sequence (FASTA)",
-            data=fasta_content,
-            file_name=f"sequence_{timestamp}.fasta",
-            mime="text/plain"
+            label="Download Excel Workbook",
+            data=excel_buffer.getvalue(),
+            file_name=f"nonb_results_{timestamp}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
+    # FASTA
+    fasta_content = f">Analyzed_sequence\n{wrap(st.session_state.seq)}"
+    st.download_button(
+        label="Download Sequence (FASTA)",
+        data=fasta_content,
+        file_name=f"sequence_{timestamp}.fasta",
+        mime="text/plain"
+    )
 
-# Documentation Page
 elif page == "Documentation":
     st.header("Scientific Documentation")
     with st.expander("All 12 Motif Types", expanded=True):
