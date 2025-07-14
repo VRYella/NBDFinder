@@ -155,11 +155,20 @@ def find_cruciform(seq):
 
 
 def find_hdna(seq):
-    return [{
-        "Class": "Triplex_DNA", "Subtype": "H-DNA_Pyrimidine", "Start": m.start()+1,
-        "End": m.start()+len(m.group(1)), "Length": len(m.group(1)), "Sequence": wrap(m.group(1)),
-        "ScoreMethod": "Triplex_Propensity", "Score": f"{min(1.0, len(m.group(2))/10 + 0.3):.2f}"}
-        for m in overlapping_finditer(r"(?=(([CT]{5,})\s*?\2))", seq) if len(m.group(2)) >= 5]
+    """Detect intramolecular triplex (mirror repeats of pyrimidines)"""
+    results = []
+    pattern = r"(?=([CT]{5,})[ATGC]{0,10}\1)"  # Valid mirror repeat pattern
+    for m in overlapping_finditer(pattern, seq):
+        repeat = m.group(1)
+        total_len = len(repeat) * 2
+        full_seq = seq[m.start():m.start()+total_len+10]  # +spacer
+        score = min(1.0, len(repeat) / 10 + 0.3)
+        results.append({
+            "Class": "Triplex_DNA", "Subtype": "H-DNA_Pyrimidine", "Start": m.start()+1,
+            "End": m.start()+len(full_seq), "Length": len(full_seq), "Sequence": wrap(full_seq),
+            "ScoreMethod": "Triplex_Propensity", "Score": f"{score:.2f}"
+        })
+    return results
 
 def find_sticky_dna(seq):
     return [{
