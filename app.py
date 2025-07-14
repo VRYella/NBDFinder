@@ -7,7 +7,7 @@ import io
 from datetime import datetime
 from PIL import Image
 
-# Import motif functions
+# Motif functions
 try:
     from motifs import (
         all_motifs, 
@@ -73,69 +73,69 @@ PAGES = {
     "Documentation": "Scientific methods and references"
 }
 
+# --- Sidebar navigation ---
 st.sidebar.title("Navigation")
 page = st.sidebar.radio("Go to", list(PAGES.keys()))
 
+# --- Developer info: fixed at sidebar bottom ---
+st.markdown(
+    """
+    <style>
+    .dev-footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 22rem;
+        padding: 14px 18px 14px 20px;
+        background: #f7f7fc;
+        border-top: 1px solid #e0e0e0;
+        border-right: 1px solid #e0e0e0;
+        border-bottom-left-radius: 12px;
+        font-size: 15px;
+        color: #1e293b;
+        z-index: 100;
+    }
+    </style>
+    <div class='dev-footer'>
+        <b>Developed by</b><br>
+        Dr. Venkata Rajesh Yella<br>
+        <a href='mailto:yvrajesh_bt@kluniversity.in'>yvrajesh_bt@kluniversity.in</a><br>
+        <a href='https://github.com/VRYella' target='_blank'>GitHub: VRYella</a>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+# --- Home page ---
 if page == "Home":
-    # Show nbd.PNG only on Home page
     try:
         nbd_image = Image.open("nbd.PNG")
         st.image(nbd_image, use_container_width=True)
     except Exception:
         pass
 
-    # Two-column info/features panel below navigation
-    info_col, features_col = st.columns([1, 2])
-    with info_col:
-        st.markdown(
-            """
-            <div style='padding:16px; background:#f0f4fa; border-radius:10px; box-shadow:0 2px 8px #EEE; font-size:16px;'>
-                <b>Developed by</b><br>
-                Dr. Venkata Rajesh Yella<br>
-                <a href='mailto:yvrajesh_bt@kluniversity.in'>yvrajesh_bt@kluniversity.in</a><br>
-                <a href='https://github.com/VRYella' target='_blank'>GitHub: VRYella</a>
-            </div>
-            """, unsafe_allow_html=True
-        )
-    with features_col:
-        st.markdown(
-            """
-            <div style='display:flex;gap:24px;'>
-              <div style='min-width:220px;'>
-                <h4 style='margin-bottom:7px;'>Key Features</h4>
-                <ul>
-                  <li><b>Comprehensive Detection:</b> 12 non-B DNA structure types</li>
-                  <li><b>Scientific Validation:</b> Published algorithms and thresholds</li>
-                  <li><b>Interactive Visualization:</b> Genome browser-style display</li>
-                  <li><b>Export Capabilities:</b> CSV, Excel, and image exports</li>
-                </ul>
-              </div>
-              <div style='min-width:220px;'>
-                <h4 style='margin-bottom:7px;'>How to Use</h4>
-                <ol>
-                  <li>Upload or paste your DNA sequence</li>
-                  <li>Run the analysis</li>
-                  <li>Explore results through interactive visualizations</li>
-                  <li>Download data for further analysis</li>
-                </ol>
-              </div>
-            </div>
-            """, unsafe_allow_html=True
-        )
+    st.title("Non-B DNA Motif Finder")
+    st.markdown("This tool identifies **12 classes** of non-canonical DNA structures using published algorithms:")
 
-    st.markdown("""
-    ## Welcome to the Non-B DNA Motif Finder
-    This tool identifies **12 classes** of non-canonical DNA structures using published algorithms:
-    """)
+    # Motif cards
     cols = st.columns(4)
     for i, (motif, color) in enumerate(MOTIF_CLASSES.items()):
         with cols[i % 4]:
             st.markdown(
-                f"<div style='background:{color};padding:10px;border-radius:5px;margin-bottom:10px;'>"
-                f"<b>{motif.replace('_',' ')}</b></div>", unsafe_allow_html=True)
+                f"<div style='background:{color};padding:10px 0 10px 0;border-radius:7px;margin-bottom:12px;text-align:center;font-weight:bold;font-size:1.1em;box-shadow:0 2px 10px #eee;'>"
+                f"{motif.replace('_',' ')}</div>", unsafe_allow_html=True)
 
-# --- (Rest of your code remains unchanged) ---
+    # Features & usage paragraph
+    st.markdown(
+        """
+        <div style='margin-top: 34px; font-size: 18px; line-height: 1.7; background: #f1f8fa; border-radius: 8px; padding: 22px 22px 18px 22px; box-shadow: 0px 2px 10px #e0e5ea;'>
+        <b>The Non-B DNA Motif Finder</b> provides comprehensive detection of 12 distinct non-canonical DNA structure types, employing scientifically validated algorithms and established thresholds. Users benefit from interactive visualizations resembling a genome browser and versatile export options including CSV, Excel, and images.<br><br>
+        <b>How to use:</b> Simply upload or paste your DNA sequence, execute the analysis, explore interactive visual representations, and download the detailed results for further examination.
+        </div>
+        """, unsafe_allow_html=True
+    )
 
+# --- Upload & Analyze ---
 elif page == "Upload & Analyze":
     st.header("Sequence Input")
     with st.expander("Input Options", expanded=True):
@@ -193,6 +193,7 @@ elif page == "Upload & Analyze":
                     st.error(f"Analysis failed: {str(e)}")
                     st.session_state.analysis_status = "Error"
 
+# --- Results page with improved Hotspot visualization ---
 elif page == "Results":
     st.header("Analysis Results")
     if not st.session_state.motif_results_nonoverlap:
@@ -275,30 +276,47 @@ elif page == "Results":
                 ax.set_ylabel("Motif Density")
                 ax.set_title("Motif Density Along Sequence")
             st.pyplot(fig)
-        st.subheader("🔥 Hotspot Regions")
+        st.subheader("🔥 Non-B DNA Clustered Regions (Hotspots)")
         if st.session_state.hotspots:
             hotspot_df = pd.DataFrame(st.session_state.hotspots)
             st.dataframe(
                 hotspot_df.sort_values('Score', ascending=False),
                 use_container_width=True
             )
+            # Colorful, labeled blocks using tab20
+            palette = sns.color_palette("tab20", len(hotspot_df))
             fig, ax = plt.subplots(figsize=(12, 3))
-            for _, row in hotspot_df.iterrows():
+            for idx, (_, row) in enumerate(hotspot_df.iterrows()):
                 ax.axvspan(
                     row['RegionStart'], 
                     row['RegionEnd'], 
-                    alpha=0.3, 
-                    color='red'
+                    alpha=0.5, 
+                    color=palette[idx],
+                    label=f"Cluster {idx+1}"
+                )
+                ax.text(
+                    (row['RegionStart'] + row['RegionEnd'])/2,
+                    0.7 + 0.1*(idx%2),
+                    f"{row['RegionStart']}–{row['RegionEnd']}",
+                    color='black',
+                    fontsize=9,
+                    ha='center',
+                    va='bottom',
+                    rotation=45
                 )
             ax.set_xlim(0, len(st.session_state.seq))
             ax.set_xlabel("Sequence Position (bp)")
-            ax.set_title("Hotspot Locations")
+            ax.set_yticks([])
+            ax.set_title("Non-B DNA Clustered Regions (Hotspots)")
+            ax.legend(loc='upper right', fontsize=8)
             st.pyplot(fig)
+            st.info("These regions represent clusters of non-B DNA motifs, i.e., hotspots where multiple motif types overlap or are concentrated.")
         else:
-            st.info("No hotspot regions detected")
+            st.info("No hotspot regions detected.")
 
+# --- Visualization page: Colorful, score-free tracks ---
 elif page == "Visualization":
-    st.header("Interactive Motif Visualization")
+    st.header("Genome Browser View (Interactive Motif Visualization)")
     if not st.session_state.motif_results_nonoverlap:
         st.session_state.motif_results_nonoverlap = select_best_nonoverlapping_motifs(
             st.session_state.motif_results
@@ -333,25 +351,18 @@ elif page == "Visualization":
         if viz_df.empty:
             st.warning("No motifs match the selected filters")
         else:
-            st.subheader("Genome Browser View")
             subtypes = sorted(viz_df['Subtype'].unique())
             y_pos = {subtype: i+1 for i, subtype in enumerate(subtypes)}
-            fig, ax = plt.subplots(figsize=(15, max(6,len(subtypes)//2+2)))
+            color_map = dict(zip(subtypes, sns.color_palette("tab20", len(subtypes))))
+            fig, ax = plt.subplots(figsize=(15, max(6, len(subtypes)//2+2)))
             for _, row in viz_df.iterrows():
                 ax.hlines(
                     y_pos[row['Subtype']],
                     row['Start'],
                     row['End'],
-                    linewidth=12,
-                    color=MOTIF_CLASSES[row['Class']],
-                    alpha=0.85
-                )
-                ax.text(
-                    (row['Start'] + row['End'])/2,
-                    y_pos[row['Subtype']] + 0.1,
-                    f"{row['Score']:.2f}",
-                    ha='center',
-                    fontsize=8
+                    linewidth=13,
+                    color=color_map.get(row['Subtype'], "#888"),
+                    alpha=0.88
                 )
             ax.set_yticks(list(y_pos.values()))
             ax.set_yticklabels(list(y_pos.keys()))
@@ -367,12 +378,13 @@ elif page == "Visualization":
             st.markdown(
                 "<div style='display:flex;flex-wrap:wrap;gap:10px;'>"
                 + "".join(
-                    f"<div style='background:{MOTIF_CLASSES[c]};padding:7px 15px;border-radius:3px;margin:2px 5px;color:black;'>"
-                    f"{c}</div>" for c in show_classes
+                    f"<div style='background:{color_map.get(s, '#ccc')};padding:7px 15px;border-radius:3px;margin:2px 5px;color:black;'>"
+                    f"{s}</div>" for s in subtypes
                 )
                 + "</div>", unsafe_allow_html=True
             )
 
+# --- Download page ---
 elif page == "Download":
     st.header("Download Results")
     if not st.session_state.motif_results_nonoverlap:
@@ -433,6 +445,7 @@ elif page == "Download":
         mime="text/plain"
     )
 
+# --- Documentation page ---
 elif page == "Documentation":
     st.header("Scientific Documentation")
     with st.expander("All 12 Motif Types", expanded=True):
