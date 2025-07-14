@@ -26,16 +26,6 @@ st.set_page_config(
     menu_items={'About': "Non-B DNA Motif Finder | Developed by Dr. Venkata Rajesh Yella"}
 )
 
-# Always show nbd.PNG as a banner at the top
-try:
-    nbd_image = Image.open("nbd.PNG")
-    st.image(nbd_image, use_column_width=True)
-except Exception:
-    pass
-
-st.title("Non-B DNA Motif Finder")
-st.caption("Comprehensive detection of 12 non-canonical DNA structure types")
-
 EXAMPLE_FASTA = """>Example_Sequence
 ATCGATCGATCGAAAATTTTATTTAAATTTAAATTTGGGTTAGGGTTAGGGTTAGGGCCCCCTCCCCCTCCCCCTCCCC
 ATCGATCGCGCGCGCGATCGCACACACACAGCTGCTGCTGCTTGGGAAAGGGGAAGGGTTAGGGAAAGGGGTTT
@@ -87,6 +77,52 @@ st.sidebar.title("Navigation")
 page = st.sidebar.radio("Go to", list(PAGES.keys()))
 
 if page == "Home":
+    # Show nbd.PNG only on Home page
+    try:
+        nbd_image = Image.open("nbd.PNG")
+        st.image(nbd_image, use_container_width=True)
+    except Exception:
+        pass
+
+    # Two-column info/features panel below navigation
+    info_col, features_col = st.columns([1, 2])
+    with info_col:
+        st.markdown(
+            """
+            <div style='padding:16px; background:#f0f4fa; border-radius:10px; box-shadow:0 2px 8px #EEE; font-size:16px;'>
+                <b>Developed by</b><br>
+                Dr. Venkata Rajesh Yella<br>
+                <a href='mailto:yvrajesh_bt@kluniversity.in'>yvrajesh_bt@kluniversity.in</a><br>
+                <a href='https://github.com/VRYella' target='_blank'>GitHub: VRYella</a>
+            </div>
+            """, unsafe_allow_html=True
+        )
+    with features_col:
+        st.markdown(
+            """
+            <div style='display:flex;gap:24px;'>
+              <div style='min-width:220px;'>
+                <h4 style='margin-bottom:7px;'>Key Features</h4>
+                <ul>
+                  <li><b>Comprehensive Detection:</b> 12 non-B DNA structure types</li>
+                  <li><b>Scientific Validation:</b> Published algorithms and thresholds</li>
+                  <li><b>Interactive Visualization:</b> Genome browser-style display</li>
+                  <li><b>Export Capabilities:</b> CSV, Excel, and image exports</li>
+                </ul>
+              </div>
+              <div style='min-width:220px;'>
+                <h4 style='margin-bottom:7px;'>How to Use</h4>
+                <ol>
+                  <li>Upload or paste your DNA sequence</li>
+                  <li>Run the analysis</li>
+                  <li>Explore results through interactive visualizations</li>
+                  <li>Download data for further analysis</li>
+                </ol>
+              </div>
+            </div>
+            """, unsafe_allow_html=True
+        )
+
     st.markdown("""
     ## Welcome to the Non-B DNA Motif Finder
     This tool identifies **12 classes** of non-canonical DNA structures using published algorithms:
@@ -97,19 +133,8 @@ if page == "Home":
             st.markdown(
                 f"<div style='background:{color};padding:10px;border-radius:5px;margin-bottom:10px;'>"
                 f"<b>{motif.replace('_',' ')}</b></div>", unsafe_allow_html=True)
-    st.markdown("""
-    ### Key Features:
-    - **Comprehensive Detection**: 12 non-B DNA structure types
-    - **Scientific Validation**: Published algorithms and thresholds
-    - **Interactive Visualization**: Genome browser-style display
-    - **Export Capabilities**: CSV, Excel, and image exports
 
-    ### How to Use:
-    1. Upload or paste your DNA sequence
-    2. Run the analysis
-    3. Explore results through interactive visualizations
-    4. Download data for further analysis
-    """)
+# --- (Rest of your code remains unchanged) ---
 
 elif page == "Upload & Analyze":
     st.header("Sequence Input")
