@@ -3,12 +3,11 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import re
 import io
 from datetime import datetime
-from typing import List, Dict
 from PIL import Image
 
+# Import motif functions
 try:
     from motifs import (
         all_motifs, 
@@ -27,6 +26,16 @@ st.set_page_config(
     menu_items={'About': "Non-B DNA Motif Finder | Developed by Dr. Venkata Rajesh Yella"}
 )
 
+# Always show nbd.PNG as a banner at the top
+try:
+    nbd_image = Image.open("nbd.PNG")
+    st.image(nbd_image, use_column_width=True)
+except Exception:
+    pass
+
+st.title("Non-B DNA Motif Finder")
+st.caption("Comprehensive detection of 12 non-canonical DNA structure types")
+
 EXAMPLE_FASTA = """>Example_Sequence
 ATCGATCGATCGAAAATTTTATTTAAATTTAAATTTGGGTTAGGGTTAGGGTTAGGGCCCCCTCCCCCTCCCCCTCCCC
 ATCGATCGCGCGCGCGATCGCACACACACAGCTGCTGCTGCTTGGGAAAGGGGAAGGGTTAGGGAAAGGGGTTT
@@ -37,6 +46,7 @@ GAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAA
 CTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCT
 """
 
+# Session state initialization
 for k, v in {
     'seq': "",
     'df': pd.DataFrame(),
@@ -76,9 +86,6 @@ PAGES = {
 st.sidebar.title("Navigation")
 page = st.sidebar.radio("Go to", list(PAGES.keys()))
 
-st.title("Non-B DNA Motif Finder")
-st.caption("Comprehensive detection of 12 non-canonical DNA structure types")
-
 if page == "Home":
     st.markdown("""
     ## Welcome to the Non-B DNA Motif Finder
@@ -103,11 +110,6 @@ if page == "Home":
     3. Explore results through interactive visualizations
     4. Download data for further analysis
     """)
-    try:
-        nbd_image = Image.open("nbd.PNG")
-        st.image(nbd_image, caption="Non-B DNA Structures Overview", use_container_width=True)
-    except Exception:
-        st.info("Non-B DNA structure summary image not found.")
 
 elif page == "Upload & Analyze":
     st.header("Sequence Input")
@@ -348,7 +350,6 @@ elif page == "Visualization":
 
 elif page == "Download":
     st.header("Download Results")
-    # Non-overlapping by default
     if not st.session_state.motif_results_nonoverlap:
         st.session_state.motif_results_nonoverlap = select_best_nonoverlapping_motifs(
             st.session_state.motif_results
