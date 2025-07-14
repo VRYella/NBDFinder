@@ -92,7 +92,6 @@ def find_local_curved(seq, apr_regions):
                 "ScoreMethod": "A/T_Stretch", "Score": f"{min(1.0, len(m.group())/10):.2f}"})
     return results
 
-
 def find_zdna(seq):
     results = []
     for m in overlapping_finditer(r"(?=(([AT][CG]){6,}))", seq):
@@ -106,12 +105,20 @@ def find_zdna(seq):
     return results
 
 def find_slipped_dna(seq):
-    pattern = r"(?=(([ATGC]{10,300})\1))"
-    return [{
-        "Class": "Slipped_DNA", "Subtype": "Direct_Repeat", "Start": m.start()+1,
-        "End": m.start()+len(m.group(1))*2, "Length": len(m.group(1))*2,
-        "Sequence": wrap(m.group(1)+m.group(1)), "ScoreMethod": "nBST_DR",
-        "Score": f"{min(1.0, len(m.group(1))/300):.2f}"} for m in overlapping_finditer(pattern, seq)]
+    # Fix: Avoid open group backreference error by matching direct repeats manually
+    results = []
+    min_len = 10
+    max_len = 300
+    for i in range(len(seq) - min_len * 2 + 1):
+        for l in range(min_len, min(max_len+1, (len(seq)-i)//2+1)):
+            repeat = seq[i:i+l]
+            if seq[i+l:i+2*l] == repeat:
+                results.append({
+                    "Class": "Slipped_DNA", "Subtype": "Direct_Repeat", "Start": i+1,
+                    "End": i+2*l, "Length": 2*l,
+                    "Sequence": wrap(repeat+repeat), "ScoreMethod": "nBST_DR",
+                    "Score": f"{min(1.0, l/300):.2f}"})
+    return results
 
 def find_rlfs(seq):
     if len(seq) < 100: return []
@@ -152,7 +159,6 @@ def find_cruciform(seq):
                     "End": mid+arm_len, "Length": len(full), "Sequence": wrap(full),
                     "ScoreMethod": "nBST_IR", "Score": f"{score:.2f}"})
     return results
-
 
 def find_hdna(seq):
     """Detect intramolecular triplex (mirror repeats of pyrimidines)"""
