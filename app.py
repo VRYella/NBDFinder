@@ -51,18 +51,18 @@ if 'analysis_status' not in st.session_state:
 if 'hotspots' not in st.session_state:
     st.session_state.hotspots = []
 
-# Define all 12 motif classes with colors
 MOTIF_CLASSES = {
     "Curved_DNA": "#FF9AA2",
     "Z-DNA": "#FFB7B2",
     "Slipped_DNA": "#FFDAC1",
     "Cruciform": "#E2F0CB",
     "Triplex_DNA": "#B5EAD7",
+    "Sticky_DNA": "#DCB8CB",
     "G-Triplex": "#C7CEEA",
     "G4": "#A2D7D8",
-    "i-Motif": "#B5EAD7",
+    "i-Motif": "#B0C4DE",
     "R-Loop": "#FFD3B6",
-    "Sticky_DNA": "#DCB8CB",
+    "Hybrid": "#C1A192",         # New
     "A-Phased_Repeat": "#A2C8CC",
     "Mirror_Repeat": "#D4A5A5"
 }
