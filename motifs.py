@@ -61,27 +61,37 @@ def validate_motif(motif, seq_len):
             re.match("^[ATGC]+$", motif['Sequence']))
 
 def find_apr(seq):
+    """Detect A-Phased Repeats with curvature scoring"""
     results = []
+    apr_regions = []
     for m in overlapping_finditer(r"(?=((A{3,6}[ATGC]{2,5}){3,}))", seq):
         seq_frag = m.group(1)
         a_count = seq_frag.count('A') + seq_frag.count('T')
         score = min(1.0, 0.2 * len(re.findall(r"A{3,6}", seq_frag)) + (a_count / len(seq_frag)))
-        results.append({
+        motif = {
             "Class": "Curved_DNA", "Subtype": "A-Phased_Repeat", "Start": m.start()+1,
             "End": m.start()+len(seq_frag), "Length": len(seq_frag), "Sequence": wrap(seq_frag),
-            "ScoreMethod": "Brukner_Curvature", "Score": f"{score:.2f}"})
-    return results + find_local_curved(seq)
+            "ScoreMethod": "Brukner_Curvature", "Score": f"{score:.2f}"
+        }
+        results.append(motif)
+        apr_regions.append((motif['Start'], motif['End']))
+    
+    # Append non-overlapping local curved regions
+    results += find_local_curved(seq, apr_regions)
+    return results
 
-def find_local_curved(seq):
-    apr_regions = [(m['Start'], m['End']) for m in find_apr(seq)]
+def find_local_curved(seq, apr_regions):
+    """Detect local curved DNA (A7/T7) not overlapping with APR"""
     results = []
     for m in overlapping_finditer(r"(A{7,}|T{7,})", seq):
-        if not any(s <= m.start() <= e or s <= m.end() <= e for s, e in apr_regions):
+        start, end = m.start()+1, m.end()
+        if not any(s <= start <= e or s <= end <= e for s, e in apr_regions):
             results.append({
-                "Class": "Curved_DNA", "Subtype": "Local_Curved", "Start": m.start()+1,
-                "End": m.end(), "Length": len(m.group()), "Sequence": wrap(m.group()),
+                "Class": "Curved_DNA", "Subtype": "Local_Curved", "Start": start,
+                "End": end, "Length": len(m.group()), "Sequence": wrap(m.group()),
                 "ScoreMethod": "A/T_Stretch", "Score": f"{min(1.0, len(m.group())/10):.2f}"})
     return results
+
 
 def find_zdna(seq):
     results = []
