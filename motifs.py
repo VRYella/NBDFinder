@@ -134,26 +134,25 @@ def find_rez(seq, start_pos, max_len=500):
     return [{'seq': window, 'end': len(window)}] if gc_content(window) >= 40 else []
 
 def find_cruciform(seq):
-    """Detect cruciform-forming inverted repeats (non-palindromic with spacer)"""
+    """Detect cruciform-forming palindromes with a spacer (approximate)"""
     results = []
-    pattern = r"(?=([ATGC]{6,})([ATGC]{0,10})\2[::-1])"  # Pseudocode pattern
-
-    # Better: Use a loop to find inverted repeats manually
-    for i in range(len(seq) - 12):
-        for arm_len in range(6, 15):  # arms of 6 to 14
+    for i in range(len(seq) - 20):
+        for arm_len in range(6, 12):  # typical stem length
+            spacer_len = 0  # can adjust for looped hairpins
             arm = seq[i:i+arm_len]
-            spacer = seq[i+arm_len:i+arm_len+5]
-            rev = reverse_complement(arm)
-            end = i + arm_len + 5 + arm_len
-            if end <= len(seq) and seq[i+arm_len+5:end] == rev:
-                full_seq = seq[i:end]
+            rev_arm = reverse_complement(arm)
+            mid = i + arm_len + spacer_len
+            if mid + arm_len > len(seq): continue
+            candidate = seq[mid:mid+arm_len]
+            if candidate == rev_arm:
+                full = seq[i:mid+arm_len]
                 score = min(1.0, (arm_len / 15) + ((arm.count('A') + arm.count('T')) / arm_len * 0.3))
                 results.append({
                     "Class": "Cruciform", "Subtype": "Inverted_Repeat", "Start": i+1,
-                    "End": end, "Length": end - i, "Sequence": wrap(full_seq),
-                    "ScoreMethod": "nBST_IR", "Score": f"{score:.2f}"
-                })
+                    "End": mid+arm_len, "Length": len(full), "Sequence": wrap(full),
+                    "ScoreMethod": "nBST_IR", "Score": f"{score:.2f}"})
     return results
+
 
 def find_hdna(seq):
     return [{
