@@ -76,6 +76,19 @@ PAGES = {
 st.sidebar.title("Navigation")
 page = st.sidebar.radio("Go to", list(PAGES.keys()))
 
+# Developer information at bottom of sidebar
+st.sidebar.markdown("---")
+st.sidebar.markdown(
+    """
+    <div style='padding:12px; background:#f8f9fa; border-radius:8px; margin-top:20px; font-size:14px;'>
+        <b>Developed by</b><br>
+        Dr. Venkata Rajesh Yella<br>
+        <a href='mailto:yvrajesh_bt@kluniversity.in'>yvrajesh_bt@kluniversity.in</a><br>
+        <a href='https://github.com/VRYella' target='_blank'>GitHub: VRYella</a>
+    </div>
+    """, unsafe_allow_html=True
+)
+
 if page == "Home":
     # Show nbd.PNG only on Home page
     try:
@@ -83,45 +96,6 @@ if page == "Home":
         st.image(nbd_image, use_container_width=True)
     except Exception:
         pass
-
-    # Two-column info/features panel below navigation
-    info_col, features_col = st.columns([1, 2])
-    with info_col:
-        st.markdown(
-            """
-            <div style='padding:16px; background:#f0f4fa; border-radius:10px; box-shadow:0 2px 8px #EEE; font-size:16px;'>
-                <b>Developed by</b><br>
-                Dr. Venkata Rajesh Yella<br>
-                <a href='mailto:yvrajesh_bt@kluniversity.in'>yvrajesh_bt@kluniversity.in</a><br>
-                <a href='https://github.com/VRYella' target='_blank'>GitHub: VRYella</a>
-            </div>
-            """, unsafe_allow_html=True
-        )
-    with features_col:
-        st.markdown(
-            """
-            <div style='display:flex;gap:24px;'>
-              <div style='min-width:220px;'>
-                <h4 style='margin-bottom:7px;'>Key Features</h4>
-                <ul>
-                  <li><b>Comprehensive Detection:</b> 12 non-B DNA structure types</li>
-                  <li><b>Scientific Validation:</b> Published algorithms and thresholds</li>
-                  <li><b>Interactive Visualization:</b> Genome browser-style display</li>
-                  <li><b>Export Capabilities:</b> CSV, Excel, and image exports</li>
-                </ul>
-              </div>
-              <div style='min-width:220px;'>
-                <h4 style='margin-bottom:7px;'>How to Use</h4>
-                <ol>
-                  <li>Upload or paste your DNA sequence</li>
-                  <li>Run the analysis</li>
-                  <li>Explore results through interactive visualizations</li>
-                  <li>Download data for further analysis</li>
-                </ol>
-              </div>
-            </div>
-            """, unsafe_allow_html=True
-        )
 
     st.markdown("""
     ## Welcome to the Non-B DNA Motif Finder
@@ -134,10 +108,26 @@ if page == "Home":
                 f"<div style='background:{color};padding:10px;border-radius:5px;margin-bottom:10px;'>"
                 f"<b>{motif.replace('_',' ')}</b></div>", unsafe_allow_html=True)
 
+    # Visually distinct description paragraph
+    st.markdown(
+        """
+        <div style='padding:24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius:12px; margin:24px 0; color:white; box-shadow:0 4px 16px rgba(0,0,0,0.1);'>
+            <p style='font-size:18px; line-height:1.6; margin:0; text-align:justify;'>
+                <b>The Non-B DNA Motif Finder</b> provides comprehensive detection of 12 distinct non-canonical DNA structure types, 
+                employing scientifically validated algorithms and established thresholds. Users benefit from interactive 
+                visualizations resembling a genome browser and versatile export options including CSV, Excel, and images. 
+                To utilize the tool, simply upload or paste your DNA sequence, execute the analysis, explore interactive 
+                visual representations, and download the detailed results for further examination.
+            </p>
+        </div>
+        """, unsafe_allow_html=True
+    )
+
 # --- (Rest of your code remains unchanged) ---
 
 elif page == "Upload & Analyze":
-    st.header("Sequence Input")
+    st.header("🧬 Sequence Input")
+    st.markdown("---")
     with st.expander("Input Options", expanded=True):
         input_method = st.radio("Select input method:", 
             ["File Upload", "Example Sequence", "Paste Sequence"])
@@ -194,7 +184,8 @@ elif page == "Upload & Analyze":
                     st.session_state.analysis_status = "Error"
 
 elif page == "Results":
-    st.header("Analysis Results")
+    st.header("📊 Analysis Results")
+    st.markdown("---")
     if not st.session_state.motif_results_nonoverlap:
         st.session_state.motif_results_nonoverlap = select_best_nonoverlapping_motifs(
             st.session_state.motif_results
@@ -217,6 +208,8 @@ elif page == "Results":
                 min(100, int(seq_coverage)),
                 text=f"Sequence coverage: {seq_coverage:.1f}%"
             )
+        
+        st.markdown("---")
         st.subheader("🧬 Detected Motifs")
         show_cols = ['Class', 'Subtype', 'Start', 'End', 'Length', 'Score', 'Sequence']
         st.dataframe(
@@ -231,6 +224,8 @@ elif page == "Results":
                 )
             }
         )
+        
+        st.markdown("---")
         st.subheader("📈 Distribution Analysis")
         tab1, tab2, tab3, tab4 = st.tabs(["By Type", "By Length", "By Score", "Motif Density"])
         with tab1:
@@ -275,30 +270,62 @@ elif page == "Results":
                 ax.set_ylabel("Motif Density")
                 ax.set_title("Motif Density Along Sequence")
             st.pyplot(fig)
-        st.subheader("🔥 Hotspot Regions")
+        
+        st.markdown("---")
+        st.subheader("🔥 Non-B DNA Clustered Regions (Hotspots)")
+        st.markdown("*Regions where non-B DNA motifs cluster together, indicating areas of potential structural complexity.*")
         if st.session_state.hotspots:
             hotspot_df = pd.DataFrame(st.session_state.hotspots)
             st.dataframe(
                 hotspot_df.sort_values('Score', ascending=False),
                 use_container_width=True
             )
-            fig, ax = plt.subplots(figsize=(12, 3))
-            for _, row in hotspot_df.iterrows():
-                ax.axvspan(
-                    row['RegionStart'], 
-                    row['RegionEnd'], 
-                    alpha=0.3, 
-                    color='red'
+            
+            # Create colorful hotspot visualization
+            fig, ax = plt.subplots(figsize=(12, 4))
+            import matplotlib.cm as cm
+            colors = cm.Set3(np.linspace(0, 1, len(hotspot_df)))
+            
+            for i, (_, row) in enumerate(hotspot_df.iterrows()):
+                # Draw colorful blocks for each hotspot
+                ax.barh(
+                    0.5, 
+                    row['RegionEnd'] - row['RegionStart'], 
+                    left=row['RegionStart'],
+                    height=0.3,
+                    color=colors[i],
+                    alpha=0.8,
+                    edgecolor='black',
+                    linewidth=1
                 )
+                # Add labels
+                ax.text(
+                    (row['RegionStart'] + row['RegionEnd'])/2,
+                    0.5,
+                    f"Hotspot {i+1}\n({row['MotifCount']} motifs)",
+                    ha='center',
+                    va='center',
+                    fontsize=10,
+                    weight='bold',
+                    color='black'
+                )
+            
             ax.set_xlim(0, len(st.session_state.seq))
+            ax.set_ylim(0, 1)
             ax.set_xlabel("Sequence Position (bp)")
-            ax.set_title("Hotspot Locations")
+            ax.set_title("Non-B DNA Clustered Regions (Hotspots)")
+            ax.set_yticks([])
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            ax.spines['left'].set_visible(False)
+            plt.tight_layout()
             st.pyplot(fig)
         else:
             st.info("No hotspot regions detected")
 
 elif page == "Visualization":
-    st.header("Interactive Motif Visualization")
+    st.header("🔬 Interactive Motif Visualization")
+    st.markdown("---")
     if not st.session_state.motif_results_nonoverlap:
         st.session_state.motif_results_nonoverlap = select_best_nonoverlapping_motifs(
             st.session_state.motif_results
@@ -336,6 +363,12 @@ elif page == "Visualization":
             st.subheader("Genome Browser View")
             subtypes = sorted(viz_df['Subtype'].unique())
             y_pos = {subtype: i+1 for i, subtype in enumerate(subtypes)}
+            
+            # Use tab20 colormap for more distinct colors
+            import matplotlib.cm as cm
+            colors = cm.tab20(np.linspace(0, 1, len(subtypes)))
+            subtype_colors = {subtype: colors[i] for i, subtype in enumerate(subtypes)}
+            
             fig, ax = plt.subplots(figsize=(15, max(6,len(subtypes)//2+2)))
             for _, row in viz_df.iterrows():
                 ax.hlines(
@@ -343,16 +376,10 @@ elif page == "Visualization":
                     row['Start'],
                     row['End'],
                     linewidth=12,
-                    color=MOTIF_CLASSES[row['Class']],
+                    color=subtype_colors[row['Subtype']],
                     alpha=0.85
                 )
-                ax.text(
-                    (row['Start'] + row['End'])/2,
-                    y_pos[row['Subtype']] + 0.1,
-                    f"{row['Score']:.2f}",
-                    ha='center',
-                    fontsize=8
-                )
+                # Removed score labels for cleaner visualization
             ax.set_yticks(list(y_pos.values()))
             ax.set_yticklabels(list(y_pos.keys()))
             ax.set_xlim(position_range[0], position_range[1])
@@ -374,7 +401,8 @@ elif page == "Visualization":
             )
 
 elif page == "Download":
-    st.header("Download Results")
+    st.header("📥 Download Results")
+    st.markdown("---")
     if not st.session_state.motif_results_nonoverlap:
         st.session_state.motif_results_nonoverlap = select_best_nonoverlapping_motifs(
             st.session_state.motif_results
@@ -434,7 +462,8 @@ elif page == "Download":
     )
 
 elif page == "Documentation":
-    st.header("Scientific Documentation")
+    st.header("📚 Scientific Documentation")
+    st.markdown("---")
     with st.expander("All 12 Motif Types", expanded=True):
         st.markdown("""
         | Motif Type | Detection Method | Key References |
