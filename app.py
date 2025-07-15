@@ -439,8 +439,9 @@ elif page == "Advanced":
     """)
 
     fasta_file = st.file_uploader("Upload multi-FASTA file", type=["fa", "fasta", "txt"])
+    run_analysis = st.button("Run Analysis", type="primary", disabled=not fasta_file)
 
-    if fasta_file:
+    if fasta_file and run_analysis:
         try:
             content = fasta_file.read().decode("utf-8")
             seqs, seq_names = [], []
@@ -509,7 +510,7 @@ elif page == "Advanced":
         except Exception as e:
             st.error(f"Error processing file: {str(e)}")
     else:
-        st.info("Please upload a multi-FASTA file.")
+        st.info("Please upload a multi-FASTA file and click 'Run Analysis'.")
 # ... (footer and remaining code)
 # --- Documentation page ---
 elif page == "Documentation":
