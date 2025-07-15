@@ -14,17 +14,6 @@ Entrez.email = "raazbiochem@gmail.com"
 Entrez.api_key = None  # Optional: Add your API key here for higher rate limit
 
 def fetch_ncbi_entry(db, query, query_type="accession", rettype="fasta", retmax=5):
-    """
-    Fetch sequence data from NCBI.
-    Args:
-        db (str): 'nucleotide', 'protein', or 'gene'.
-        query (str): Accession, gene name, or Entrez query.
-        query_type (str): 'accession', 'gene', or 'custom'.
-        rettype (str): 'fasta', 'gb', etc.
-        retmax (int): Number of records to retrieve for custom/gene queries.
-    Returns:
-        List of SeqRecord or empty list.
-    """
     try:
         if query_type == "accession":
             handle = Entrez.efetch(db=db, id=query, rettype=rettype, retmode="text")
@@ -65,7 +54,7 @@ def fetch_ncbi_entry(db, query, query_type="accession", rettype="fasta", retmax=
 def wrap(seq, width=70):
     return "\n".join([seq[i:i+width] for i in range(0, len(seq), width)])
 
-# Motif functions
+# Import motif functions
 try:
     from motifs import (
         all_motifs, 
@@ -107,19 +96,22 @@ for k, v in {
         st.session_state[k] = v
 
 MOTIF_CLASSES = {
-    "Curved_DNA": "#FF9AA2",
-    "Z-DNA": "#FFB7B2",
-    "Slipped_DNA": "#FFDAC1",
-    "R-Loop": "#FFD3B6",
+    "Curved DNA": "#FF9AA2",
+    "Z DNA": "#FFB7B2",
+    "Slipped DNA": "#FFDAC1",
+    "R Loop": "#FFD3B6",
     "Cruciform": "#E2F0CB",
-    "Triplex_DNA": "#B5EAD7",
-    "Sticky_DNA": "#DCB8CB",
-    "G-Triplex": "#C7CEEA",
-    "G-quadruplex": "#A2D7D8",
-    "i-Motif": "#B0C4DE",    
+    "Triplex DNA": "#B5EAD7",
+    "Sticky DNA": "#DCB8CB",
+    "G Triplex": "#C7CEEA",
+    "G quadruplex": "#A2D7D8",
+    "i Motif": "#B0C4DE",    
     "Hybrid": "#C1A192",
-    "Non-B-DNA Clusters": "#A2C8CC"
+    "Non-B DNA Clusters": "#A2C8CC"
 }
+
+def motif_class_with_spaces(motif):
+    return motif.replace("_", " ")
 
 PAGES = {
     "Home": "Introduction and overview",
@@ -134,51 +126,22 @@ PAGES = {
 st.sidebar.title("Navigation")
 page = st.sidebar.radio("Go to", list(PAGES.keys()))
 
-# --- Developer info: fixed at sidebar bottom ---
-st.markdown(
-    """
-    <style>
-    .dev-footer {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 20rem;
-        padding: 12px 16px 12px 18px;
-        background: #f7f7fc;
-        border-top: 1px solid #e0e0e0;
-        border-right: 1px solid #e0e0e0;
-        border-bottom-left-radius: 12px;
-        font-size: 12px;
-        color: #1e293b;
-        z-index: 100;
-    }
-    </style>
-    <div class='dev-footer'>
-        <b>Developed by</b><br>
-        Dr. Venkata Rajesh Yella<br>
-        <a href='mailto:yvrajesh_bt@kluniversity.in'>yvrajesh_bt@kluniversity.in</a><br>
-        <a href='https://github.com/VRYella' target='_blank'>GitHub: VRYella</a>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
 # --- Home page ---
 if page == "Home":
+    st.title("Non-B DNA Motif Finder")
+    st.markdown("This tool identifies **12 classes** of non-canonical DNA structures using published algorithms:")
     try:
         nbd_image = Image.open("nbd3.png")
         st.image(nbd_image, use_container_width=True)
     except Exception:
         pass
 
-    st.title("Non-B DNA Motif Finder")
-    st.markdown("This tool identifies **12 classes** of non-canonical DNA structures using published algorithms:")
     cols = st.columns(4)
     for i, (motif, color) in enumerate(MOTIF_CLASSES.items()):
         with cols[i % 4]:
             st.markdown(
                 f"<div style='background:{color};padding:10px 0 10px 0;border-radius:7px;margin-bottom:12px;text-align:center;font-weight:bold;font-size:1.1em;box-shadow:0 2px 10px #eee;'>"
-                f"{motif.replace('_',' ')}</div>", unsafe_allow_html=True)
+                f"{motif}</div>", unsafe_allow_html=True)
 
     st.markdown(
         """
@@ -257,16 +220,17 @@ elif page == "Upload & Analyze":
             with st.spinner("Analyzing sequence for 12 motif types..."):
                 try:
                     st.session_state.motif_results = all_motifs(st.session_state.seq)
-                    st.session_state.df = pd.DataFrame(st.session_state.motif_results)
+                    # Only keep non-overlapping results for all visual sections except Download
                     st.session_state.motif_results_nonoverlap = select_best_nonoverlapping_motifs(
                         st.session_state.motif_results
                     )
+                    st.session_state.df = pd.DataFrame(st.session_state.motif_results_nonoverlap)
                     st.session_state.hotspots = find_hotspots(
-                        st.session_state.motif_results,
+                        st.session_state.motif_results_nonoverlap,
                         len(st.session_state.seq)
                     )
-                    if st.session_state.motif_results:
-                        st.success(f"Found {len(st.session_state.motif_results)} motifs across {st.session_state.df['Class'].nunique()} classes")
+                    if st.session_state.motif_results_nonoverlap:
+                        st.success(f"Found {len(st.session_state.motif_results_nonoverlap)} motifs across {st.session_state.df['Class'].nunique()} classes")
                         st.session_state.analysis_status = "Complete"
                     else:
                         st.warning("No motifs detected")
@@ -275,11 +239,7 @@ elif page == "Upload & Analyze":
                     st.error(f"Analysis failed: {str(e)}")
                     st.session_state.analysis_status = "Error"
 
-# --- [rest of your app.py remains unchanged] ---
-# Results, Visualization, Download, Documentation pages...
-
-
-# --- Results page with improved Hotspot visualization ---
+# --- Results page (non-overlapping only) ---
 elif page == "Results":
     st.header("Analysis Results")
     if not st.session_state.motif_results_nonoverlap:
@@ -306,8 +266,11 @@ elif page == "Results":
             )
         st.subheader("🧬 Detected Motifs")
         show_cols = ['Class', 'Subtype', 'Start', 'End', 'Length', 'Score', 'Sequence']
+        display_df = df.copy()
+        display_df['Class'] = display_df['Class'].apply(lambda x: x.replace("_", " "))
+        display_df['Subtype'] = display_df['Subtype'].apply(lambda x: x.replace("_", " "))
         st.dataframe(
-            df[show_cols],
+            display_df[show_cols],
             use_container_width=True,
             height=400,
             column_config={
@@ -323,9 +286,9 @@ elif page == "Results":
         with tab1:
             fig, ax = plt.subplots(figsize=(10, 6))
             sns.countplot(
-                data=df,
+                data=display_df,
                 y='Class',
-                order=df['Class'].value_counts().index,
+                order=display_df['Class'].value_counts().index,
                 palette=MOTIF_CLASSES.values()
             )
             ax.set_title("Motif Count by Class")
@@ -333,7 +296,7 @@ elif page == "Results":
         with tab2:
             fig, ax = plt.subplots(figsize=(10, 6))
             sns.boxplot(
-                data=df, 
+                data=display_df, 
                 x='Length', 
                 y='Class',
                 palette=MOTIF_CLASSES.values()
@@ -343,7 +306,7 @@ elif page == "Results":
         with tab3:
             fig, ax = plt.subplots(figsize=(10, 6))
             sns.violinplot(
-                data=df,
+                data=display_df,
                 x='Score',
                 y='Class',
                 palette=MOTIF_CLASSES.values()
@@ -353,7 +316,7 @@ elif page == "Results":
         with tab4:
             fig, ax = plt.subplots(figsize=(12, 3))
             pos = []
-            for _, row in df.iterrows():
+            for _, row in display_df.iterrows():
                 pos.extend(range(row['Start'], row['End'] + 1))
             if pos:
                 sns.kdeplot(pos, fill=True, color='navy', ax=ax)
@@ -369,7 +332,6 @@ elif page == "Results":
                 hotspot_df.sort_values('Score', ascending=False),
                 use_container_width=True
             )
-            # Colorful, labeled blocks using tab20
             palette = sns.color_palette("tab20", len(hotspot_df))
             fig, ax = plt.subplots(figsize=(12, 3))
             for idx, (_, row) in enumerate(hotspot_df.iterrows()):
@@ -400,9 +362,9 @@ elif page == "Results":
         else:
             st.info("No hotspot regions detected.")
 
-# --- Visualization page: Colorful, score-free tracks ---
+# --- Visualization page: Non-overlapping motif tracks, no scores ---
 elif page == "Visualization":
-    st.header("Genome Browser View (Interactive Motif Visualization)")
+    st.header("Motif Map (Non-Overlapping Motif Tracks)")
     if not st.session_state.motif_results_nonoverlap:
         st.session_state.motif_results_nonoverlap = select_best_nonoverlapping_motifs(
             st.session_state.motif_results
@@ -411,50 +373,45 @@ elif page == "Visualization":
     if df.empty:
         st.info("No results to visualize. Please run analysis first.")
     else:
-        df['Score'] = pd.to_numeric(df['Score'], errors='coerce')
-        df = df.dropna(subset=['Score'])
+        display_df = df.copy()
+        display_df['Class'] = display_df['Class'].apply(lambda x: x.replace("_", " "))
         seq_len = len(st.session_state.seq)
-        st.sidebar.subheader("Visualization Settings")
+        st.sidebar.subheader("Motif Map Settings")
         show_classes = st.sidebar.multiselect(
             "Select motif classes to display:",
-            sorted(df['Class'].unique()),
-            default=sorted(df['Class'].unique())
-        )
-        min_score = st.sidebar.slider(
-            "Minimum confidence score:",
-            float(df['Score'].min()), float(df['Score'].max()), float(df['Score'].min())
+            sorted(display_df['Class'].unique()),
+            default=sorted(display_df['Class'].unique())
         )
         position_range = st.sidebar.slider(
             "Sequence position range:",
             0, seq_len, (0, min(5000, seq_len))
         )
-        viz_df = df[
-            (df['Class'].isin(show_classes)) & 
-            (df['Score'] >= min_score) &
-            (df['Start'] >= position_range[0]) & 
-            (df['End'] <= position_range[1])
+        viz_df = display_df[
+            (display_df['Class'].isin(show_classes)) &
+            (display_df['Start'] >= position_range[0]) & 
+            (display_df['End'] <= position_range[1])
         ].copy()
         if viz_df.empty:
             st.warning("No motifs match the selected filters")
         else:
-            subtypes = sorted(viz_df['Subtype'].unique())
-            y_pos = {subtype: i+1 for i, subtype in enumerate(subtypes)}
-            color_map = dict(zip(subtypes, sns.color_palette("tab20", len(subtypes))))
-            fig, ax = plt.subplots(figsize=(15, max(6, len(subtypes)//2+2)))
+            classes = sorted(viz_df['Class'].unique())
+            y_pos = {motif:i+1 for i, motif in enumerate(classes)}
+            color_map = dict(zip(classes, sns.color_palette("tab20", len(classes))))
+            fig, ax = plt.subplots(figsize=(15, max(6, len(classes)//2+2)))
             for _, row in viz_df.iterrows():
                 ax.hlines(
-                    y_pos[row['Subtype']],
+                    y_pos[row['Class']],
                     row['Start'],
                     row['End'],
                     linewidth=13,
-                    color=color_map.get(row['Subtype'], "#888"),
+                    color=color_map.get(row['Class'], "#888"),
                     alpha=0.88
                 )
             ax.set_yticks(list(y_pos.values()))
             ax.set_yticklabels(list(y_pos.keys()))
             ax.set_xlim(position_range[0], position_range[1])
             ax.set_xlabel("Sequence Position (bp)")
-            ax.set_title(f"Non-B DNA Motifs ({position_range[0]:,}-{position_range[1]:,} bp)")
+            ax.set_title(f"Non-B DNA Motifs ({position_range[0]:,}-{position_range[1]:,} bp, non-overlapping)")
             plt.tight_layout()
             st.pyplot(fig)
             st.dataframe(
@@ -465,7 +422,7 @@ elif page == "Visualization":
                 "<div style='display:flex;flex-wrap:wrap;gap:10px;'>"
                 + "".join(
                     f"<div style='background:{color_map.get(s, '#ccc')};padding:7px 15px;border-radius:3px;margin:2px 5px;color:black;'>"
-                    f"{s}</div>" for s in subtypes
+                    f"{s}</div>" for s in classes
                 )
                 + "</div>", unsafe_allow_html=True
             )
@@ -477,6 +434,7 @@ elif page == "Download":
         st.session_state.motif_results_nonoverlap = select_best_nonoverlapping_motifs(
             st.session_state.motif_results
         )
+    # Download non-overlapping motifs
     df = pd.DataFrame(st.session_state.motif_results_nonoverlap)
     df['Score'] = pd.to_numeric(df['Score'], errors='coerce')
     df = df.dropna(subset=['Score'])
@@ -579,3 +537,14 @@ elif page == "Documentation":
     4. Bacolla et al. (2006) Nucleic Acids Research  
     5. Mirkin & Frank-Kamenetskii (1994) Annual Review of Biophysics
     """)
+
+# --- Footer: developer info, always at bottom ---
+st.markdown("""
+---
+<div style='font-size: 15px; color: #1e293b; margin-top: 40px; text-align: left;'>
+<b>Developed by</b><br>
+Dr. Venkata Rajesh Yella<br>
+<a href='mailto:yvrajesh_bt@kluniversity.in'>yvrajesh_bt@kluniversity.in</a><br>
+<a href='https://github.com/VRYella' target='_blank'>GitHub: VRYella</a>
+</div>
+""", unsafe_allow_html=True)
