@@ -136,12 +136,7 @@ if page == "Home":
     except Exception:
         pass
 
-    cols = st.columns(4)
-    for i, (motif, color) in enumerate(MOTIF_CLASSES.items()):
-        with cols[i % 4]:
-            st.markdown(
-                f"<div style='background:{color};padding:10px 0 10px 0;border-radius:7px;margin-bottom:12px;text-align:center;font-weight:bold;font-size:1.1em;box-shadow:0 2px 10px #eee;'>"
-                f"{motif}</div>", unsafe_allow_html=True)
+
 
     st.markdown(
         """
