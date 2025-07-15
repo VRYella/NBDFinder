@@ -129,7 +129,7 @@ if page == "Home":
     st.markdown(
         """
         <div style='margin-top: 34px; font-size: 18px; line-height: 1.7; background: #f1f8fa; border-radius: 8px; padding: 22px 22px 18px 22px; box-shadow: 0px 2px 10px #e0e5ea;'>
-        <b>The Non-B DNA Motif Finder</b> provides comprehensive detection of 12 distinct non-canonical DNA structure types, employing scientifically validated algorithms and established thresholds. Users benefit from interactive visualizations resembling a genome browser and versatile export options including CSV, Excel, and images.<br><br>
+        <b>The Non-B DNA Motif Finder</b> provides comprehensive detection of 12 distinct non-canonical DNA structure types, employing scientifically validated algorithms and established thresholds for exploratory genome-wide motif scanning (scientifically reasonable). Users benefit from interactive visualizations resembling a genome browser and versatile export options including CSV, Excel, and images.<br><br>
         <b>How to use:</b> Simply upload or paste your DNA sequence, execute the analysis, explore interactive visual representations, and download the detailed results for further examination.
         </div>
         """, unsafe_allow_html=True
