@@ -113,14 +113,21 @@ MOTIF_CLASSES = {
 def motif_class_with_spaces(motif):
     return motif.replace("_", " ")
 
+# ... (your existing imports)
+from Bio import Entrez, SeqIO
+
+# ... (your session state and motif class setup)
+
 PAGES = {
     "Home": "Introduction and overview",
     "Upload & Analyze": "Submit DNA sequence for analysis",
     "Results": "View detected motifs and statistics", 
     "Visualization": "Graphical representation of motifs",
     "Download": "Export results for further analysis",
-    "Documentation": "Scientific methods and references"
+    "Documentation": "Scientific methods and references",
+    "Advanced": "Advanced sequence/multifasta analysis"
 }
+
 
 # --- Sidebar navigation ---
 st.sidebar.title("Navigation")
@@ -483,7 +490,61 @@ elif page == "Download":
         file_name=f"sequence_{timestamp}.fasta",
         mime="text/plain"
     )
+# --- Advanced page ---
+elif page == "Advanced":
+    st.header("Advanced Analysis: Motif Position Histograms from Multi-FASTA")
+    st.markdown("""
+    Upload a multi-FASTA file (all sequences must be of the same length).
+    The app will plot, for each motif, a histogram of the positions where the motif occurs across all sequences.
+    """)
+    fasta_file = st.file_uploader("Upload multi-FASTA file", type=["fa", "fasta", "txt"])
+    motifs_input = st.text_input(
+        "Enter motifs to search (comma-separated, e.g. ATG,TGA,GGC):",
+        value="ATG,TGA,GGC"
+    )
 
+    if fasta_file and motifs_input:
+        motifs = [m.strip().upper() for m in motifs_input.split(",") if m.strip()]
+        try:
+            fasta_io = io.StringIO(fasta_file.read().decode("utf-8"))
+            records = list(SeqIO.parse(fasta_io, "fasta"))
+            sequences = [str(rec.seq).upper() for rec in records]
+            if not sequences:
+                st.error("No sequences found in the uploaded file.")
+                st.stop()
+            seq_len = len(sequences[0])
+            if not all(len(seq) == seq_len for seq in sequences):
+                st.error("All sequences in the file must be of the same length.")
+                st.stop()
+
+            motif_pos_dict = {motif: [] for motif in motifs}
+            for motif in motifs:
+                motif_len = len(motif)
+                for seq in sequences:
+                    for i in range(seq_len - motif_len + 1):
+                        if seq[i:i+motif_len] == motif:
+                            motif_pos_dict[motif].append(i)
+
+            n = len(motifs)
+            fig, axes = plt.subplots(n, 1, figsize=(10, 3*n), sharex=True)
+            if n == 1:
+                axes = [axes]
+            for ax, motif in zip(axes, motifs):
+                ax.hist(motif_pos_dict[motif], bins=np.arange(seq_len+1)-0.5, color='skyblue', edgecolor='black')
+                ax.set_title(f"Motif: {motif}")
+                ax.set_ylabel("Count")
+                ax.set_xlim(-0.5, seq_len-0.5)
+                ax.grid(axis='y')
+            axes[-1].set_xlabel("Position in Sequence (0-based)")
+            plt.tight_layout()
+            st.pyplot(fig)
+            st.success("Histogram(s) generated!")
+        except Exception as e:
+            st.error(f"Error processing file: {str(e)}")
+    else:
+        st.info("Please upload a multi-FASTA file and enter at least one motif.")
+
+# ... (footer and remaining code)
 # --- Documentation page ---
 elif page == "Documentation":
     st.header("Scientific Documentation")
