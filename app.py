@@ -85,13 +85,13 @@ st.markdown(
         position: fixed;
         bottom: 0;
         left: 0;
-        width: 22rem;
-        padding: 14px 18px 14px 20px;
+        width: 20rem;
+        padding: 12px 16px 12px 18px;
         background: #f7f7fc;
         border-top: 1px solid #e0e0e0;
         border-right: 1px solid #e0e0e0;
         border-bottom-left-radius: 12px;
-        font-size: 15px;
+        font-size: 12px;
         color: #1e293b;
         z-index: 100;
     }
