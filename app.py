@@ -129,7 +129,7 @@ page = st.sidebar.radio("Go to", list(PAGES.keys()))
 # --- Home page ---
 if page == "Home":
     st.title("Non-B DNA Motif Finder")
-    st.markdown("This tool identifies **12 classes** of non-canonical DNA structures using published algorithms:")
+    #st.markdown("This tool identifies **12 classes** of non-canonical DNA structures using published algorithms:")
     try:
         nbd_image = Image.open("nbd3.png")
         st.image(nbd_image, use_container_width=True)
