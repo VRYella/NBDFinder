@@ -60,8 +60,8 @@ MOTIF_CLASSES = {
     "i-Motif": "#B0C4DE",
     "R-Loop": "#FFD3B6",
     "Hybrid": "#C1A192",
-    "A-Phased_Repeat": "#A2C8CC",
-    "Mirror_Repeat": "#D4A5A5"
+    "Non-B-DNA Clusters": "#A2C8CC"
+    
 }
 
 PAGES = {
