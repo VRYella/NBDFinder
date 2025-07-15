@@ -7,12 +7,70 @@ import io
 from datetime import datetime
 from PIL import Image
 
+# ---- NCBI section ----
+from Bio import Entrez, SeqIO
+
+Entrez.email = "raazbiochem@gmail.com"
+Entrez.api_key = None  # Optional: Add your API key here for higher rate limit
+
+def fetch_ncbi_entry(db, query, query_type="accession", rettype="fasta", retmax=5):
+    """
+    Fetch sequence data from NCBI.
+    Args:
+        db (str): 'nucleotide', 'protein', or 'gene'.
+        query (str): Accession, gene name, or Entrez query.
+        query_type (str): 'accession', 'gene', or 'custom'.
+        rettype (str): 'fasta', 'gb', etc.
+        retmax (int): Number of records to retrieve for custom/gene queries.
+    Returns:
+        List of SeqRecord or empty list.
+    """
+    try:
+        if query_type == "accession":
+            handle = Entrez.efetch(db=db, id=query, rettype=rettype, retmode="text")
+            records = list(SeqIO.parse(handle, rettype))
+            handle.close()
+            return records
+        elif query_type == "gene":
+            search = Entrez.esearch(db="gene", term=query, retmax=retmax)
+            result = Entrez.read(search)
+            if not result["IdList"]:
+                return []
+            gene_id = result["IdList"][0]
+            link = Entrez.elink(dbfrom="gene", db=db, id=gene_id)
+            link_result = Entrez.read(link)
+            if not link_result[0]["LinkSetDb"]:
+                return []
+            linked_ids = [l['Id'] for l in link_result[0]['LinkSetDb'][0]['Link']]
+            handle = Entrez.efetch(db=db, id=",".join(linked_ids), rettype=rettype, retmode="text")
+            records = list(SeqIO.parse(handle, rettype))
+            handle.close()
+            return records
+        elif query_type == "custom":
+            search = Entrez.esearch(db=db, term=query, retmax=retmax)
+            result = Entrez.read(search)
+            ids = result["IdList"]
+            if not ids:
+                return []
+            handle = Entrez.efetch(db=db, id=",".join(ids), rettype=rettype, retmode="text")
+            records = list(SeqIO.parse(handle, rettype))
+            handle.close()
+            return records
+        else:
+            return []
+    except Exception as e:
+        st.error(f"NCBI fetch failed: {str(e)}")
+        return []
+
+def wrap(seq, width=70):
+    return "\n".join([seq[i:i+width] for i in range(0, len(seq), width)])
+
 # Motif functions
 try:
     from motifs import (
         all_motifs, 
         find_hotspots,
-        parse_fasta, wrap, gc_content, reverse_complement,
+        parse_fasta, gc_content, reverse_complement,
         select_best_nonoverlapping_motifs
     )
 except ImportError as e:
@@ -61,7 +119,6 @@ MOTIF_CLASSES = {
     "i-Motif": "#B0C4DE",    
     "Hybrid": "#C1A192",
     "Non-B-DNA Clusters": "#A2C8CC"
-    
 }
 
 PAGES = {
@@ -116,8 +173,6 @@ if page == "Home":
 
     st.title("Non-B DNA Motif Finder")
     st.markdown("This tool identifies **12 classes** of non-canonical DNA structures using published algorithms:")
-
-    # Motif cards
     cols = st.columns(4)
     for i, (motif, color) in enumerate(MOTIF_CLASSES.items()):
         with cols[i % 4]:
@@ -125,7 +180,6 @@ if page == "Home":
                 f"<div style='background:{color};padding:10px 0 10px 0;border-radius:7px;margin-bottom:12px;text-align:center;font-weight:bold;font-size:1.1em;box-shadow:0 2px 10px #eee;'>"
                 f"{motif.replace('_',' ')}</div>", unsafe_allow_html=True)
 
-    # Features & usage paragraph
     st.markdown(
         """
         <div style='margin-top: 34px; font-size: 18px; line-height: 1.7; background: #f1f8fa; border-radius: 8px; padding: 22px 22px 18px 22px; box-shadow: 0px 2px 10px #e0e5ea;'>
@@ -140,7 +194,7 @@ elif page == "Upload & Analyze":
     st.header("Sequence Input")
     with st.expander("Input Options", expanded=True):
         input_method = st.radio("Select input method:", 
-            ["File Upload", "Example Sequence", "Paste Sequence"])
+            ["File Upload", "Example Sequence", "Paste Sequence", "NCBI Fetch"])
         if input_method == "File Upload":
             fasta_file = st.file_uploader("Upload FASTA file", type=["fa", "fasta", "txt"])
             if fasta_file:
@@ -163,6 +217,34 @@ elif page == "Upload & Analyze":
                     st.success(f"Sequence parsed: {len(st.session_state.seq):,} bp")
                 except Exception as e:
                     st.error(f"Invalid sequence: {str(e)}")
+        elif input_method == "NCBI Fetch":
+            st.markdown("Fetch a sequence from NCBI by accession, gene name, or custom query.")
+            ncbi_db = st.selectbox("NCBI Database", ["nucleotide", "protein", "gene"])
+            ncbi_query_type = st.radio("Query Type", ["Accession", "Gene Name", "Custom Query"])
+            ncbi_query = st.text_input("Enter your query (accession, gene name, or Entrez term):")
+            ncbi_rettype = st.selectbox("Return format", ["fasta", "gb"])
+            ncbi_retmax = st.number_input("Max records (for gene/custom)", min_value=1, max_value=20, value=5)
+            if st.button("Fetch from NCBI"):
+                if ncbi_query:
+                    qtype = {"Accession": "accession", "Gene Name": "gene", "Custom Query": "custom"}[ncbi_query_type]
+                    with st.spinner("Contacting NCBI..."):
+                        records = fetch_ncbi_entry(
+                            db=ncbi_db,
+                            query=ncbi_query,
+                            query_type=qtype,
+                            rettype=ncbi_rettype,
+                            retmax=ncbi_retmax
+                        )
+                    if not records:
+                        st.error("No sequence found for this query.")
+                    else:
+                        seq = str(records[0].seq)
+                        st.session_state.seq = seq
+                        st.success(f"Fetched sequence: {len(seq):,} bp")
+                        st.code(f">{records[0].id}\n{wrap(seq)}", language="fasta")
+                else:
+                    st.warning("Enter a query before fetching.")
+
     if st.session_state.seq:
         st.subheader("Sequence Preview")
         col1, col2 = st.columns(2)
@@ -192,6 +274,10 @@ elif page == "Upload & Analyze":
                 except Exception as e:
                     st.error(f"Analysis failed: {str(e)}")
                     st.session_state.analysis_status = "Error"
+
+# --- [rest of your app.py remains unchanged] ---
+# Results, Visualization, Download, Documentation pages...
+
 
 # --- Results page with improved Hotspot visualization ---
 elif page == "Results":
