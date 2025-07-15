@@ -430,120 +430,86 @@ elif page == "Visualization":
             )
 
 # --- Download page ---
-elif page == "Download":
-    st.header("Download Results")
-    if not st.session_state.motif_results_nonoverlap:
-        st.session_state.motif_results_nonoverlap = select_best_nonoverlapping_motifs(
-            st.session_state.motif_results
-        )
-    # Download non-overlapping motifs
-    df = pd.DataFrame(st.session_state.motif_results_nonoverlap)
-    df['Score'] = pd.to_numeric(df['Score'], errors='coerce')
-    df = df.dropna(subset=['Score'])
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    csv = df.to_csv(index=False).encode('utf-8')
-    st.download_button(
-        label="Download CSV (Non-overlapping Motifs)",
-        data=csv,
-        file_name=f"nonb_motifs_nonoverlap_{timestamp}.csv",
-        mime="text/csv"
-    )
-    st.markdown("For advanced analysis, you may download all motifs (overlapping):")
-    all_df = pd.DataFrame(st.session_state.motif_results)
-    all_df['Score'] = pd.to_numeric(all_df['Score'], errors='coerce')
-    all_df = all_df.dropna(subset=['Score'])
-    all_csv = all_df.to_csv(index=False).encode('utf-8')
-    st.download_button(
-        label="Download CSV (All Motifs - Overlapping)",
-        data=all_csv,
-        file_name=f"nonb_motifs_ALL_{timestamp}.csv",
-        mime="text/csv"
-    )
-    # Excel
-    excel_buffer = io.BytesIO()
-    with pd.ExcelWriter(excel_buffer, engine='xlsxwriter') as writer:
-        df.to_excel(writer, index=False, sheet_name='Motifs')
-        if st.session_state.hotspots:
-            pd.DataFrame(st.session_state.hotspots).to_excel(
-                writer, index=False, sheet_name='Hotspots'
-            )
-        pd.DataFrame({
-            'Sequence Info': [
-                f"Length: {len(st.session_state.seq)} bp",
-                f"GC Content: {gc_content(st.session_state.seq):.1f}%",
-                f"Motifs Found: {len(df)}",
-                f"Analysis Date: {timestamp}"
-            ]
-        }).to_excel(writer, index=False, sheet_name='Summary')
-        writer.close()
-        st.download_button(
-            label="Download Excel Workbook",
-            data=excel_buffer.getvalue(),
-            file_name=f"nonb_results_{timestamp}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-    # FASTA
-    fasta_content = f">Analyzed_sequence\n{wrap(st.session_state.seq)}"
-    st.download_button(
-        label="Download Sequence (FASTA)",
-        data=fasta_content,
-        file_name=f"sequence_{timestamp}.fasta",
-        mime="text/plain"
-    )
 # --- Advanced page ---
 elif page == "Advanced":
-    st.header("Advanced Analysis: Motif Position Histograms from Multi-FASTA")
+    st.header("Advanced Analysis: All Non-B DNA Motifs from Multi-FASTA")
     st.markdown("""
     Upload a multi-FASTA file (all sequences must be of the same length).
-    The app will plot, for each motif, a histogram of the positions where the motif occurs across all sequences.
+    The app will automatically detect all 12 non-B DNA motif classes as defined in motifs.py and plot, for each class, a histogram of the motif positions across all sequences.
     """)
+
     fasta_file = st.file_uploader("Upload multi-FASTA file", type=["fa", "fasta", "txt"])
-    motifs_input = st.text_input(
-        "Enter motifs to search (comma-separated, e.g. ATG,TGA,GGC):",
-        value="ATG,TGA,GGC"
-    )
 
-    if fasta_file and motifs_input:
-        motifs = [m.strip().upper() for m in motifs_input.split(",") if m.strip()]
+    if fasta_file:
         try:
-            fasta_io = io.StringIO(fasta_file.read().decode("utf-8"))
-            records = list(SeqIO.parse(fasta_io, "fasta"))
-            sequences = [str(rec.seq).upper() for rec in records]
-            if not sequences:
-                st.error("No sequences found in the uploaded file.")
-                st.stop()
-            seq_len = len(sequences[0])
-            if not all(len(seq) == seq_len for seq in sequences):
-                st.error("All sequences in the file must be of the same length.")
-                st.stop()
-
-            motif_pos_dict = {motif: [] for motif in motifs}
-            for motif in motifs:
-                motif_len = len(motif)
-                for seq in sequences:
-                    for i in range(seq_len - motif_len + 1):
-                        if seq[i:i+motif_len] == motif:
-                            motif_pos_dict[motif].append(i)
-
-            n = len(motifs)
-            fig, axes = plt.subplots(n, 1, figsize=(10, 3*n), sharex=True)
-            if n == 1:
-                axes = [axes]
-            for ax, motif in zip(axes, motifs):
-                ax.hist(motif_pos_dict[motif], bins=np.arange(seq_len+1)-0.5, color='skyblue', edgecolor='black')
-                ax.set_title(f"Motif: {motif}")
-                ax.set_ylabel("Count")
-                ax.set_xlim(-0.5, seq_len-0.5)
-                ax.grid(axis='y')
-            axes[-1].set_xlabel("Position in Sequence (0-based)")
-            plt.tight_layout()
-            st.pyplot(fig)
-            st.success("Histogram(s) generated!")
+            content = fasta_file.read().decode("utf-8")
+            seqs, seq_names = [], []
+            cur_seq, cur_name = "", ""
+            for line in content.splitlines():
+                if line.startswith(">"):
+                    if cur_seq:
+                        seqs.append(cur_seq.upper())
+                        seq_names.append(cur_name)
+                    cur_name = line.strip().lstrip(">")
+                    cur_seq = ""
+                else:
+                    cur_seq += line.strip()
+            if cur_seq:
+                seqs.append(cur_seq.upper())
+                seq_names.append(cur_name)
+            if len(set(len(s) for s in seqs)) != 1:
+                st.error("All FASTA sequences must be of the same length!")
+            else:
+                seq_len = len(seqs[0])
+                st.success(f"Loaded {len(seqs)} sequences, each {seq_len} bp long.")
+                # Collect motif occurrences for all classes
+                motif_pos_dict = {}  # {class: [positions]}
+                motif_count_dict = {}  # {class: hit count}
+                motif_names_dict = {}  # {class: [subtype list]}
+                for idx, seq in enumerate(seqs):
+                    hits = all_motifs(seq)
+                    for hit in hits:
+                        motif_class = hit["Class"]
+                        start = hit["Start"] - 1  # 0-based
+                        if motif_class not in motif_pos_dict:
+                            motif_pos_dict[motif_class] = []
+                            motif_names_dict[motif_class] = set()
+                            motif_count_dict[motif_class] = 0
+                        motif_pos_dict[motif_class].append(start)
+                        motif_names_dict[motif_class].add(hit.get("Subtype", ""))
+                        motif_count_dict[motif_class] += 1
+                if not motif_pos_dict:
+                    st.warning("No motifs found in the provided sequences.")
+                else:
+                    motif_classes = sorted(motif_pos_dict.keys())
+                    n = len(motif_classes)
+                    fig, axes = plt.subplots(n, 1, figsize=(10, 3*n), sharex=True)
+                    if n == 1:
+                        axes = [axes]
+                    for ax, motif_class in zip(axes, motif_classes):
+                        positions = motif_pos_dict[motif_class]
+                        ax.hist(positions, bins=np.arange(seq_len+1)-0.5, color='skyblue', edgecolor='black')
+                        ax.set_title(
+                            f"{motif_class} (Subtypes: {', '.join(sorted(motif_names_dict[motif_class]))})"
+                        )
+                        ax.set_ylabel("Count")
+                        ax.set_xlim(-0.5, seq_len-0.5)
+                        ax.grid(axis='y')
+                    axes[-1].set_xlabel("Position in Sequence (0-based)")
+                    plt.tight_layout()
+                    st.pyplot(fig)
+                    st.success("All motif histograms generated!")
+                    # Show summary table
+                    df_summary = pd.DataFrame({
+                        "Motif Class": motif_classes,
+                        "Total Hits": [motif_count_dict[m] for m in motif_classes],
+                        "Unique Subtypes": [", ".join(sorted(motif_names_dict[m])) for m in motif_classes]
+                    })
+                    st.dataframe(df_summary)
         except Exception as e:
             st.error(f"Error processing file: {str(e)}")
     else:
-        st.info("Please upload a multi-FASTA file and enter at least one motif.")
-
+        st.info("Please upload a multi-FASTA file.")
 # ... (footer and remaining code)
 # --- Documentation page ---
 elif page == "Documentation":
