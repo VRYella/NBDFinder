@@ -109,7 +109,7 @@ st.markdown(
 # --- Home page ---
 if page == "Home":
     try:
-        nbd_image = Image.open("nbd.PNG")
+        nbd_image = Image.open("nbd2.PNG")
         st.image(nbd_image, use_container_width=True)
     except Exception:
         pass
