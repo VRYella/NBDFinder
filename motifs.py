@@ -78,29 +78,22 @@ def all_motifs(seq):
     )
     return [m for m in results if validate_motif(m, len(seq))]
 #####################################################################################################################
-#####################################################################################################################
-############################################## 1. Curved DNA Motif: Code Start ######################################
 import re
 
-def validate_motif(motif, seq_len):
-    return (0 < motif['Start'] <= motif['End'] <= seq_len and 
-            motif['Length'] == (motif['End'] - motif['Start'] + 1) and 
-            re.match("^[ATGC]+$", motif['Sequence']))
+def wrap(seq, width=60):
+    # Utility to wrap sequence lines (optional)
+    return '\n'.join([seq[i:i+width] for i in range(0, len(seq), width)])
 
-def has_TA_step(seq: str) -> bool:
+def has_single_TA_step(seq: str) -> bool:
     """
-    Checks for a TpA (TA) dinucleotide step within a DNA tract.
-    A-tracts and T-tracts without TA steps are associated with intrinsic curvature.
-    Reference: Crothers DM et al., 1992; Brukner I et al., 1995.
+    Returns True if the sequence contains at most one 'TA' step.
     """
-    return 'TA' in seq
+    return seq.count('TA') <= 1
 
-def find_AT_tracts(seq: str, min_len: int) -> list:
+def find_relaxed_AT_tracts(seq: str, min_len: int) -> list:
     """
-    Identifies all runs of consecutive A or T bases of at least min_len,
-    excluding tracts containing TA steps, as these disrupt DNA bending.
-    Reference: Crothers DM et al., 1992; Brukner I et al., 1995.
-    Returns: list of (start, end, sequence) for valid tracts.
+    Finds runs of A or T bases (≥min_len), allowing a single TA step per tract.
+    Returns list of (start, end, sequence) for valid tracts.
     """
     tracts = []
     i = 0
@@ -109,33 +102,32 @@ def find_AT_tracts(seq: str, min_len: int) -> list:
             start = i
             tract_seq = seq[i]
             i += 1
+            ta_count = 0
             while i < len(seq) and seq[i] in "AT":
+                if seq[i-1:i+1] == 'TA':
+                    ta_count += 1
                 tract_seq += seq[i]
                 i += 1
-            if len(tract_seq) >= min_len and not has_TA_step(tract_seq):
+            # Accept tract if it's long enough and has at most one TA step
+            if len(tract_seq) >= min_len and ta_count <= 1:
                 tracts.append((start, i-1, tract_seq))
         else:
             i += 1
     return tracts
 
-def find_global_curved(seq: str, min_tract_len: int = 4, min_repeats: int = 3, min_spacing: int = 9, max_spacing: int = 11) -> tuple:
+def find_relaxed_global_curved(seq: str, min_tract_len: int = 3, min_repeats: int = 2, min_spacing: int = 8, max_spacing: int = 12) -> tuple:
     """
-    Detects 'Curved DNA motif (Global)' based on phased A/T tracts (≥4 bases, no TA step)
-    spaced at ~10–11 bp intervals (from tract centre to centre), repeated at least min_repeats times.
-
-    Scientific Principle: Phased A-tracts (A-tracts or T-tracts without TA steps, separated by helical repeat distance)
-    induce intrinsic DNA curvature. Reference: Crothers DM et al., 1992; Brukner I et al., 1995; Trifonov EN, 1980.
-    
-    Scoring: Difference between longest A/T tract and longest T-only tract within the motif.
+    Detects relaxed global curved DNA motifs:
+        - ≥2 A/T tracts (≥3 bases, ≤1 TA step)
+        - Phased at 8–12 bp center-to-center
     """
-    tracts = find_AT_tracts(seq, min_tract_len)
+    tracts = find_relaxed_AT_tracts(seq, min_tract_len)
     results = []
     apr_regions = []
     for i in range(len(tracts) - min_repeats + 1):
         group = [tracts[i]]
         group_centers = [(tracts[i][0] + tracts[i][1]) // 2]
         for j in range(1, min_repeats):
-            # Calculate spacing from centre of previous tract to centre of current tract
             prev_center = (tracts[i + j - 1][0] + tracts[i + j - 1][1]) // 2
             curr_center = (tracts[i + j][0] + tracts[i + j][1]) // 2
             spacing = curr_center - prev_center
@@ -144,65 +136,68 @@ def find_global_curved(seq: str, min_tract_len: int = 4, min_repeats: int = 3, m
                 group_centers.append(curr_center)
             else:
                 break
-        # Only A/T tracts themselves must be TA-free; loop/spacing regions are allowed to have TA
         if len(group) >= min_repeats:
-            maxATlen = max(len(t[2]) for t in group)
-            maxTlen = max((len(t[2]) for t in group if set(t[2]) == {'T'}), default=0)
-            score = maxATlen - maxTlen
             motif_seq = seq[group[0][0]:group[-1][1]+1]
             motif = {
                 "Class": "Curved_DNA",
-                "Subtype": "Global_Curved",
+                "Subtype": "Global_Curved_Relaxed",
                 "Start": group[0][0] + 1,
                 "End": group[-1][1] + 1,
                 "Length": group[-1][1] - group[0][0] + 1,
                 "Sequence": wrap(motif_seq),
-                "ScoreMethod": "MaxATlen-MAXTlen (Crothers 1992)",
-                "Score": f"{score:.2f}"
+                "ScoreMethod": "Relaxed: tract count",
+                "Score": f"{len(group)} tracts"
             }
             results.append(motif)
             apr_regions.append((motif["Start"], motif["End"]))
     return results, apr_regions
 
-def find_local_curved(seq: str, apr_regions: list, min_len: int = 7) -> list:
+def find_relaxed_local_curved(seq: str, apr_regions: list, min_len: int = 5) -> list:
     """
-    Detects 'Local curved DNA motif' as uninterrupted stretches of ≥7 A or T bases
-    without TA steps, not overlapping with global curved regions.
-
-    Scientific Principle: Long A-tracts or T-tracts (≥7 bases) can induce localized DNA bending.
-    Reference: Crothers DM et al., 1992; Brukner I et al., 1995.
+    Detects relaxed local curved DNA motifs:
+        - A/T tract of ≥5 bases (≤1 TA step), not overlapping global regions
     """
     results = []
-    tracts = find_AT_tracts(seq, min_len)
+    tracts = find_relaxed_AT_tracts(seq, min_len)
     for start, end, tract_seq in tracts:
         s, e = start + 1, end + 1
         if not any(r_start <= s <= r_end or r_start <= e <= r_end for r_start, r_end in apr_regions):
             results.append({
                 "Class": "Curved_DNA",
-                "Subtype": "Local_Curved",
+                "Subtype": "Local_Curved_Relaxed",
                 "Start": s,
                 "End": e,
                 "Length": len(tract_seq),
                 "Sequence": wrap(tract_seq),
-                "ScoreMethod": "A/T stretch length (Brukner 1995)",
-                "Score": f"{min(1.0, len(tract_seq)/10):.2f}"
+                "ScoreMethod": "Relaxed: tract length",
+                "Score": f"{len(tract_seq)}"
             })
     return results
 
-def find_curved_DNA(seq: str) -> list:
+def find_curved_DNA_relaxed(seq: str) -> list:
     """
-    Main function to identify both global and local curved DNA motifs.
-    - Global: Phased A/T tracts (≥4 bases, no TA step, spaced by 10–11 bp centre-to-centre, 3+ repeats)
-    - Local: Long A/T tracts (≥7 bases, no TA step), not overlapping global regions
-
-    References:
-    - Crothers DM et al. (1992) DNA bending by A-tracts. Science.
-    - Brukner I et al. (1995) Curvature of DNA: phasing of A-tracts. J Biomol Struct Dyn.
-    - Trifonov EN (1980) Sequence-dependent deformational anisotropy of chromatin DNA.
+    Main function for relaxed curved DNA motif detection.
+    - Global: ≥2 A/T tracts (≥3 bases, ≤1 TA step), spaced 8–12 bp (center-to-center)
+    - Local: A/T tracts (≥5 bases, ≤1 TA step), not overlapping global motifs
     """
-    global_results, apr_regions = find_global_curved(seq)
-    local_results = find_local_curved(seq, apr_regions)
+    global_results, apr_regions = find_relaxed_global_curved(seq)
+    local_results = find_relaxed_local_curved(seq, apr_regions)
     return global_results + local_results
+
+# Example usage:
+if __name__ == "__main__":
+    test_seq = "ccaaaaatgtcaaaaaataggcaaaaaatgcc"
+    motifs = find_curved_DNA_relaxed(test_seq)
+    for motif in motifs:
+        print(
+            motif["Class"],
+            motif["Subtype"],
+            motif["Start"],
+            motif["End"],
+            motif["Length"],
+            motif["Score"],
+            motif["Sequence"].replace('\n', '')
+        )
 
 ############################################ 1. Curved DNA Motif: Code End  ########################################
 ####################################################################################################################
