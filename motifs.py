@@ -634,9 +634,11 @@ def find_hdna(seq):
 import re
 
 def wrap(seq, width=60):
+    """Wrap sequence for display."""
     return '\n'.join(seq[i:i+width] for i in range(0, len(seq), width))
 
 def overlapping_finditer(pattern, seq):
+    """Find all overlapping matches of a regex pattern in a sequence."""
     regex = re.compile(pattern)
     i = 0
     while i < len(seq):
@@ -648,28 +650,35 @@ def overlapping_finditer(pattern, seq):
 
 def find_sticky_dna(seq):
     """
-    Detect (GAA)n or (TTC)n tracts where n = 59–270 (potential sticky DNA partners).
+    Detects uninterrupted (GAA)n or (TTC)n tracts where n = 59–270 (potential sticky DNA partners).
     Sticky DNA forms only when two such tracts are present (on separate molecules).
-    Reference: Sakamoto N et al., Molecular Cell 1999.
+    References:
+      - Sakamoto N et al., Molecular Cell, 1999.
+      - Potaman VN et al., Nucleic Acids Res, 2004.
+      - Grabczyk E et al., Biochemistry, 2000.
     """
     motifs = []
-    # Find all tracts with 59 to 270 repeats
+    # Regex for uninterrupted GAA or TTC repeats, n = 59–270
     pattern = r"(GAA){59,270}|(TTC){59,270}"
     for m in overlapping_finditer(pattern, seq):
+        repeat_count = len(m.group()) // 3
         motifs.append({
             "Class": "Sticky_DNA_Candidate",
             "Subtype": "GAA_TTC_Repeat",
-            "Start": m.start()+1,
+            "Start": m.start() + 1,
             "End": m.end(),
             "Length": len(m.group()),
-            "RepeatCount": len(m.group()) // 3,
+            "RepeatCount": repeat_count,
             "Sequence": wrap(m.group()),
             "ScoreMethod": "Sakamoto1999",
-            "Score": f"{min(1.0, (len(m.group())//3)/270):.2f}",
-            "References": "Sakamoto N et al., Molecular Cell, 1999, Sticky DNA: Effect of the Polypurine·Polypyrimidine A. Vetcher, Marek Napierala, Robert D. Wells"
+            "Score": f"{min(1.0, repeat_count/270):.2f}",
+            "References": (
+                "Sakamoto N et al., Molecular Cell, 1999; "
+                "Potaman VN et al., Nucleic Acids Res, 2004; "
+                "Grabczyk E et al., Biochemistry, 2000"
+            )
         })
     return motifs
-
 
 
 #######################################++++++++++##########################################################
