@@ -430,6 +430,29 @@ elif page == "Visualization":
             )
 
 # --- Download page ---
+elif page == "Download":
+    st.header("Download Results")
+    if st.session_state.df.empty:
+        st.info("No results available to download. Please run analysis first.")
+    else:
+        st.markdown("Download detected motifs and results as CSV or Excel.")
+        csv_data = st.session_state.df.to_csv(index=False).encode("utf-8")
+        st.download_button(
+            label="Download CSV",
+            data=csv_data,
+            file_name="motif_results.csv",
+            mime="text/csv"
+        )
+        excel_data = io.BytesIO()
+        with pd.ExcelWriter(excel_data, engine='xlsxwriter') as writer:
+            st.session_state.df.to_excel(writer, index=False, sheet_name="Motifs")
+        excel_data.seek(0)
+        st.download_button(
+            label="Download Excel",
+            data=excel_data,
+            file_name="motif_results.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
 # --- Advanced page ---
 elif page == "Advanced":
     st.header("Advanced Analysis: All Non-B DNA Motifs from Multi-FASTA")
