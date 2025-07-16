@@ -648,7 +648,7 @@ def find_sticky_dna(seq):
     for m in re.finditer(pattern, seq):
         repeat_count = len(m.group()) // 3
         motifs.append({
-            "Class": "Sticky_DNA_Candidate",
+            "Class": "Sticky_DNA",
             "Subtype": "GAA_TTC_Repeat",
             "Start": m.start() + 1,
             "End": m.end(),
