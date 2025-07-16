@@ -46,13 +46,36 @@ def overlapping_finditer(pattern, seq):
         yield m
 
 def all_motifs(seq):
-    if not seq or not re.match("^[ATGC]+$", seq, re.IGNORECASE): return []
+    """
+    Identifies all non-B DNA motifs in the input sequence, including:
+    - Curved DNA motifs (Global: phased A/T tracts, Local: A7/T7, no TA step)
+    - Z-DNA, slipped DNA, R-loops, cruciforms, triplexes, G-quadruplexes, i-motifs, hybrids, sticky DNA, etc.
+
+    References:
+    - Crothers DM et al. (1992) DNA bending by A-tracts. Science.
+    - Brukner I et al. (1995) Curvature of DNA: phasing of A-tracts. J Biomol Struct Dyn.
+    - Trifonov EN (1980) Sequence-dependent deformational anisotropy of chromatin DNA.
+    """
+    if not seq or not re.match("^[ATGC]+$", seq, re.IGNORECASE):
+        return []
     seq = seq.upper()
-    results = (find_apr(seq) + find_zdna(seq) + find_slipped_dna(seq) + find_rlfs(seq) + 
-               find_cruciform(seq) + find_hdna(seq) + find_gtriplex(seq) + find_gquadruplex(seq) + 
-               find_relaxed_gquadruplex(seq) + find_bulged_gquadruplex(seq) + 
-               find_bipartite_gquadruplex(seq) + find_multimeric_gquadruplex(seq) + 
-               find_imotif(seq) + find_hybrids(seq) + find_sticky_dna(seq))
+    results = (
+        find_curved_DNA(seq) +
+        find_zdna(seq) +
+        find_slipped_dna(seq) +
+        find_rlfs(seq) +
+        find_cruciform(seq) +
+        find_hdna(seq) +
+        find_gtriplex(seq) +
+        find_gquadruplex(seq) +
+        find_relaxed_gquadruplex(seq) +
+        find_bulged_gquadruplex(seq) +
+        find_bipartite_gquadruplex(seq) +
+        find_multimeric_gquadruplex(seq) +
+        find_imotif(seq) +
+        find_hybrids(seq) +
+        find_sticky_dna(seq)
+    )
     return [m for m in results if validate_motif(m, len(seq))]
 
 def validate_motif(motif, seq_len):
@@ -60,38 +83,116 @@ def validate_motif(motif, seq_len):
             motif['Length'] == (motif['End'] - motif['Start'] + 1) and 
             re.match("^[ATGC]+$", motif['Sequence']))
 
-def find_apr(seq):
-    """Detect A-Phased Repeats with curvature scoring"""
+def has_TA_step(seq: str) -> bool:
+    """
+    Checks for a TpA (TA) dinucleotide step within a DNA tract.
+    A-tracts and T-tracts without TA steps are associated with intrinsic curvature.
+    Reference: Crothers DM et al., 1992; Brukner I et al., 1995.
+    """
+    return 'TA' in seq
+
+def find_AT_tracts(seq: str, min_len: int) -> list:
+    """
+    Identifies all runs of consecutive A or T bases of at least min_len,
+    excluding tracts containing TA steps, as these disrupt DNA bending.
+    Reference: Crothers DM et al., 1992; Brukner I et al., 1995.
+    Returns: list of (start, end, sequence) for valid tracts.
+    """
+    tracts = []
+    i = 0
+    while i < len(seq):
+        if seq[i] in "AT":
+            start = i
+            tract_seq = seq[i]
+            i += 1
+            while i < len(seq) and seq[i] in "AT":
+                tract_seq += seq[i]
+                i += 1
+            if len(tract_seq) >= min_len and not has_TA_step(tract_seq):
+                tracts.append((start, i-1, tract_seq))
+        else:
+            i += 1
+    return tracts
+
+def find_global_curved(seq: str, min_tract_len: int = 4, min_repeats: int = 3, min_spacing: int = 9, max_spacing: int = 11) -> tuple:
+    """
+    Detects 'Curved DNA motif (Global)' based on phased A/T tracts (≥4 bases, no TA step)
+    spaced at ~10–11 bp intervals, repeated at least min_repeats times.
+
+    Scientific Principle: Phased A-tracts (A-tracts or T-tracts without TA steps, separated by helical repeat distance)
+    induce intrinsic DNA curvature. Reference: Crothers DM et al., 1992; Brukner I et al., 1995; Trifonov EN, 1980.
+    
+    Scoring: Difference between longest A/T tract and longest T-only tract within the motif.
+    """
+    tracts = find_AT_tracts(seq, min_tract_len)
     results = []
     apr_regions = []
-    for m in overlapping_finditer(r"(?=((A{3,6}[ATGC]{2,5}){3,}))", seq):
-        seq_frag = m.group(1)
-        a_count = seq_frag.count('A') + seq_frag.count('T')
-        score = min(1.0, 0.2 * len(re.findall(r"A{3,6}", seq_frag)) + (a_count / len(seq_frag)))
-        motif = {
-            "Class": "Curved_DNA", "Subtype": "A-Phased_Repeat", "Start": m.start()+1,
-            "End": m.start()+len(seq_frag), "Length": len(seq_frag), "Sequence": wrap(seq_frag),
-            "ScoreMethod": "Brukner_Curvature", "Score": f"{score:.2f}"
-        }
-        results.append(motif)
-        apr_regions.append((motif['Start'], motif['End']))
-    
-    # Append non-overlapping local curved regions
-    results += find_local_curved(seq, apr_regions)
-    return results
+    for i in range(len(tracts) - min_repeats + 1):
+        group = [tracts[i]]
+        for j in range(1, min_repeats):
+            spacing = tracts[i + j][0] - tracts[i + j - 1][1]
+            if min_spacing <= spacing <= max_spacing:
+                group.append(tracts[i + j])
+            else:
+                break
+        if len(group) >= min_repeats:
+            maxATlen = max(len(t[2]) for t in group)
+            maxTlen = max((len(t[2]) for t in group if set(t[2]) == {'T'}), default=0)
+            score = maxATlen - maxTlen
+            motif_seq = seq[group[0][0]:group[-1][1]+1]
+            motif = {
+                "Class": "Curved_DNA",
+                "Subtype": "Global_Curved",
+                "Start": group[0][0] + 1,
+                "End": group[-1][1] + 1,
+                "Length": group[-1][1] - group[0][0] + 1,
+                "Sequence": wrap(motif_seq),
+                "ScoreMethod": "MaxATlen-MAXTlen (Crothers 1992)",
+                "Score": f"{score:.2f}"
+            }
+            results.append(motif)
+            apr_regions.append((motif["Start"], motif["End"]))
+    return results, apr_regions
 
-def find_local_curved(seq, apr_regions):
-    """Detect local curved DNA (A7/T7) not overlapping with APR"""
+def find_local_curved(seq: str, apr_regions: list, min_len: int = 7) -> list:
+    """
+    Detects 'Local curved DNA motif' as uninterrupted stretches of ≥7 A or T bases
+    without TA steps, not overlapping with global curved regions.
+
+    Scientific Principle: Long A-tracts or T-tracts (≥7 bases) can induce localized DNA bending.
+    Reference: Crothers DM et al., 1992; Brukner I et al., 1995.
+    """
     results = []
-    for m in overlapping_finditer(r"(A{7,}|T{7,})", seq):
-        start, end = m.start()+1, m.end()
-        if not any(s <= start <= e or s <= end <= e for s, e in apr_regions):
+    tracts = find_AT_tracts(seq, min_len)
+    for start, end, tract_seq in tracts:
+        s, e = start + 1, end + 1
+        if not any(r_start <= s <= r_end or r_start <= e <= r_end for r_start, r_end in apr_regions):
             results.append({
-                "Class": "Curved_DNA", "Subtype": "Local_Curved", "Start": start,
-                "End": end, "Length": len(m.group()), "Sequence": wrap(m.group()),
-                "ScoreMethod": "A/T_Stretch", "Score": f"{min(1.0, len(m.group())/10):.2f}"})
+                "Class": "Curved_DNA",
+                "Subtype": "Local_Curved",
+                "Start": s,
+                "End": e,
+                "Length": len(tract_seq),
+                "Sequence": wrap(tract_seq),
+                "ScoreMethod": "A/T stretch length (Brukner 1995)",
+                "Score": f"{min(1.0, len(tract_seq)/10):.2f}"
+            })
     return results
 
+def find_curved_DNA(seq: str) -> list:
+    """
+    Main function to identify both global and local curved DNA motifs.
+    - Global: Phased A/T tracts (≥4 bases, no TA step, spaced by 10–11 bp, 3+ repeats)
+    - Local: Long A/T tracts (≥7 bases, no TA step), not overlapping global regions
+
+    References:
+    - Crothers DM et al. (1992) DNA bending by A-tracts. Science.
+    - Brukner I et al. (1995) Curvature of DNA: phasing of A-tracts. J Biomol Struct Dyn.
+    - Trifonov EN (1980) Sequence-dependent deformational anisotropy of chromatin DNA.
+    """
+    global_results, apr_regions = find_global_curved(seq)
+    local_results = find_local_curved(seq, apr_regions)
+    return global_results + local_results
 def find_zdna(seq):
     results = []
     for m in overlapping_finditer(r"(?=(([AT][CG]){6,}))", seq):
