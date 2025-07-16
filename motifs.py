@@ -637,3 +637,20 @@ def select_best_nonoverlapping_motifs(motifs: List[Dict], motif_priority: List[s
     return selected
 
 # ========== END NEW SECTION ==========
+
+def validate_motif(motif, seq_length):
+    """
+    Checks that a motif dict has required keys and valid coordinates.
+    Returns True if the motif is valid, False otherwise.
+    """
+    required_keys = ["Class", "Subtype", "Start", "End", "Length", "Sequence"]
+    # Check all required fields exist
+    if not all(key in motif for key in required_keys):
+        return False
+    # Check valid coordinates
+    if not (1 <= motif["Start"] <= motif["End"] <= seq_length):
+        return False
+    # Check non-empty sequence
+    if len(motif["Sequence"].replace('\n', '')) == 0:
+        return False
+    return True
