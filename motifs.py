@@ -197,7 +197,8 @@ def find_curved_DNA(seq: str) -> list:
 #########################################################################
 import numpy as np
 
-def zdna_seeker_scoring_array(seq,
+def zdna_seeker_scoring_array(
+    seq,
     GC_weight=7.0, AT_weight=0.5, GT_weight=1.25, AC_weight=1.25,
     consecutive_AT_scoring=(0.5, 0.5, 0.5, 0.5, 0.0, 0.0, -5.0, -100.0),
     mismatch_penalty_type="linear",
@@ -205,13 +206,35 @@ def zdna_seeker_scoring_array(seq,
     mismatch_penalty_linear_delta=3,
     cadence_reward=0.0
 ):
-    """Return scoring array for Z-seeker (official defaults)."""
-    scoring_array = np.empty(len(seq) - 1, dtype=float)
-    mismatches_counter = 0
-    consecutive_AT_counter = 0
+    """
+    Computes a Z-DNA propensity score for every dinucleotide in the input sequence.
+
+    Scoring is based on the type of dinucleotide:
+      - 'GC'/'CG': Strong Z-DNA former, highest score.
+      - 'GT'/'TG' and 'AC'/'CA': Intermediate scores.
+      - 'AT'/'TA': Weak Z-DNA former, penalized more for consecutive repeats.
+      - All other dinucleotides: Penalized with mismatch penalty (linear or exponential).
+
+    Parameters:
+        seq (str): DNA sequence (A/C/G/T).
+        GC_weight, AT_weight, GT_weight, AC_weight (float): Weights for dinucleotide types.
+        consecutive_AT_scoring (tuple): Additional penalties for consecutive AT/TA.
+        mismatch_penalty_type (str): "linear" or "exponential" penalty for mismatches.
+        mismatch_penalty_starting_value (float): Starting penalty for mismatches.
+        mismatch_penalty_linear_delta (float): Increment for linear penalty.
+        cadence_reward (float): Additional score for canonical dinucleotides.
+
+    Returns:
+        scoring_array (np.ndarray): Array of scores for each position (dinucleotide).
+    """
+    scoring_array = np.empty(len(seq) - 1, dtype=float)  # Score for each dinucleotide
+    mismatches_counter = 0       # Tracks consecutive mismatches
+    consecutive_AT_counter = 0   # Tracks consecutive AT/TA dinucleotides
+
     for i in range(len(seq) - 1):
-        t = seq[i:i+2].upper()
+        t = seq[i:i+2].upper()   # Current dinucleotide
         if t in ("GC", "CG"):
+            # Strongest Z-DNA-forming dinucleotides
             scoring_array[i] = GC_weight
             mismatches_counter = 0
             consecutive_AT_counter = 0
@@ -224,37 +247,53 @@ def zdna_seeker_scoring_array(seq,
             mismatches_counter = 0
             consecutive_AT_counter = 0
         elif t in ("AT", "TA"):
+            # Apply additional penalty for consecutive AT/TA
             adjusted_weight = AT_weight
-            # Penalize consecutive AT/TA further
             if consecutive_AT_counter < len(consecutive_AT_scoring):
                 adjusted_weight += consecutive_AT_scoring[consecutive_AT_counter]
             else:
-                adjusted_weight += consecutive_AT_scoring[-1]
+                adjusted_weight += consecutive_AT_scoring[-1]  # Use last value if too many
             scoring_array[i] = adjusted_weight
             consecutive_AT_counter += 1
             mismatches_counter = 0
         else:
+            # Penalty for non-canonical dinucleotides (mismatch)
             mismatches_counter += 1
             consecutive_AT_counter = 0
             if mismatch_penalty_type == "exponential":
+                # Exponential penalty for long stretches
                 scoring_array[i] = -mismatch_penalty_starting_value ** mismatches_counter \
                                    if mismatches_counter < 15 else -32000
             elif mismatch_penalty_type == "linear":
+                # Linear penalty increases with length of mismatch stretch
                 scoring_array[i] = -mismatch_penalty_starting_value \
                                    - mismatch_penalty_linear_delta * (mismatches_counter - 1)
             else:
-                scoring_array[i] = -10
+                scoring_array[i] = -10  # Default penalty
 
-        # Cadence reward
+        # Optional reward for canonical dinucleotide "cadence"
         if t in ("GC", "CG", "GT", "TG", "AC", "CA", "AT", "TA"):
             scoring_array[i] += cadence_reward
+
     return scoring_array
 
 def wrap(seq, width=50):
-    """Format sequence string for motif display (NBDFinder style)."""
+    """
+    Formats a DNA sequence into lines of specified width.
+
+    Used for displaying long motifs in a readable way.
+
+    Parameters:
+        seq (str): The DNA sequence to format.
+        width (int): The length of each line.
+
+    Returns:
+        str: Formatted sequence.
+    """
     return '\n'.join(seq[i:i+width] for i in range(0, len(seq), width))
 
-def find_zdna(seq,
+def find_zdna(
+    seq,
     threshold=50,
     drop_threshold=50,
     GC_weight=7.0, AT_weight=0.5, GT_weight=1.25, AC_weight=1.25,
@@ -265,11 +304,30 @@ def find_zdna(seq,
     cadence_reward=0.0
 ):
     """
-    Z-seeker logic for Z-DNA motif detection with official defaults.
-    Finds regions (subarrays) with cumulative score > threshold.
-    Reports motifs in NBDFinder format (1-based inclusive coordinates).
+    Identifies candidate Z-DNA-forming regions ("motifs") in the input sequence.
+
+    Uses a modified Kadane's algorithm to find subarrays (contiguous regions)
+    where the cumulative Z-DNA score exceeds the specified threshold.
+    Motif is reported when the score drops by at least drop_threshold, or at the end.
+
+    Parameters:
+        seq (str): DNA sequence.
+        threshold (float): Minimum score for motif detection.
+        drop_threshold (float): Minimum score drop to segment motifs.
+        All other parameters: See zdna_seeker_scoring_array.
+
+    Returns:
+        motifs (list of dict): Each dict contains motif annotation:
+            - Class: always "Z-DNA"
+            - Subtype: always "Z-Seeker"
+            - Start: 1-based motif start coordinate
+            - End: 1-based motif end coordinate (inclusive)
+            - Length: motif length
+            - Sequence: wrapped motif sequence
+            - ScoreMethod: "Z-Seeker Weighted"
+            - Score: motif score (float, 2 decimals)
     """
-    seq = seq.upper()
+    seq = seq.upper()  # Ensure uppercase
     scoring = zdna_seeker_scoring_array(
         seq,
         GC_weight=GC_weight, AT_weight=AT_weight,
@@ -281,14 +339,17 @@ def find_zdna(seq,
         cadence_reward=cadence_reward
     )
     motifs = []
-    # Modified Kadane's algorithm for subarrays above threshold, with drop threshold
+
+    # Find motifs using modified Kadane's algorithm
     start_idx = 0
     max_ending_here = scoring[0]
     current_max = 0
     candidate = None
     end_idx = 1
+
     for i in range(1, len(scoring)):
         num = scoring[i]
+        # Start new region if current score is higher than continuing previous
         if num >= max_ending_here + num:
             start_idx = i
             end_idx = i + 1
@@ -297,18 +358,19 @@ def find_zdna(seq,
             max_ending_here += num
             end_idx = i + 1
 
+        # If score above threshold, mark as candidate
         if max_ending_here >= threshold and (candidate is None or current_max < max_ending_here):
             candidate = (start_idx, end_idx, max_ending_here)
             current_max = max_ending_here
 
-        # Drop threshold logic
+        # If score drops enough, record motif and reset
         if candidate and (max_ending_here < 0 or current_max - max_ending_here >= drop_threshold):
             s, e, score = candidate
             motifs.append({
                 "Class": "Z-DNA",
                 "Subtype": "Z-Seeker",
-                "Start": s + 1,           # 1-based for NBDFinder output
-                "End": e + 1,             # 1-based inclusive (covers all input bases)
+                "Start": s + 1,           # 1-based indexing for output
+                "End": e + 1,             # inclusive end (covers all input bases)
                 "Length": e - s + 1,
                 "Sequence": wrap(seq[s:e+1]),
                 "ScoreMethod": "Z-Seeker Weighted",
@@ -317,7 +379,7 @@ def find_zdna(seq,
             candidate = None
             max_ending_here = current_max = 0
 
-    # Handle any leftover candidate (if motif runs to end of sequence)
+    # If there's a leftover candidate at the end, record it
     if candidate:
         s, e, score = candidate
         motifs.append({
@@ -331,6 +393,7 @@ def find_zdna(seq,
             "Score": f"{score:.2f}",
         })
     return motifs
+###################################################################################
 ###################################################################################
 ###################################################################################
 
