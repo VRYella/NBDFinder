@@ -251,7 +251,7 @@ def zdna_seeker_scoring_array(seq,
     return scoring_array
 
 def wrap(seq, width=50):
-    # Utility for formatting sequence output
+    """Format sequence string for motif display (NBDFinder style)."""
     return '\n'.join(seq[i:i+width] for i in range(0, len(seq), width))
 
 def find_zdna(seq,
@@ -267,6 +267,7 @@ def find_zdna(seq,
     """
     Z-seeker logic for Z-DNA motif detection with official defaults.
     Finds regions (subarrays) with cumulative score > threshold.
+    Reports motifs in NBDFinder format (1-based inclusive coordinates).
     """
     seq = seq.upper()
     scoring = zdna_seeker_scoring_array(
@@ -285,6 +286,7 @@ def find_zdna(seq,
     max_ending_here = scoring[0]
     current_max = 0
     candidate = None
+    end_idx = 1
     for i in range(1, len(scoring)):
         num = scoring[i]
         if num >= max_ending_here + num:
@@ -295,18 +297,19 @@ def find_zdna(seq,
             max_ending_here += num
             end_idx = i + 1
 
-        if max_ending_here >= threshold and current_max < max_ending_here:
+        if max_ending_here >= threshold and (candidate is None or current_max < max_ending_here):
             candidate = (start_idx, end_idx, max_ending_here)
             current_max = max_ending_here
 
+        # Drop threshold logic
         if candidate and (max_ending_here < 0 or current_max - max_ending_here >= drop_threshold):
             s, e, score = candidate
             motifs.append({
                 "Class": "Z-DNA",
                 "Subtype": "Z-Seeker",
-                "Start": s,
-                "End": e,
-                "Length": e - s,
+                "Start": s + 1,           # 1-based for NBDFinder output
+                "End": e + 1,             # 1-based inclusive (covers all input bases)
+                "Length": e - s + 1,
                 "Sequence": wrap(seq[s:e+1]),
                 "ScoreMethod": "Z-Seeker Weighted",
                 "Score": f"{score:.2f}",
@@ -314,20 +317,21 @@ def find_zdna(seq,
             candidate = None
             max_ending_here = current_max = 0
 
-    # Handle any leftover candidate
+    # Handle any leftover candidate (if motif runs to end of sequence)
     if candidate:
         s, e, score = candidate
         motifs.append({
             "Class": "Z-DNA",
             "Subtype": "Z-Seeker",
-            "Start": s,
-            "End": e,
-            "Length": e - s,
+            "Start": s + 1,
+            "End": e + 1,
+            "Length": e - s + 1,
             "Sequence": wrap(seq[s:e+1]),
             "ScoreMethod": "Z-Seeker Weighted",
             "Score": f"{score:.2f}",
         })
     return motifs
+###################################################################################
 ###################################################################################
 
 
