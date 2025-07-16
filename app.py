@@ -242,91 +242,117 @@ elif page == "Upload & Analyze":
                     st.session_state.analysis_status = "Error"
 
 # --- Results page (non-overlapping only) ---
+# --- Results page (non-overlapping only) ---
 elif page == "Results":
     st.header("Analysis Results")
+    # Ensure non-overlapping motifs are prepared
     if not st.session_state.motif_results_nonoverlap:
         st.session_state.motif_results_nonoverlap = select_best_nonoverlapping_motifs(
             st.session_state.motif_results
         )
     df = pd.DataFrame(st.session_state.motif_results_nonoverlap)
-    if df.empty:
+    if df.empty or df.shape[0] == 0:
         st.info("No results available. Please run analysis first.")
     else:
-        df['Score'] = pd.to_numeric(df['Score'], errors='coerce')
-        df = df.dropna(subset=['Score'])
+        # Ensure numeric conversion for Score
+        if 'Score' in df.columns:
+            df['Score'] = pd.to_numeric(df['Score'], errors='coerce')
+            df = df.dropna(subset=['Score'])
+        else:
+            df['Score'] = np.nan
+
+        # Handle missing Length column
+        if 'Length' not in df.columns:
+            df['Length'] = df['End'] - df['Start'] + 1 if 'Start' in df.columns and 'End' in df.columns else 0
+
+        # Handle missing Subtype column
+        if 'Subtype' not in df.columns:
+            df['Subtype'] = ""
+
         with st.expander("📊 Summary Statistics", expanded=True):
             cols = st.columns(4)
             cols[0].metric("Total Motifs", len(df))
-            cols[1].metric("Unique Types", df['Subtype'].nunique())
-            seq_coverage = sum(df['Length']) / len(st.session_state.seq) * 100
+            cols[1].metric("Unique Types", df['Subtype'].nunique() if 'Subtype' in df.columns else 0)
+            seq_len = len(st.session_state.seq) if st.session_state.seq else 1
+            seq_coverage = sum(df['Length']) / seq_len * 100 if seq_len > 0 else 0
             cols[2].metric("Sequence Coverage", f"{seq_coverage:.1f}%")
-            max_score = df['Score'].max()
+            max_score = df['Score'].max() if 'Score' in df.columns else 0
             cols[3].metric("Top Score", f"{max_score:.2f}")
             st.progress(
                 min(100, int(seq_coverage)),
                 text=f"Sequence coverage: {seq_coverage:.1f}%"
             )
+
         st.subheader("🧬 Detected Motifs")
         show_cols = ['Class', 'Subtype', 'Start', 'End', 'Length', 'Score', 'Sequence']
         display_df = df.copy()
-        display_df['Class'] = display_df['Class'].apply(lambda x: x.replace("_", " "))
-        display_df['Subtype'] = display_df['Subtype'].apply(lambda x: x.replace("_", " "))
+        if 'Class' in display_df.columns:
+            display_df['Class'] = display_df['Class'].apply(lambda x: x.replace("_", " "))
+        if 'Subtype' in display_df.columns:
+            display_df['Subtype'] = display_df['Subtype'].apply(lambda x: x.replace("_", " "))
+
+        # Only display columns that exist in DF
+        show_cols_actual = [col for col in show_cols if col in display_df.columns]
+
         st.dataframe(
-            display_df[show_cols],
+            display_df[show_cols_actual],
             use_container_width=True,
-            height=400,
-            column_config={
-                "Score": st.column_config.ProgressColumn(
-                    "Score", format="%.2f",
-                    min_value=0,
-                    max_value=max(1, df['Score'].max())
-                )
-            }
+            height=400
         )
+
         st.subheader("📈 Distribution Analysis")
         tab1, tab2, tab3, tab4 = st.tabs(["By Type", "By Length", "By Score", "Motif Density"])
+
         with tab1:
             fig, ax = plt.subplots(figsize=(10, 6))
-            sns.countplot(
-                data=display_df,
-                y='Class',
-                order=display_df['Class'].value_counts().index,
-                palette=MOTIF_CLASSES.values()
-            )
-            ax.set_title("Motif Count by Class")
+            if 'Class' in display_df.columns:
+                sns.countplot(
+                    data=display_df,
+                    y='Class',
+                    order=display_df['Class'].value_counts().index,
+                    palette=list(MOTIF_CLASSES.values())
+                )
+                ax.set_title("Motif Count by Class")
             st.pyplot(fig)
+
         with tab2:
             fig, ax = plt.subplots(figsize=(10, 6))
-            sns.boxplot(
-                data=display_df, 
-                x='Length', 
-                y='Class',
-                palette=MOTIF_CLASSES.values()
-            )
-            ax.set_title("Motif Length Distribution")
+            if 'Length' in display_df.columns and 'Class' in display_df.columns:
+                sns.boxplot(
+                    data=display_df,
+                    x='Length',
+                    y='Class',
+                    palette=list(MOTIF_CLASSES.values())
+                )
+                ax.set_title("Motif Length Distribution")
             st.pyplot(fig)
+
         with tab3:
             fig, ax = plt.subplots(figsize=(10, 6))
-            sns.violinplot(
-                data=display_df,
-                x='Score',
-                y='Class',
-                palette=MOTIF_CLASSES.values()
-            )
-            ax.set_title("Score Distribution by Class")
+            if 'Score' in display_df.columns and 'Class' in display_df.columns:
+                sns.violinplot(
+                    data=display_df,
+                    x='Score',
+                    y='Class',
+                    palette=list(MOTIF_CLASSES.values())
+                )
+                ax.set_title("Score Distribution by Class")
             st.pyplot(fig)
+
         with tab4:
             fig, ax = plt.subplots(figsize=(12, 3))
             pos = []
-            for _, row in display_df.iterrows():
-                pos.extend(range(row['Start'], row['End'] + 1))
+            if 'Start' in display_df.columns and 'End' in display_df.columns:
+                for _, row in display_df.iterrows():
+                    pos.extend(range(int(row['Start']), int(row['End']) + 1))
             if pos:
                 sns.kdeplot(pos, fill=True, color='navy', ax=ax)
-                ax.set_xlim(0, len(st.session_state.seq))
+                ax.set_xlim(0, seq_len)
                 ax.set_xlabel("Sequence Position (bp)")
                 ax.set_ylabel("Motif Density")
                 ax.set_title("Motif Density Along Sequence")
             st.pyplot(fig)
+
         st.subheader("🔥 Non-B DNA Clustered Regions (Hotspots)")
         if st.session_state.hotspots:
             hotspot_df = pd.DataFrame(st.session_state.hotspots)
@@ -354,7 +380,7 @@ elif page == "Results":
                     va='bottom',
                     rotation=45
                 )
-            ax.set_xlim(0, len(st.session_state.seq))
+            ax.set_xlim(0, seq_len)
             ax.set_xlabel("Sequence Position (bp)")
             ax.set_yticks([])
             ax.set_title("Non-B DNA Clustered Regions (Hotspots)")
@@ -363,7 +389,6 @@ elif page == "Results":
             st.info("These regions represent clusters of non-B DNA motifs, i.e., hotspots where multiple motif types overlap or are concentrated.")
         else:
             st.info("No hotspot regions detected.")
-
 # --- Visualization page: Non-overlapping motif tracks, no scores ---
 elif page == "Visualization":
     st.header("Motif Map (Non-Overlapping Motif Tracks)")
