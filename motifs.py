@@ -109,10 +109,11 @@ def find_AT_tracts_no_TA(seq: str, min_len: int) -> list:
             i += 1
     return tracts
 
-def find_AT_tracts_relaxed(seq: str, min_len: int, max_TA: int = 1) -> list:
+def find_AT_tracts_relaxed(seq: str, min_len: int, max_TA: int = 0) -> list:
     """
     Finds runs of A or T bases (≥min_len), allowing at most max_TA TA steps per tract.
     Returns list of (start, end, sequence).
+    NOTE: For relaxed version, max_TA=0 (NO TA allowed).
     """
     tracts = []
     i = 0
@@ -133,11 +134,25 @@ def find_AT_tracts_relaxed(seq: str, min_len: int, max_TA: int = 1) -> list:
             i += 1
     return tracts
 
-def find_global_curved(seq: str, min_tract_len: int = 3, min_repeats: int = 3, min_spacing: int = 8, max_spacing: int = 12) -> tuple:
+def curvature_score(seq):
+    """
+    Scores a curved DNA motif:
+    Each AA, TT, or AT step = 1 point.
+    Example: AAA = 2 (AA, AA), ATTA = 2 (AT, TT).
+    """
+    score = 0
+    for i in range(len(seq) - 1):
+        pair = seq[i:i+2]
+        if pair in ["AA", "TT", "AT"]:
+            score += 1
+    return score
+
+def find_global_curved(seq: str, min_tract_len: int = 3, min_repeats: int = 3, min_spacing: int = 8, max_spacing: int = 12, min_score: int = 6) -> tuple:
     """
     Detects global curved DNA motifs:
       - ≥3 A/T tracts (≥3 bases, NO TA step)
       - Phased at 8–12 bp center-to-center
+      - Motif score (AA/TT/AT steps) must be ≥ min_score (default 6)
     """
     tracts = find_AT_tracts_no_TA(seq, min_tract_len)
     results = []
@@ -154,27 +169,29 @@ def find_global_curved(seq: str, min_tract_len: int = 3, min_repeats: int = 3, m
                 break
         if len(group) >= min_repeats:
             motif_seq = seq[group[0][0]:group[-1][1]+1]
-            motif = {
-                "Class": "Curved_DNA",
-                "Subtype": "Global_Curved_Strict",
-                "Start": group[0][0] + 1,
-                "End": group[-1][1] + 1,
-                "Length": group[-1][1] - group[0][0] + 1,
-                "Sequence": wrap(motif_seq),
-                "ScoreMethod": "Strict: tract count",
-                "Score": f"{len(group)} tracts"
-            }
-            results.append(motif)
-            apr_regions.append((motif["Start"], motif["End"]))
+            score = curvature_score(motif_seq)
+            if score >= min_score:
+                motif = {
+                    "Class": "Curved_DNA",
+                    "Subtype": "Global_Curved_Strict",
+                    "Start": group[0][0] + 1,
+                    "End": group[-1][1] + 1,
+                    "Length": group[-1][1] - group[0][0] + 1,
+                    "Sequence": wrap(motif_seq),
+                    "ScoreMethod": "Strict: curvature step score",
+                    "Score": score
+                }
+                results.append(motif)
+                apr_regions.append((motif["Start"], motif["End"]))
     return results, apr_regions
 
 def find_local_curved(seq: str, apr_regions: list, min_len: int = 7) -> list:
     """
     Detects relaxed local curved DNA motifs:
-      - A/T tract of ≥7 bases (≤1 TA step), not overlapping global curved regions
+      - A/T tract of ≥7 bases (NO TA step), not overlapping global curved regions
     """
     results = []
-    tracts = find_AT_tracts_relaxed(seq, min_len, max_TA=1)
+    tracts = find_AT_tracts_relaxed(seq, min_len, max_TA=0)  # NO TA allowed even for relaxed
     for start, end, tract_seq in tracts:
         s, e = start + 1, end + 1
         if not any(r_start <= s <= r_end or r_start <= e <= r_end for r_start, r_end in apr_regions):
@@ -186,19 +203,24 @@ def find_local_curved(seq: str, apr_regions: list, min_len: int = 7) -> list:
                 "Length": len(tract_seq),
                 "Sequence": wrap(tract_seq),
                 "ScoreMethod": "Relaxed: tract length",
-                "Score": f"{len(tract_seq)}"
+                "Score": len(tract_seq)
             })
     return results
 
 def find_curved_DNA(seq: str) -> list:
     """
     Main function for curved DNA motif detection.
-    - Global: ≥3 A/T tracts (≥3 bases, NO TA step), spaced 8–12 bp (center-to-center)
-    - Local: A/T tracts (≥7 bases, ≤1 TA step), not overlapping global motifs
+    - Global: ≥3 A/T tracts (≥3 bases, NO TA step), spaced 8–12 bp (center-to-center),
+      curvature step score ≥ 6
+    - Local: A/T tracts (≥7 bases, NO TA step), not overlapping global motifs
     """
     global_results, apr_regions = find_global_curved(seq)
     local_results = find_local_curved(seq, apr_regions)
     return global_results + local_results
+
+############################################ 1. Curved DNA Motif: Code End  ########################################
+####################################################################################################################
+
 
 ############################################ 1. Curved DNA Motif: Code End  ########################################
 ####################################################################################################################
