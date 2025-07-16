@@ -225,7 +225,6 @@ def zdna_seeker_scoring_array(seq,
             consecutive_AT_counter = 0
         elif t in ("AT", "TA"):
             adjusted_weight = AT_weight
-            # Penalize consecutive AT/TA further
             if consecutive_AT_counter < len(consecutive_AT_scoring):
                 adjusted_weight += consecutive_AT_scoring[consecutive_AT_counter]
             else:
@@ -237,21 +236,16 @@ def zdna_seeker_scoring_array(seq,
             mismatches_counter += 1
             consecutive_AT_counter = 0
             if mismatch_penalty_type == "exponential":
-                scoring_array[i] = -mismatch_penalty_starting_value ** mismatches_counter \
-                                   if mismatches_counter < 15 else -32000
+                scoring_array[i] = -mismatch_penalty_starting_value ** mismatches_counter if mismatches_counter < 15 else -32000
             elif mismatch_penalty_type == "linear":
-                scoring_array[i] = -mismatch_penalty_starting_value \
-                                   - mismatch_penalty_linear_delta * (mismatches_counter - 1)
+                scoring_array[i] = -mismatch_penalty_starting_value - mismatch_penalty_linear_delta * (mismatches_counter - 1)
             else:
                 scoring_array[i] = -10
-
-        # Cadence reward
         if t in ("GC", "CG", "GT", "TG", "AC", "CA", "AT", "TA"):
             scoring_array[i] += cadence_reward
     return scoring_array
 
 def wrap(seq, width=50):
-    """Format sequence string for motif display (NBDFinder style)."""
     return '\n'.join(seq[i:i+width] for i in range(0, len(seq), width))
 
 def find_zdna(seq,
@@ -281,54 +275,34 @@ def find_zdna(seq,
         cadence_reward=cadence_reward
     )
     motifs = []
-    # Modified Kadane's algorithm for subarrays above threshold, with drop threshold
+    # Modified Kadane's algorithm to always report max scoring region above threshold
     start_idx = 0
-    max_ending_here = scoring[0]
-    current_max = 0
-    candidate = None
-    end_idx = 1
+    max_so_far = float('-inf')
+    max_start = 0
+    max_end = 0
+    curr_sum = scoring[0]
+    curr_start = 0
     for i in range(1, len(scoring)):
-        num = scoring[i]
-        if num >= max_ending_here + num:
-            start_idx = i
-            end_idx = i + 1
-            max_ending_here = num
+        if scoring[i] > curr_sum + scoring[i]:
+            curr_sum = scoring[i]
+            curr_start = i
         else:
-            max_ending_here += num
-            end_idx = i + 1
-
-        if max_ending_here >= threshold and (candidate is None or current_max < max_ending_here):
-            candidate = (start_idx, end_idx, max_ending_here)
-            current_max = max_ending_here
-
-        # Drop threshold logic
-        if candidate and (max_ending_here < 0 or current_max - max_ending_here >= drop_threshold):
-            s, e, score = candidate
-            motifs.append({
-                "Class": "Z-DNA",
-                "Subtype": "Z-Seeker",
-                "Start": s + 1,           # 1-based for NBDFinder output
-                "End": e + 1,             # 1-based inclusive (covers all input bases)
-                "Length": e - s + 1,
-                "Sequence": wrap(seq[s:e+1]),
-                "ScoreMethod": "Z-Seeker Weighted",
-                "Score": f"{score:.2f}",
-            })
-            candidate = None
-            max_ending_here = current_max = 0
-
-    # Handle any leftover candidate (if motif runs to end of sequence)
-    if candidate:
-        s, e, score = candidate
+            curr_sum += scoring[i]
+        if curr_sum > max_so_far and curr_sum >= threshold:
+            max_so_far = curr_sum
+            max_start = curr_start
+            max_end = i
+    # If a region above the threshold was found, report it
+    if max_so_far >= threshold:
         motifs.append({
             "Class": "Z-DNA",
             "Subtype": "Z-Seeker",
-            "Start": s + 1,
-            "End": e + 1,
-            "Length": e - s + 1,
-            "Sequence": wrap(seq[s:e+1]),
+            "Start": max_start + 1,            # 1-based
+            "End": max_end + 2,                # inclusive end (matches NBDFinder, covers all input bases)
+            "Length": max_end - max_start + 2, # +2 to include both ends
+            "Sequence": wrap(seq[max_start:max_end+2]),
             "ScoreMethod": "Z-Seeker Weighted",
-            "Score": f"{score:.2f}",
+            "Score": f"{max_so_far:.2f}",
         })
     return motifs
 ###################################################################################
