@@ -496,64 +496,141 @@ def find_slipped_dna(seq):
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 
-############################################ 3. Slipped-DNA  ############################################################
+############################################ 4.R-loop  ############################################################
 
-def find_rlfs(seq):
-    if len(seq) < 100: return []
+import re
+
+def wrap(seq, width=60):
+    return '\n'.join(seq[i:i+width] for i in range(0, len(seq), width))
+
+def gc_content(seq):
+    gc = seq.count('G') + seq.count('C')
+    return (gc / len(seq)) * 100 if seq else 0
+
+# RLFS regex models based on QmRLFS-finder
+RLFS_MODELS = {
+    "m1": r"G{3,}[ATGC]{1,10}?G{3,}(?:[ATGC]{1,10}?G{3,}){1,}",
+    "m2": r"G{4,}(?:[ATGC]{1,10}?G{4,}){1,}",
+}
+
+def find_rlfs(seq, models=("m1", "m2")):
+    if len(seq) < 100:
+        return []
     results = []
-    for m in re.finditer(r"(G{3,}[ATGC]{1,10}G{3,}[ATGC]{1,10}G{4,})", seq, re.IGNORECASE):
-        riz_seq = m.group(1)
-        if gc_content(riz_seq) < 50: continue
-        for rez in find_rez(seq, m.end()):
-            stability = min(1.0, 0.6 * (gc_content(riz_seq + rez['seq']) / 100) + 
-                            0.4 * (len(re.findall(r"G{3,}", riz_seq + rez['seq'])) / 5))
-            results.append({
-                "Class": "R-Loop", "Subtype": "RLFS", "Start": m.start()+1,
-                "End": m.start()+len(riz_seq)+rez['end'], "Length": len(riz_seq)+rez['end'],
-                "Sequence": wrap(riz_seq+rez['seq']), "ScoreMethod": "QmRLFS_Thermo",
-                "Score": f"{stability:.2f}"})
-    return results
-
-def find_rez(seq, start_pos, max_len=500):
-    window = seq[start_pos:start_pos+max_len]
-    return [{'seq': window, 'end': len(window)}] if gc_content(window) >= 40 else []
-
-def find_cruciform(seq):
-    """Detect cruciform-forming palindromes with a spacer (approximate)"""
-    results = []
-    for i in range(len(seq) - 20):
-        for arm_len in range(6, 12):  # typical stem length
-            spacer_len = 0  # can adjust for looped hairpins
-            arm = seq[i:i+arm_len]
-            rev_arm = reverse_complement(arm)
-            mid = i + arm_len + spacer_len
-            if mid + arm_len > len(seq): continue
-            candidate = seq[mid:mid+arm_len]
-            if candidate == rev_arm:
-                full = seq[i:mid+arm_len]
-                score = min(1.0, (arm_len / 15) + ((arm.count('A') + arm.count('T')) / arm_len * 0.3))
+    for model_name in models:
+        pattern = RLFS_MODELS[model_name]
+        for m in re.finditer(pattern, seq, re.IGNORECASE):
+            riz_seq = m.group(0)
+            if gc_content(riz_seq) < 50:
+                continue
+            rez = find_rez_max(seq, m.end())
+            if rez:
+                rez_seq = rez['seq']
+                stability = min(1.0, 0.6 * (gc_content(riz_seq + rez_seq) / 100) +
+                                0.4 * (len(re.findall(r"G{3,}", riz_seq + rez_seq)) / 5))
                 results.append({
-                    "Class": "Cruciform", "Subtype": "Inverted_Repeat", "Start": i+1,
-                    "End": mid+arm_len, "Length": len(full), "Sequence": wrap(full),
-                    "ScoreMethod": "nBST_IR", "Score": f"{score:.2f}"})
+                    "Class": "R-Loop",
+                    "Subtype": f"RLFS_{model_name}",
+                    "Start": m.start() + 1,
+                    "End": m.start() + len(riz_seq) + rez['end'],
+                    "Length": len(riz_seq) + rez['end'],
+                    "Sequence": wrap(riz_seq + rez_seq),
+                    "ScoreMethod": "QmRLFS_Thermo",
+                    "Score": f"{stability:.2f}"
+                })
     return results
+
+def find_rez_max(seq, start_pos, max_len=2000, step=100, min_gc=40):
+    # Find the maximal REZ region downstream of RIZ with >=min_gc%
+    max_window = ""
+    for win_start in range(start_pos, min(len(seq), start_pos + max_len), step):
+        win_end = min(win_start + step, len(seq))
+        window = seq[win_start:win_end]
+        if gc_content(window) >= min_gc and len(window) > len(max_window):
+            max_window = window
+    if max_window:
+        return {'seq': max_window, 'end': len(max_window)}
+    return None
+####################################++++++++++++++++++++++++++++++++##########################################
+
+#################################5. Cruciform ###################################################################
+def find_cruciform(seq):
+    """Detect cruciform-forming palindromes with a spacer (0–3 bases) and arm (10–100 bases)."""
+    results = []
+    for i in range(len(seq) - 2*10):  # minimum required for two arms
+        for arm_len in range(10, 101):  # arm length from 10 to 100
+            for spacer_len in range(0, 4):  # spacer length from 0 to 3
+                arm = seq[i:i+arm_len]
+                rev_arm = reverse_complement(arm)
+                mid = i + arm_len + spacer_len
+                if mid + arm_len > len(seq): continue
+                candidate = seq[mid:mid+arm_len]
+                if candidate == rev_arm:
+                    full = seq[i:mid+arm_len]
+                    score = min(1.0, (arm_len / 100) + ((arm.count('A') + arm.count('T')) / arm_len * 0.3))
+                    results.append({
+                        "Class": "Cruciform",
+                        "Subtype": f"Inverted_Repeat_spacer{spacer_len}",
+                        "Start": i+1,
+                        "End": mid+arm_len,
+                        "Length": len(full),
+                        "Sequence": wrap(full),
+                        "ScoreMethod": "nBST_IR",
+                        "Score": f"{score:.2f}"
+                    })
+    return results
+
+####++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++##################################
+################################################6. Triplex DNA #######################################################
+import re
+
+def purine_fraction(seq):
+    """Return fraction of purines (A/G) in the sequence."""
+    return (seq.count('A') + seq.count('G')) / max(1, len(seq))
+
+def pyrimidine_fraction(seq):
+    """Return fraction of pyrimidines (C/T) in the sequence."""
+    return (seq.count('C') + seq.count('T')) / max(1, len(seq))
+
+def wrap(seq, width=60):
+    """Wrap sequence output to fixed width (for display)."""
+    return '\n'.join(seq[i:i+width] for i in range(0, len(seq), width))
 
 def find_hdna(seq):
-    """Detect intramolecular triplex (mirror repeats of pyrimidines)"""
+    """Detects mirror repeats suitable for triplex (H-DNA) formation with spacer 0–8 nt."""
     results = []
-    pattern = r"(?=([CT]{5,})[ATGC]{0,10}\1)"  # Valid mirror repeat pattern
-    for m in overlapping_finditer(pattern, seq):
-        repeat = m.group(1)
-        total_len = len(repeat) * 2
-        full_seq = seq[m.start():m.start()+total_len+10]  # +spacer
-        score = min(1.0, len(repeat) / 10 + 0.3)
-        results.append({
-            "Class": "Triplex_DNA", "Subtype": "H-DNA_Pyrimidine", "Start": m.start()+1,
-            "End": m.start()+len(full_seq), "Length": len(full_seq), "Sequence": wrap(full_seq),
-            "ScoreMethod": "Triplex_Propensity", "Score": f"{score:.2f}"
-        })
+    n = len(seq)
+    # Repeat length: 10–100nt, Spacer: 0–8nt
+    for rep_len in range(10, min(101, n//2)):
+        for spacer in range(0, 9):  # Spacer 0–8 nt inclusive
+            # Pattern: (repeat)[spacer](repeat)
+            pattern = re.compile(rf"(?=(([ATGC]{{{rep_len}}})[ATGC]{{{spacer}}}\2))", re.IGNORECASE)
+            for m in pattern.finditer(seq):
+                repeat = m.group(2)
+                mirror_start = m.start()
+                mirror_end = mirror_start + 2*rep_len + spacer
+                if mirror_end > n:
+                    continue
+                full_seq = seq[mirror_start:mirror_end]
+                pur_frac = purine_fraction(full_seq)
+                pyr_frac = pyrimidine_fraction(full_seq)
+                is_triplex = (pur_frac >= 0.9 or pyr_frac >= 0.9)
+                results.append({
+                    "Class": "Triplex_DNA" if is_triplex else "Mirror_Repeat",
+                    "Subtype": "Triplex_Motif" if is_triplex else "Mirror_Repeat",
+                    "Start": mirror_start + 1,
+                    "End": mirror_end,
+                    "Length": len(full_seq),
+                    "Spacer": spacer,
+                    "Sequence": wrap(full_seq),
+                    "PurineFrac": round(pur_frac, 2),
+                    "PyrimidineFrac": round(pyr_frac, 2)
+                })
     return results
 
+
+
+###########################################
 def find_sticky_dna(seq):
     return [{
         "Class": "Sticky_DNA", "Subtype": "GAA_TTC_Repeat", "Start": m.start()+1,
