@@ -629,14 +629,62 @@ def find_hdna(seq):
     return results
 
 
+####++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++##################################
+################################################7. Sticky DNA #######################################################
+import re
 
-###########################################
+def wrap(seq, width=60):
+    return '\n'.join(seq[i:i+width] for i in range(0, len(seq), width))
+
+def overlapping_finditer(pattern, seq):
+    regex = re.compile(pattern)
+    i = 0
+    while i < len(seq):
+        m = regex.search(seq, i)
+        if not m:
+            break
+        yield m
+        i = m.start() + 1
+
 def find_sticky_dna(seq):
-    return [{
-        "Class": "Sticky_DNA", "Subtype": "GAA_TTC_Repeat", "Start": m.start()+1,
-        "End": m.end(), "Length": len(m.group()), "Sequence": wrap(m.group()),
-        "ScoreMethod": "Potaman_Score", "Score": f"{min(1.0, len(m.group())/30):.2f}"}
-        for m in overlapping_finditer(r"(GAA){3,}|(TTC){3,}", seq)]
+    """
+    Detect (GAA)n or (TTC)n tracts where n = 59–270 (potential sticky DNA partners).
+    Sticky DNA forms only when two such tracts are present (on separate molecules).
+    Reference: Sakamoto N et al., Molecular Cell 1999.
+    """
+    motifs = []
+    # Find all tracts with 59 to 270 repeats
+    pattern = r"(GAA){59,270}|(TTC){59,270}"
+    for m in overlapping_finditer(pattern, seq):
+        motifs.append({
+            "Class": "Sticky_DNA_Candidate",
+            "Subtype": "GAA_TTC_Repeat",
+            "Start": m.start()+1,
+            "End": m.end(),
+            "Length": len(m.group()),
+            "RepeatCount": len(m.group()) // 3,
+            "Sequence": wrap(m.group()),
+            "ScoreMethod": "Sakamoto1999",
+            "Score": f"{min(1.0, (len(m.group())//3)/270):.2f}",
+            "References": "Sakamoto N et al., Molecular Cell, 1999, Sticky DNA: Effect of the Polypurine·Polypyrimidine A. Vetcher, Marek Napierala, Robert D. Wells"
+        })
+    return motifs
+
+# Example usage:
+if __name__ == "__main__":
+    seq1 = "GAA" * 60
+    seq2 = "TTC" * 65
+    motifs1 = find_sticky_dna(seq1)
+    motifs2 = find_sticky_dna(seq2)
+    if motifs1 and motifs2:
+        print("Sticky DNA can form: Both sequences contain sufficiently long tracts.")
+    else:
+        print("Sticky DNA cannot form: One or both sequences lack a long tract.")
+    # To see individual candidate annotations
+    print(motifs1)
+    print(motifs2)
+
+#######################################++++++++++##########################################################
 
 def find_gtriplex(seq):
     results = []
