@@ -425,26 +425,76 @@ def find_zdna(
 ###################################################################################
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 
+########################################### 3. Slipped-DNA  ############################################################
 
-############################################ 3. Slipped-DNA  ############################################################
+def wrap(seq, width=60):
+    """Wraps sequence for display (optional, adjust/remove as needed)."""
+    return '\n'.join(seq[i:i+width] for i in range(0, len(seq), width))
 
 def find_slipped_dna(seq):
-    # Fix: Avoid open group backreference error by matching direct repeats manually
+    """
+    Finds slipped-strand DNA motifs: direct repeats and short tandem repeats (STRs/microsatellites).
+    Returns a list of dictionaries with details for each motif.
+    """
     results = []
-    min_len = 10
-    max_len = 300
-    for i in range(len(seq) - min_len * 2 + 1):
-        for l in range(min_len, min(max_len+1, (len(seq)-i)//2+1)):
+    # Direct repeats (>=10bp unit, 2 copies, up to 300bp unit)
+    min_len_dr = 10
+    max_len_dr = 300
+    for i in range(len(seq) - min_len_dr * 2 + 1):
+        for l in range(min_len_dr, min(max_len_dr+1, (len(seq)-i)//2+1)):
             repeat = seq[i:i+l]
             if seq[i+l:i+2*l] == repeat:
                 results.append({
-                    "Class": "Slipped_DNA", "Subtype": "Direct_Repeat", "Start": i+1,
-                    "End": i+2*l, "Length": 2*l,
-                    "Sequence": wrap(repeat+repeat), "ScoreMethod": "nBST_DR",
-                    "Score": f"{min(1.0, l/300):.2f}"})
-    return results
-#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+                    "Class": "Slipped_DNA",
+                    "Subtype": "Direct_Repeat",
+                    "Start": i+1,
+                    "End": i+2*l,
+                    "Length": 2*l,
+                    "Sequence": wrap(repeat+repeat),
+                    "ScoreMethod": "nBST_DR",
+                    "Score": f"{min(1.0, l/300):.2f}"
+                })
 
+    # Short Tandem Repeats (microsatellites: 1-6bp unit, >=5 copies, at least 15bp array)
+    min_unit_str = 1
+    max_unit_str = 6
+    min_reps_str = 5
+    min_len_str = 15
+    for unit in range(min_unit_str, max_unit_str+1):
+        for i in range(len(seq) - unit * min_reps_str + 1):
+            repeat_unit = seq[i:i+unit]
+            if 'n' in repeat_unit.lower():
+                continue  # skip ambiguous bases
+            reps = 1
+            while (i + reps*unit + unit <= len(seq) and
+                   seq[i + reps*unit:i + (reps+1)*unit] == repeat_unit):
+                reps += 1
+            if reps >= min_reps_str and reps*unit >= min_len_str:
+                # Optionally check for partial repeat at end
+                remainder = 0
+                rs = i + reps*unit
+                re = rs
+                while (re < len(seq) and seq[re] == repeat_unit[re % unit]):
+                    remainder += 1
+                    re += 1
+                results.append({
+                    "Class": "Slipped_DNA",
+                    "Subtype": "STR",
+                    "Start": i+1,
+                    "End": i + reps*unit + remainder,
+                    "Length": reps*unit + remainder,
+                    "Unit": repeat_unit,
+                    "Copies": reps,
+                    "Sequence": wrap(seq[i:i + reps*unit + remainder]),
+                    "ScoreMethod": "nBST_STR",
+                    "Score": f"{min(1.0, reps/20):.2f}"
+                })
+                # Skip overlapping STRs
+                i = i + reps*unit + remainder - 1
+
+    return results
+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 
 ############################################ 3. Slipped-DNA  ############################################################
 
