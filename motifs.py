@@ -193,17 +193,139 @@ def find_curved_DNA(seq: str) -> list:
     global_results, apr_regions = find_global_curved(seq)
     local_results = find_local_curved(seq, apr_regions)
     return global_results + local_results
-def find_zdna(seq):
-    results = []
-    for m in overlapping_finditer(r"(?=(([AT][CG]){6,}))", seq):
-        seq_frag = m.group(1)
-        cg = seq_frag.count('CG') + seq_frag.count('GC')
-        score = min(1.0, (cg/5) + (len(seq_frag)/15))
-        results.append({
-            "Class": "Z-DNA", "Subtype": "Z-Forming_Repeat", "Start": m.start()+1,
-            "End": m.start()+len(seq_frag), "Length": len(seq_frag), "Sequence": wrap(seq_frag),
-            "ScoreMethod": "Z-Seeker", "Score": f"{score:.2f}"})
-    return results
+
+#########################################################################
+import numpy as np
+
+def zdna_seeker_scoring_array(seq,
+    GC_weight=25.0, AT_weight=-5.0, GT_weight=3.0, AC_weight=3.0,
+    consecutive_AT_scoring=[0.0],
+    mismatch_penalty_type="linear",
+    mismatch_penalty_starting_value=3,
+    mismatch_penalty_linear_delta=5,
+    cadence_reward=0.0
+):
+    """Return scoring array for Z-seeker."""
+    scoring_array = np.empty(len(seq) - 1, dtype=float)
+    mismatches_counter = 0
+    consecutive_AT_counter = 0
+    for i in range(len(seq) - 1):
+        t = seq[i:i+2].upper()
+        if t in ("GC", "CG"):
+            scoring_array[i] = GC_weight
+            mismatches_counter = 0
+            consecutive_AT_counter = 0
+        elif t in ("GT", "TG"):
+            scoring_array[i] = GT_weight
+            mismatches_counter = 0
+            consecutive_AT_counter = 0
+        elif t in ("AC", "CA"):
+            scoring_array[i] = AC_weight
+            mismatches_counter = 0
+            consecutive_AT_counter = 0
+        elif t in ("AT", "TA"):
+            adjusted_weight = AT_weight
+            # Penalize consecutive AT/TA further
+            if consecutive_AT_counter < len(consecutive_AT_scoring):
+                adjusted_weight += consecutive_AT_scoring[consecutive_AT_counter]
+            else:
+                adjusted_weight += consecutive_AT_scoring[-1]
+            scoring_array[i] = adjusted_weight
+            consecutive_AT_counter += 1
+            mismatches_counter = 0
+        else:
+            mismatches_counter += 1
+            consecutive_AT_counter = 0
+            if mismatch_penalty_type == "exponential":
+                scoring_array[i] = -mismatch_penalty_starting_value ** mismatches_counter \
+                                   if mismatches_counter < 15 else -32000
+            elif mismatch_penalty_type == "linear":
+                scoring_array[i] = -mismatch_penalty_starting_value \
+                                   - mismatch_penalty_linear_delta * (mismatches_counter - 1)
+            else:
+                scoring_array[i] = -10
+
+        # Cadence reward
+        if t in ("GC", "CG", "GT", "TG", "AC", "CA", "AT", "TA"):
+            scoring_array[i] += cadence_reward
+    return scoring_array
+
+def find_zdna(seq,
+    threshold=40,
+    drop_threshold=50,
+    GC_weight=25.0, AT_weight=-5.0, GT_weight=3.0, AC_weight=3.0,
+    consecutive_AT_scoring=[0.0],
+    mismatch_penalty_type="linear",
+    mismatch_penalty_starting_value=3,
+    mismatch_penalty_linear_delta=5,
+    cadence_reward=0.0
+):
+    """
+    Z-seeker logic for Z-DNA motif detection.
+    Finds regions (subarrays) with cumulative score > threshold.
+    """
+    seq = seq.upper()
+    scoring = zdna_seeker_scoring_array(
+        seq,
+        GC_weight=GC_weight, AT_weight=AT_weight,
+        GT_weight=GT_weight, AC_weight=AC_weight,
+        consecutive_AT_scoring=consecutive_AT_scoring,
+        mismatch_penalty_type=mismatch_penalty_type,
+        mismatch_penalty_starting_value=mismatch_penalty_starting_value,
+        mismatch_penalty_linear_delta=mismatch_penalty_linear_delta,
+        cadence_reward=cadence_reward
+    )
+    motifs = []
+    # Modified Kadane's algorithm for subarrays above threshold, with drop threshold
+    start_idx = 0
+    max_ending_here = scoring[0]
+    current_max = 0
+    candidate = None
+    for i in range(1, len(scoring)):
+        num = scoring[i]
+        if num >= max_ending_here + num:
+            start_idx = i
+            end_idx = i + 1
+            max_ending_here = num
+        else:
+            max_ending_here += num
+            end_idx = i + 1
+
+        if max_ending_here >= threshold and current_max < max_ending_here:
+            candidate = (start_idx, end_idx, max_ending_here)
+            current_max = max_ending_here
+
+        if candidate and (max_ending_here < 0 or current_max - max_ending_here >= drop_threshold):
+            s, e, score = candidate
+            motifs.append({
+                "Class": "Z-DNA",
+                "Subtype": "Z-Seeker",
+                "Start": s + 1,
+                "End": e + 1,
+                "Length": e - s,
+                "Sequence": wrap(seq[s:e+1]),
+                "ScoreMethod": "Z-Seeker Weighted",
+                "Score": f"{score:.2f}",
+            })
+            candidate = None
+            max_ending_here = current_max = 0
+
+    # Handle any leftover candidate
+    if candidate:
+        s, e, score = candidate
+        motifs.append({
+            "Class": "Z-DNA",
+            "Subtype": "Z-Seeker",
+            "Start": s + 1,
+            "End": e + 1,
+            "Length": e - s,
+            "Sequence": wrap(seq[s:e+1]),
+            "ScoreMethod": "Z-Seeker Weighted",
+            "Score": f"{score:.2f}",
+        })
+    return motifs
+###################################################################################
+
 
 def find_slipped_dna(seq):
     # Fix: Avoid open group backreference error by matching direct repeats manually
