@@ -432,27 +432,48 @@ elif page == "Visualization":
 # --- Download page ---
 elif page == "Download":
     st.header("Download Results")
-    if st.session_state.df.empty:
+    # Check for data existence
+    has_nonoverlap = not st.session_state.df.empty
+    has_overlap = len(st.session_state.motif_results) > 0
+
+    if not has_nonoverlap and not has_overlap:
         st.info("No results available to download. Please run analysis first.")
     else:
         st.markdown("Download detected motifs and results as CSV or Excel.")
-        csv_data = st.session_state.df.to_csv(index=False).encode("utf-8")
+        # Select which results to download
+        choices = []
+        if has_nonoverlap:
+            choices.append("Non-Overlapping Motifs")
+        if has_overlap:
+            choices.append("All (Overlapping) Motifs")
+        result_type = st.radio("Select result type to download:", choices)
+        # Prepare data
+        if result_type == "Non-Overlapping Motifs":
+            df_download = st.session_state.df
+            fname = "motif_results_nonoverlap"
+        else:
+            df_download = pd.DataFrame(st.session_state.motif_results)
+            fname = "motif_results_all"
+        # CSV
+        csv_data = df_download.to_csv(index=False).encode("utf-8")
         st.download_button(
             label="Download CSV",
             data=csv_data,
-            file_name="motif_results.csv",
+            file_name=f"{fname}.csv",
             mime="text/csv"
         )
+        # Excel
         excel_data = io.BytesIO()
         with pd.ExcelWriter(excel_data, engine='xlsxwriter') as writer:
-            st.session_state.df.to_excel(writer, index=False, sheet_name="Motifs")
+            df_download.to_excel(writer, index=False, sheet_name="Motifs")
         excel_data.seek(0)
         st.download_button(
             label="Download Excel",
             data=excel_data,
-            file_name="motif_results.xlsx",
+            file_name=f"{fname}.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
+        st.info("Choose which result type you want to download. Non-overlapping are filtered motifs, while 'All' includes overlapping hits.")
 # --- Advanced page ---
 elif page == "Advanced":
     st.header("Advanced Analysis: All Non-B DNA Motifs from Multi-FASTA")
