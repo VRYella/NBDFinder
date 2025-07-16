@@ -78,7 +78,10 @@ def all_motifs(seq):
     )
     return [m for m in results if validate_motif(m, len(seq))]
 #####################################################################################################################
+#####################################################################################################################
 ############################################## 1. Curved DNA Motif: Code Start ######################################
+import re
+
 def validate_motif(motif, seq_len):
     return (0 < motif['Start'] <= motif['End'] <= seq_len and 
             motif['Length'] == (motif['End'] - motif['Start'] + 1) and 
@@ -136,6 +139,7 @@ def find_global_curved(seq: str, min_tract_len: int = 4, min_repeats: int = 3, m
                 group.append(tracts[i + j])
             else:
                 break
+        # Only A/T tracts themselves must be TA-free; loop/spacing regions are allowed to have TA
         if len(group) >= min_repeats:
             maxATlen = max(len(t[2]) for t in group)
             maxTlen = max((len(t[2]) for t in group if set(t[2]) == {'T'}), default=0)
@@ -194,7 +198,6 @@ def find_curved_DNA(seq: str) -> list:
     global_results, apr_regions = find_global_curved(seq)
     local_results = find_local_curved(seq, apr_regions)
     return global_results + local_results
-
 
 ############################################ 1. Curved DNA Motif: Code End  ########################################
 ####################################################################################################################
