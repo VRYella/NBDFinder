@@ -670,19 +670,7 @@ def find_sticky_dna(seq):
         })
     return motifs
 
-# Example usage:
-if __name__ == "__main__":
-    seq1 = "GAA" * 60
-    seq2 = "TTC" * 65
-    motifs1 = find_sticky_dna(seq1)
-    motifs2 = find_sticky_dna(seq2)
-    if motifs1 and motifs2:
-        print("Sticky DNA can form: Both sequences contain sufficiently long tracts.")
-    else:
-        print("Sticky DNA cannot form: One or both sequences lack a long tract.")
-    # To see individual candidate annotations
-    print(motifs1)
-    print(motifs2)
+
 
 #######################################++++++++++##########################################################
 
