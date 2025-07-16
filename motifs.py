@@ -633,21 +633,6 @@ def find_hdna(seq):
 ################################################7. Sticky DNA #######################################################
 import re
 
-def wrap(seq, width=60):
-    """Wrap sequence for display."""
-    return '\n'.join(seq[i:i+width] for i in range(0, len(seq), width))
-
-def overlapping_finditer(pattern, seq):
-    """Find all overlapping matches of a regex pattern in a sequence."""
-    regex = re.compile(pattern)
-    i = 0
-    while i < len(seq):
-        m = regex.search(seq, i)
-        if not m:
-            break
-        yield m
-        i = m.start() + 1
-
 def find_sticky_dna(seq):
     """
     Detects uninterrupted (GAA)n or (TTC)n tracts where n = 59–270 (potential sticky DNA partners).
@@ -658,9 +643,9 @@ def find_sticky_dna(seq):
       - Grabczyk E et al., Biochemistry, 2000.
     """
     motifs = []
-    # Regex for uninterrupted GAA or TTC repeats, n = 59–270
-    pattern = r"(GAA){59,270}|(TTC){59,270}"
-    for m in overlapping_finditer(pattern, seq):
+    # Simple regex: matches uninterrupted GAA or TTC repeats, n = 59–270
+    pattern = r"(?:GAA){59,270}|(?:TTC){59,270}"
+    for m in re.finditer(pattern, seq):
         repeat_count = len(m.group()) // 3
         motifs.append({
             "Class": "Sticky_DNA_Candidate",
@@ -669,7 +654,7 @@ def find_sticky_dna(seq):
             "End": m.end(),
             "Length": len(m.group()),
             "RepeatCount": repeat_count,
-            "Sequence": wrap(m.group()),
+            "Sequence": m.group(),  # or wrap(m.group()) if you want wrapped output
             "ScoreMethod": "Sakamoto1999",
             "Score": f"{min(1.0, repeat_count/270):.2f}",
             "References": (
