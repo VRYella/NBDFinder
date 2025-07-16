@@ -77,7 +77,8 @@ def all_motifs(seq):
         find_sticky_dna(seq)
     )
     return [m for m in results if validate_motif(m, len(seq))]
-
+#####################################################################################################################
+############################################## 1. Curved DNA Motif: Code Start ######################################
 def validate_motif(motif, seq_len):
     return (0 < motif['Start'] <= motif['End'] <= seq_len and 
             motif['Length'] == (motif['End'] - motif['Start'] + 1) and 
@@ -194,6 +195,10 @@ def find_curved_DNA(seq: str) -> list:
     local_results = find_local_curved(seq, apr_regions)
     return global_results + local_results
 
+
+############################################ 1. Curved DNA Motif: Code End  ########################################
+####################################################################################################################
+def validate_motif(motif, seq_len):
 #########################################################################
 import numpy as np
 
@@ -295,7 +300,7 @@ def wrap(seq, width=50):
 def find_zdna(
     seq,
     threshold=50,
-    drop_threshold=50,
+    drop_threshold=50, #A region must have a total Z-DNA score of at least 50 to be reported as a motif.It’s a biological cutoff.
     GC_weight=7.0, AT_weight=0.5, GT_weight=1.25, AC_weight=1.25,
     consecutive_AT_scoring=(0.5, 0.5, 0.5, 0.5, 0.0, 0.0, -5.0, -100.0),
     mismatch_penalty_type="linear",
