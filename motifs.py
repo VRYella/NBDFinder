@@ -121,7 +121,7 @@ def find_AT_tracts(seq: str, min_len: int) -> list:
 def find_global_curved(seq: str, min_tract_len: int = 4, min_repeats: int = 3, min_spacing: int = 9, max_spacing: int = 11) -> tuple:
     """
     Detects 'Curved DNA motif (Global)' based on phased A/T tracts (≥4 bases, no TA step)
-    spaced at ~10–11 bp intervals, repeated at least min_repeats times.
+    spaced at ~10–11 bp intervals (from tract centre to centre), repeated at least min_repeats times.
 
     Scientific Principle: Phased A-tracts (A-tracts or T-tracts without TA steps, separated by helical repeat distance)
     induce intrinsic DNA curvature. Reference: Crothers DM et al., 1992; Brukner I et al., 1995; Trifonov EN, 1980.
@@ -133,10 +133,15 @@ def find_global_curved(seq: str, min_tract_len: int = 4, min_repeats: int = 3, m
     apr_regions = []
     for i in range(len(tracts) - min_repeats + 1):
         group = [tracts[i]]
+        group_centers = [(tracts[i][0] + tracts[i][1]) // 2]
         for j in range(1, min_repeats):
-            spacing = tracts[i + j][0] - tracts[i + j - 1][1]
+            # Calculate spacing from centre of previous tract to centre of current tract
+            prev_center = (tracts[i + j - 1][0] + tracts[i + j - 1][1]) // 2
+            curr_center = (tracts[i + j][0] + tracts[i + j][1]) // 2
+            spacing = curr_center - prev_center
             if min_spacing <= spacing <= max_spacing:
                 group.append(tracts[i + j])
+                group_centers.append(curr_center)
             else:
                 break
         # Only A/T tracts themselves must be TA-free; loop/spacing regions are allowed to have TA
@@ -187,7 +192,7 @@ def find_local_curved(seq: str, apr_regions: list, min_len: int = 7) -> list:
 def find_curved_DNA(seq: str) -> list:
     """
     Main function to identify both global and local curved DNA motifs.
-    - Global: Phased A/T tracts (≥4 bases, no TA step, spaced by 10–11 bp, 3+ repeats)
+    - Global: Phased A/T tracts (≥4 bases, no TA step, spaced by 10–11 bp centre-to-centre, 3+ repeats)
     - Local: Long A/T tracts (≥7 bases, no TA step), not overlapping global regions
 
     References:
