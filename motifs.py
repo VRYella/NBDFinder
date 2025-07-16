@@ -198,14 +198,14 @@ def find_curved_DNA(seq: str) -> list:
 import numpy as np
 
 def zdna_seeker_scoring_array(seq,
-    GC_weight=25.0, AT_weight=-5.0, GT_weight=3.0, AC_weight=3.0,
-    consecutive_AT_scoring=[0.0],
+    GC_weight=7.0, AT_weight=0.5, GT_weight=1.25, AC_weight=1.25,
+    consecutive_AT_scoring=(0.5, 0.5, 0.5, 0.5, 0.0, 0.0, -5.0, -100.0),
     mismatch_penalty_type="linear",
     mismatch_penalty_starting_value=3,
-    mismatch_penalty_linear_delta=5,
+    mismatch_penalty_linear_delta=3,
     cadence_reward=0.0
 ):
-    """Return scoring array for Z-seeker."""
+    """Return scoring array for Z-seeker (official defaults)."""
     scoring_array = np.empty(len(seq) - 1, dtype=float)
     mismatches_counter = 0
     consecutive_AT_counter = 0
@@ -250,18 +250,22 @@ def zdna_seeker_scoring_array(seq,
             scoring_array[i] += cadence_reward
     return scoring_array
 
+def wrap(seq, width=50):
+    # Utility for formatting sequence output
+    return '\n'.join(seq[i:i+width] for i in range(0, len(seq), width))
+
 def find_zdna(seq,
-    threshold=40,
+    threshold=50,
     drop_threshold=50,
-    GC_weight=25.0, AT_weight=-5.0, GT_weight=3.0, AC_weight=3.0,
-    consecutive_AT_scoring=[0.0],
+    GC_weight=7.0, AT_weight=0.5, GT_weight=1.25, AC_weight=1.25,
+    consecutive_AT_scoring=(0.5, 0.5, 0.5, 0.5, 0.0, 0.0, -5.0, -100.0),
     mismatch_penalty_type="linear",
     mismatch_penalty_starting_value=3,
-    mismatch_penalty_linear_delta=5,
+    mismatch_penalty_linear_delta=3,
     cadence_reward=0.0
 ):
     """
-    Z-seeker logic for Z-DNA motif detection.
+    Z-seeker logic for Z-DNA motif detection with official defaults.
     Finds regions (subarrays) with cumulative score > threshold.
     """
     seq = seq.upper()
@@ -300,8 +304,8 @@ def find_zdna(seq,
             motifs.append({
                 "Class": "Z-DNA",
                 "Subtype": "Z-Seeker",
-                "Start": s + 1,
-                "End": e + 1,
+                "Start": s,
+                "End": e,
                 "Length": e - s,
                 "Sequence": wrap(seq[s:e+1]),
                 "ScoreMethod": "Z-Seeker Weighted",
@@ -316,8 +320,8 @@ def find_zdna(seq,
         motifs.append({
             "Class": "Z-DNA",
             "Subtype": "Z-Seeker",
-            "Start": s + 1,
-            "End": e + 1,
+            "Start": s,
+            "End": e,
             "Length": e - s,
             "Sequence": wrap(seq[s:e+1]),
             "ScoreMethod": "Z-Seeker Weighted",
