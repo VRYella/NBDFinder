@@ -599,7 +599,7 @@ def merge_hotspots(hotspots):
 
 # ========== NON-OVERLAPPING MOTIF SELECTION ==========
 
-def select_best_nonoverlapping_motifs(motifs: List[Dict], motif_priority: List[str] = None) -> List[Dict]:
+def select_best_nonoverlapping_motifs(motifs: list, motif_priority: list = None) -> list:
     if motif_priority is None:
         motif_priority = [
             'Multimeric_G4', 'Bipartite_G4', 'Dimeric_G4', 'Canonical_G4',
@@ -613,15 +613,21 @@ def select_best_nonoverlapping_motifs(motifs: List[Dict], motif_priority: List[s
         except ValueError:
             score = 0.0
         length = m.get('Length', 0)
-        return (rank, -score, -length)
+        return (m.get('Class', ''), rank, -score, -length)
+    # Sort all motifs best-to-worst within and across classes
     sorted_motifs = sorted(motifs, key=motif_key)
     selected = []
-    occupied = set()
+    # Track occupied regions per class
+    occupied_per_class = dict()
     for m in sorted_motifs:
+        motif_class = m.get('Class', 'Other')
         region = set(range(m['Start'], m['End']+1))
-        if occupied.isdisjoint(region):
+        if motif_class not in occupied_per_class:
+            occupied_per_class[motif_class] = set()
+        # Only prevent overlaps within the same class
+        if occupied_per_class[motif_class].isdisjoint(region):
             selected.append(m)
-            occupied.update(region)
+            occupied_per_class[motif_class].update(region)
     return selected
 
 def validate_motif(motif, seq_length):
