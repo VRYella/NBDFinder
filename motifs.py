@@ -843,7 +843,7 @@ def all_motifs(seq, nonoverlap=False):
     if not seq or not re.match("^[ATGC]+$", seq, re.IGNORECASE):
         return []
     seq = seq.upper()
-    results = (
+    motif_list = (
         find_sticky_dna(seq) +
         find_curved_DNA(seq) +
         find_zdna(seq) +
@@ -857,12 +857,13 @@ def all_motifs(seq, nonoverlap=False):
         find_bulged_gquadruplex(seq) +
         find_bipartite_gquadruplex(seq) +
         find_multimeric_gquadruplex(seq) +
-        find_imotif(seq) +
-        find_hybrids(seq)
+        find_imotif(seq)
     )
-    motifs = [m for m in results if validate_motif(m, len(seq))]
+    motif_list = [m for m in motif_list if validate_motif(m, len(seq))]
+    # Now find hybrids among validated motifs
+    motif_list += find_hybrids(motif_list)
     if nonoverlap:
-        motifs = select_best_nonoverlapping_motifs(motifs)
-    return motifs
+        motif_list = select_best_nonoverlapping_motifs(motif_list)
+    return motif_list
 
 # ========== END OF FILE ==========
