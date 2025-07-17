@@ -677,7 +677,6 @@ def find_nonoverlapping_g4_variants(seq):
 
 # ========== 9. I-motif &  VARIANTS ==========
 
-
 def find_imotif(seq):
     results = []
     # Pattern for canonical and long-loop: 4 C-runs, loops 1-12 nt (in vivo evidence)
@@ -686,8 +685,14 @@ def find_imotif(seq):
         motif_seq = m.group(1)
         score = imotif_score(motif_seq)
         if score >= 0.7:
-            # Compute loop lengths for subtype assignment
-            loops = [len(l) for l in re.findall(r"C{3,}(\w{1,12})C{3,}", motif_seq)]
+            # Improved: get the actual C-run starts and the loop spans between them
+            c_run_spans = [match.span() for match in re.finditer(r"C{3,}", motif_seq)]
+            loops = []
+            for i in range(len(c_run_spans)-1):
+                loop_start = c_run_spans[i][1]
+                loop_end = c_run_spans[i+1][0]
+                loops.append(loop_end - loop_start)
+            # Subtype logic
             if loops and all(1 <= l <= 7 for l in loops):
                 subtype = "Canonical_iMotif"
             elif loops and any(8 <= l <= 12 for l in loops):
@@ -711,8 +716,14 @@ def imotif_score(seq):
     c_fraction = seq.count('C') / len(seq) if seq else 0
     if len(c_runs) < 4:
         return 0
-    loops = re.findall(r"C{3,}(\w{1,12})C{3,}", seq)
-    loop_score = sum(1/(len(l)+1) for l in loops) / max(1, len(loops)) if loops else 0.5
+    # Loop size calculation as above
+    c_run_spans = [match.span() for match in re.finditer(r"C{3,}", seq)]
+    loops = []
+    for i in range(len(c_run_spans)-1):
+        loop_start = c_run_spans[i][1]
+        loop_end = c_run_spans[i+1][0]
+        loops.append(loop_end - loop_start)
+    loop_score = sum(1/(l+1) for l in loops) / max(1, len(loops)) if loops else 0.5
     return min(1.0, sum(c_runs)/16 + c_fraction*0.5 + loop_score*0.3)
 
 #########################
