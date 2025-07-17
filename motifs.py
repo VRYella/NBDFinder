@@ -656,8 +656,7 @@ def all_motifs(seq, nonoverlap=False):
         find_bipartite_gquadruplex(seq) +
         find_multimeric_gquadruplex(seq) +
         find_imotif(seq) +
-        find_hybrids(seq) +
-        find_sticky_dna(seq)
+        find_hybrids(seq)
     )
     motifs = [m for m in results if validate_motif(m, len(seq))]
     if nonoverlap:
