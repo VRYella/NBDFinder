@@ -862,7 +862,7 @@ def all_motifs(seq, nonoverlap=False):
     )
     motif_list = [m for m in motif_list if validate_motif(m, len(seq))]
     # Now find hybrids among validated motifs
-    motif_list += find_hybrids(motif_list)
+    motif_list += find_hybrids(motif_list,seq)
     if nonoverlap:
         motif_list = select_best_nonoverlapping_motifs(motif_list)
     return motif_list
