@@ -460,11 +460,9 @@ def find_hdna(seq):
 # ========== 7. STICKY DNA ==========
 
 def find_sticky_dna(seq):
-    """
-    Detects uninterrupted (GAA)n or (TTC)n tracts where n >= 59 (potential sticky DNA partners).
-    """
     motifs = []
-    # Match uninterrupted GAA or TTC repeats, n >= 59
+    # Remove newlines and spaces to ensure pure repeat
+    seq = seq.replace('\n','').replace(' ','').upper()
     pattern = r"(?:GAA){59,}|(?:TTC){59,}"
     for m in re.finditer(pattern, seq):
         repeat_count = len(m.group()) // 3
@@ -478,11 +476,6 @@ def find_sticky_dna(seq):
             "Sequence": m.group(),
             "ScoreMethod": "Sakamoto1999",
             "Score": f"{min(1.0, repeat_count/270):.2f}",
-            "References": (
-                "Sakamoto N et al., Molecular Cell, 1999; "
-                "Potaman VN et al., Nucleic Acids Res, 2004; "
-                "Grabczyk E et al., Biochemistry, 2000"
-            )
         })
     return motifs
 
