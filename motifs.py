@@ -716,13 +716,14 @@ def imotif_score(seq):
     return min(1.0, sum(c_runs)/16 + c_fraction*0.5 + loop_score*0.3)
 
 #########################
-def find_hybrids(motifs):
+def find_hybrids(motifs, seq):
     """
     Detects all regions where two or more unique motif classes overlap.
 
     motifs: list of motif dicts, each with 'Class', 'Start', 'End', 'Sequence', etc.
+    seq: the full DNA sequence as a string.
 
-    Returns a list of hybrid region dicts, with interval, unique classes, and contributing motifs.
+    Returns a list of hybrid region dicts, with interval, unique classes, contributing motifs, and sequence.
     """
     # Build event points for sweep line
     events = []
@@ -758,7 +759,7 @@ def find_hybrids(motifs):
                         "ContributingMotifs": region_motifs,
                         "ScoreMethod": "HybridOverlap",
                         "Score": f"{min(1.0, len(involved_classes)/5 + len(region_motifs)/10):.2f}",
-                        # "Sequence": wrap(seq[region_start-1:region_end])  # if you want, and have seq in scope
+                        "Sequence": seq[region_start-1:region_end]  # 1-based to 0-based adjustment
                     })
             active.discard(idx)
     return results
