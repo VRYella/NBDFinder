@@ -4,15 +4,19 @@ from typing import List, Dict, Tuple
 from collections import defaultdict, Counter
 import random
 
-# ========== UTILS FUNCTIONS ==========
+# ========= UTILITY FUNCTIONS =========
+
 def parse_fasta(fasta_str: str) -> str:
+    """Parse FASTA string, return clean DNA sequence (A/T/G/C only, U->T, uppercased)."""
     return "".join([line.strip() for line in fasta_str.split('\n') if not line.startswith(">")]).upper().replace(" ", "").replace("U", "T")
 
 def wrap(seq: str, width: int = 60) -> str:
-    return "\n".join([seq[i:i+width] for i in range(0, len(seq), width)])
+    """Wraps sequence for display purposes (optional)."""
+    return "\n".join(seq[i:i+width] for i in range(0, len(seq), width))
 
 def gc_content(seq: str) -> float:
-    return 100 * (seq.count('G') + seq.count('C')) / max(1, len(seq))
+    gc = seq.count('G') + seq.count('C')
+    return (gc / max(1, len(seq))) * 100 if seq else 0
 
 def reverse_complement(seq: str) -> str:
     return seq.translate(str.maketrans("ATGC", "TACG"))[::-1]
@@ -21,6 +25,7 @@ def is_palindrome(seq: str) -> bool:
     return seq == reverse_complement(seq)
 
 def g4hunter_score(seq: str) -> float:
+    """Computes G4Hunter-style score for a sequence."""
     scores = []
     for c in seq.upper():
         if c == 'G':
@@ -40,56 +45,22 @@ def percentileofscore(a, score, kind='rank'):
     elif kind == 'mean': return (sum(a < score) + sum(a <= score)) / (2 * len(a)) * 100
     else: raise ValueError("kind must be 'rank', 'strict', 'weak' or 'mean'")
 
-# ========== MOTIF DETECTION ==========
+# ========== MOTIF DETECTION HELPERS ==========
+
 def overlapping_finditer(pattern, seq):
-    for m in re.compile(pattern, re.IGNORECASE).finditer(seq):
+    """Regex finditer with overlapping matches."""
+    regex = re.compile(pattern, re.IGNORECASE)
+    pos = 0
+    while pos < len(seq):
+        m = regex.search(seq, pos)
+        if not m:
+            break
         yield m
+        pos = m.start() + 1  # allow overlap
 
-def all_motifs(seq):
-    """
-    Identifies all non-B DNA motifs in the input sequence, including:
-    - Curved DNA motifs (Global: phased A/T tracts, Local: A7/T7, no TA step)
-    - Z-DNA, slipped DNA, R-loops, cruciforms, triplexes, G-quadruplexes, i-motifs, hybrids, sticky DNA, etc.
-
-    References:
-    - Crothers DM et al. (1992) DNA bending by A-tracts. Science.
-    - Brukner I et al. (1995) Curvature of DNA: phasing of A-tracts. J Biomol Struct Dyn.
-    - Trifonov EN (1980) Sequence-dependent deformational anisotropy of chromatin DNA.
-    """
-    if not seq or not re.match("^[ATGC]+$", seq, re.IGNORECASE):
-        return []
-    seq = seq.upper()
-    results = (
-        find_curved_DNA(seq) +
-        find_zdna(seq) +
-        find_slipped_dna(seq) +
-        find_rlfs(seq) +
-        find_cruciform(seq) +
-        find_hdna(seq) +
-        find_gtriplex(seq) +
-        find_gquadruplex(seq) +
-        find_relaxed_gquadruplex(seq) +
-        find_bulged_gquadruplex(seq) +
-        find_bipartite_gquadruplex(seq) +
-        find_multimeric_gquadruplex(seq) +
-        find_imotif(seq) +
-        find_hybrids(seq) +
-        find_sticky_dna(seq)
-    )
-    return [m for m in results if validate_motif(m, len(seq))]
-#####################################################################################################################
-#####################################################################################################################
-import re
-
-def wrap(seq, width=60):
-    """Wraps sequence for display purposes (optional)."""
-    return '\n'.join([seq[i:i+width] for i in range(0, len(seq), width)])
+# ========== 1. CURVED DNA ==========
 
 def find_AT_tracts_no_TA(seq: str, min_len: int) -> list:
-    """
-    Finds runs of A or T bases (≥min_len) with NO TA steps.
-    Returns list of (start, end, sequence).
-    """
     tracts = []
     i = 0
     while i < len(seq):
@@ -110,11 +81,6 @@ def find_AT_tracts_no_TA(seq: str, min_len: int) -> list:
     return tracts
 
 def find_AT_tracts_relaxed(seq: str, min_len: int, max_TA: int = 0) -> list:
-    """
-    Finds runs of A or T bases (≥min_len), allowing at most max_TA TA steps per tract.
-    Returns list of (start, end, sequence).
-    NOTE: For relaxed version, max_TA=0 (NO TA allowed).
-    """
     tracts = []
     i = 0
     while i < len(seq):
@@ -135,11 +101,6 @@ def find_AT_tracts_relaxed(seq: str, min_len: int, max_TA: int = 0) -> list:
     return tracts
 
 def curvature_score(seq):
-    """
-    Scores a curved DNA motif:
-    Each AA, TT, or AT step = 1 point.
-    Example: AAA = 2 (AA, AA), ATTA = 2 (AT, TT).
-    """
     score = 0
     for i in range(len(seq) - 1):
         pair = seq[i:i+2]
@@ -147,13 +108,7 @@ def curvature_score(seq):
             score += 1
     return score
 
-def find_global_curved(seq: str, min_tract_len: int = 3, min_repeats: int = 3, min_spacing: int = 8, max_spacing: int = 12, min_score: int = 6) -> tuple:
-    """
-    Detects global curved DNA motifs:
-      - ≥3 A/T tracts (≥3 bases, NO TA step)
-      - Phased at 8–12 bp center-to-center
-      - Motif score (AA/TT/AT steps) must be ≥ min_score (default 6)
-    """
+def find_global_curved(seq: str, min_tract_len: int = 3, min_repeats: int = 3, min_spacing: int = 8, max_spacing: int = 12, min_score: int = 6) -> Tuple[list, list]:
     tracts = find_AT_tracts_no_TA(seq, min_tract_len)
     results = []
     apr_regions = []
@@ -186,12 +141,8 @@ def find_global_curved(seq: str, min_tract_len: int = 3, min_repeats: int = 3, m
     return results, apr_regions
 
 def find_local_curved(seq: str, apr_regions: list, min_len: int = 7) -> list:
-    """
-    Detects relaxed local curved DNA motifs:
-      - A/T tract of ≥7 bases (NO TA step), not overlapping global curved regions
-    """
     results = []
-    tracts = find_AT_tracts_relaxed(seq, min_len, max_TA=0)  # NO TA allowed even for relaxed
+    tracts = find_AT_tracts_relaxed(seq, min_len, max_TA=0)
     for start, end, tract_seq in tracts:
         s, e = start + 1, end + 1
         if not any(r_start <= s <= r_end or r_start <= e <= r_end for r_start, r_end in apr_regions):
@@ -208,23 +159,11 @@ def find_local_curved(seq: str, apr_regions: list, min_len: int = 7) -> list:
     return results
 
 def find_curved_DNA(seq: str) -> list:
-    """
-    Main function for curved DNA motif detection.
-    - Global: ≥3 A/T tracts (≥3 bases, NO TA step), spaced 8–12 bp (center-to-center),
-      curvature step score ≥ 6
-    - Local: A/T tracts (≥7 bases, NO TA step), not overlapping global motifs
-    """
     global_results, apr_regions = find_global_curved(seq)
     local_results = find_local_curved(seq, apr_regions)
     return global_results + local_results
 
-############################################ 1. Curved DNA Motif: Code End  ########################################
-#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
-
-
-############################################ 2. Z-DNA  ############################################################
-
-import numpy as np
+# ========== 2. Z-DNA ==========
 
 def zdna_seeker_scoring_array(
     seq,
@@ -235,35 +174,12 @@ def zdna_seeker_scoring_array(
     mismatch_penalty_linear_delta=3,
     cadence_reward=0.0
 ):
-    """
-    Computes a Z-DNA propensity score for every dinucleotide in the input sequence.
-
-    Scoring is based on the type of dinucleotide:
-      - 'GC'/'CG': Strong Z-DNA former, highest score.
-      - 'GT'/'TG' and 'AC'/'CA': Intermediate scores.
-      - 'AT'/'TA': Weak Z-DNA former, penalized more for consecutive repeats.
-      - All other dinucleotides: Penalized with mismatch penalty (linear or exponential).
-
-    Parameters:
-        seq (str): DNA sequence (A/C/G/T).
-        GC_weight, AT_weight, GT_weight, AC_weight (float): Weights for dinucleotide types.
-        consecutive_AT_scoring (tuple): Additional penalties for consecutive AT/TA.
-        mismatch_penalty_type (str): "linear" or "exponential" penalty for mismatches.
-        mismatch_penalty_starting_value (float): Starting penalty for mismatches.
-        mismatch_penalty_linear_delta (float): Increment for linear penalty.
-        cadence_reward (float): Additional score for canonical dinucleotides.
-
-    Returns:
-        scoring_array (np.ndarray): Array of scores for each position (dinucleotide).
-    """
-    scoring_array = np.empty(len(seq) - 1, dtype=float)  # Score for each dinucleotide
-    mismatches_counter = 0       # Tracks consecutive mismatches
-    consecutive_AT_counter = 0   # Tracks consecutive AT/TA dinucleotides
-
+    scoring_array = np.empty(len(seq) - 1, dtype=float)
+    mismatches_counter = 0
+    consecutive_AT_counter = 0
     for i in range(len(seq) - 1):
-        t = seq[i:i+2].upper()   # Current dinucleotide
+        t = seq[i:i+2].upper()
         if t in ("GC", "CG"):
-            # Strongest Z-DNA-forming dinucleotides
             scoring_array[i] = GC_weight
             mismatches_counter = 0
             consecutive_AT_counter = 0
@@ -276,55 +192,31 @@ def zdna_seeker_scoring_array(
             mismatches_counter = 0
             consecutive_AT_counter = 0
         elif t in ("AT", "TA"):
-            # Apply additional penalty for consecutive AT/TA
             adjusted_weight = AT_weight
             if consecutive_AT_counter < len(consecutive_AT_scoring):
                 adjusted_weight += consecutive_AT_scoring[consecutive_AT_counter]
             else:
-                adjusted_weight += consecutive_AT_scoring[-1]  # Use last value if too many
+                adjusted_weight += consecutive_AT_scoring[-1]
             scoring_array[i] = adjusted_weight
             consecutive_AT_counter += 1
             mismatches_counter = 0
         else:
-            # Penalty for non-canonical dinucleotides (mismatch)
             mismatches_counter += 1
             consecutive_AT_counter = 0
             if mismatch_penalty_type == "exponential":
-                # Exponential penalty for long stretches
-                scoring_array[i] = -mismatch_penalty_starting_value ** mismatches_counter \
-                                   if mismatches_counter < 15 else -32000
+                scoring_array[i] = -mismatch_penalty_starting_value ** mismatches_counter if mismatches_counter < 15 else -32000
             elif mismatch_penalty_type == "linear":
-                # Linear penalty increases with length of mismatch stretch
-                scoring_array[i] = -mismatch_penalty_starting_value \
-                                   - mismatch_penalty_linear_delta * (mismatches_counter - 1)
+                scoring_array[i] = -mismatch_penalty_starting_value - mismatch_penalty_linear_delta * (mismatches_counter - 1)
             else:
-                scoring_array[i] = -10  # Default penalty
-
-        # Optional reward for canonical dinucleotide "cadence"
+                scoring_array[i] = -10
         if t in ("GC", "CG", "GT", "TG", "AC", "CA", "AT", "TA"):
             scoring_array[i] += cadence_reward
-
     return scoring_array
-
-def wrap(seq, width=50):
-    """
-    Formats a DNA sequence into lines of specified width.
-
-    Used for displaying long motifs in a readable way.
-
-    Parameters:
-        seq (str): The DNA sequence to format.
-        width (int): The length of each line.
-
-    Returns:
-        str: Formatted sequence.
-    """
-    return '\n'.join(seq[i:i+width] for i in range(0, len(seq), width))
 
 def find_zdna(
     seq,
     threshold=50,
-    drop_threshold=50, #A region must have a total Z-DNA score of at least 50 to be reported as a motif.It’s a biological cutoff.
+    drop_threshold=50,
     GC_weight=7.0, AT_weight=0.5, GT_weight=1.25, AC_weight=1.25,
     consecutive_AT_scoring=(0.5, 0.5, 0.5, 0.5, 0.0, 0.0, -5.0, -100.0),
     mismatch_penalty_type="linear",
@@ -332,31 +224,9 @@ def find_zdna(
     mismatch_penalty_linear_delta=3,
     cadence_reward=0.0
 ):
-    """
-    Identifies candidate Z-DNA-forming regions ("motifs") in the input sequence.
-
-    Uses a modified Kadane's algorithm to find subarrays (contiguous regions)
-    where the cumulative Z-DNA score exceeds the specified threshold.
-    Motif is reported when the score drops by at least drop_threshold, or at the end.
-
-    Parameters:
-        seq (str): DNA sequence.
-        threshold (float): Minimum score for motif detection.
-        drop_threshold (float): Minimum score drop to segment motifs.
-        All other parameters: See zdna_seeker_scoring_array.
-
-    Returns:
-        motifs (list of dict): Each dict contains motif annotation:
-            - Class: always "Z-DNA"
-            - Subtype: always "Z-Seeker"
-            - Start: 1-based motif start coordinate
-            - End: 1-based motif end coordinate (inclusive)
-            - Length: motif length
-            - Sequence: wrapped motif sequence
-            - ScoreMethod: "Z-Seeker Weighted"
-            - Score: motif score (float, 2 decimals)
-    """
-    seq = seq.upper()  # Ensure uppercase
+    seq = seq.upper()
+    if len(seq) < 12:  # Too short for Z-DNA
+        return []
     scoring = zdna_seeker_scoring_array(
         seq,
         GC_weight=GC_weight, AT_weight=AT_weight,
@@ -368,17 +238,13 @@ def find_zdna(
         cadence_reward=cadence_reward
     )
     motifs = []
-
-    # Find motifs using modified Kadane's algorithm
     start_idx = 0
     max_ending_here = scoring[0]
     current_max = 0
     candidate = None
     end_idx = 1
-
     for i in range(1, len(scoring)):
         num = scoring[i]
-        # Start new region if current score is higher than continuing previous
         if num >= max_ending_here + num:
             start_idx = i
             end_idx = i + 1
@@ -386,20 +252,16 @@ def find_zdna(
         else:
             max_ending_here += num
             end_idx = i + 1
-
-        # If score above threshold, mark as candidate
         if max_ending_here >= threshold and (candidate is None or current_max < max_ending_here):
             candidate = (start_idx, end_idx, max_ending_here)
             current_max = max_ending_here
-
-        # If score drops enough, record motif and reset
         if candidate and (max_ending_here < 0 or current_max - max_ending_here >= drop_threshold):
             s, e, score = candidate
             motifs.append({
                 "Class": "Z-DNA",
                 "Subtype": "Z-Seeker",
-                "Start": s + 1,           # 1-based indexing for output
-                "End": e + 1,             # inclusive end (covers all input bases)
+                "Start": s + 1,
+                "End": e + 1,
                 "Length": e - s + 1,
                 "Sequence": wrap(seq[s:e+1]),
                 "ScoreMethod": "Z-Seeker Weighted",
@@ -407,8 +269,6 @@ def find_zdna(
             })
             candidate = None
             max_ending_here = current_max = 0
-
-    # If there's a leftover candidate at the end, record it
     if candidate:
         s, e, score = candidate
         motifs.append({
@@ -422,20 +282,10 @@ def find_zdna(
             "Score": f"{score:.2f}",
         })
     return motifs
-###################################################################################
-#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 
-########################################### 3. Slipped-DNA  ############################################################
-
-def wrap(seq, width=60):
-    """Wraps sequence for display (optional, adjust/remove as needed)."""
-    return '\n'.join(seq[i:i+width] for i in range(0, len(seq), width))
+# ========== 3. SLIPPED DNA (DR, STR) ==========
 
 def find_slipped_dna(seq):
-    """
-    Finds slipped-strand DNA motifs: direct repeats and short tandem repeats (STRs/microsatellites).
-    Returns a list of dictionaries with details for each motif.
-    """
     results = []
     # Direct repeats (>=10bp unit, 2 copies, up to 300bp unit)
     min_len_dr = 10
@@ -454,29 +304,31 @@ def find_slipped_dna(seq):
                     "ScoreMethod": "nBST_DR",
                     "Score": f"{min(1.0, l/300):.2f}"
                 })
-
     # Short Tandem Repeats (microsatellites: 1-6bp unit, >=5 copies, at least 15bp array)
     min_unit_str = 1
     max_unit_str = 6
     min_reps_str = 5
     min_len_str = 15
-    for unit in range(min_unit_str, max_unit_str+1):
-        for i in range(len(seq) - unit * min_reps_str + 1):
+    i = 0
+    while i < len(seq) - min_unit_str * min_reps_str + 1:
+        found = False
+        for unit in range(min_unit_str, max_unit_str+1):
+            if i + unit * min_reps_str > len(seq):
+                continue
             repeat_unit = seq[i:i+unit]
             if 'n' in repeat_unit.lower():
-                continue  # skip ambiguous bases
+                continue
             reps = 1
             while (i + reps*unit + unit <= len(seq) and
                    seq[i + reps*unit:i + (reps+1)*unit] == repeat_unit):
                 reps += 1
             if reps >= min_reps_str and reps*unit >= min_len_str:
-                # Optionally check for partial repeat at end
                 remainder = 0
                 rs = i + reps*unit
-                re = rs
-                while (re < len(seq) and seq[re] == repeat_unit[re % unit]):
+                re_idx = rs
+                while (re_idx < len(seq) and seq[re_idx] == repeat_unit[re_idx % unit]):
                     remainder += 1
-                    re += 1
+                    re_idx += 1
                 results.append({
                     "Class": "Slipped_DNA",
                     "Subtype": "STR",
@@ -489,25 +341,15 @@ def find_slipped_dna(seq):
                     "ScoreMethod": "nBST_STR",
                     "Score": f"{min(1.0, reps/20):.2f}"
                 })
-                # Skip overlapping STRs
                 i = i + reps*unit + remainder - 1
-
+                found = True
+                break
+        if not found:
+            i += 1
     return results
 
-#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+# ========== 4. R-LOOP ==========
 
-############################################ 4.R-loop  ############################################################
-
-import re
-
-def wrap(seq, width=60):
-    return '\n'.join(seq[i:i+width] for i in range(0, len(seq), width))
-
-def gc_content(seq):
-    gc = seq.count('G') + seq.count('C')
-    return (gc / len(seq)) * 100 if seq else 0
-
-# RLFS regex models based on QmRLFS-finder
 RLFS_MODELS = {
     "m1": r"G{3,}[ATGC]{1,10}?G{3,}(?:[ATGC]{1,10}?G{3,}){1,}",
     "m2": r"G{4,}(?:[ATGC]{1,10}?G{4,}){1,}",
@@ -541,7 +383,6 @@ def find_rlfs(seq, models=("m1", "m2")):
     return results
 
 def find_rez_max(seq, start_pos, max_len=2000, step=100, min_gc=40):
-    # Find the maximal REZ region downstream of RIZ with >=min_gc%
     max_window = ""
     for win_start in range(start_pos, min(len(seq), start_pos + max_len), step):
         win_end = min(win_start + step, len(seq))
@@ -551,15 +392,14 @@ def find_rez_max(seq, start_pos, max_len=2000, step=100, min_gc=40):
     if max_window:
         return {'seq': max_window, 'end': len(max_window)}
     return None
-####################################++++++++++++++++++++++++++++++++##########################################
 
-#################################5. Cruciform ###################################################################
+# ========== 5. CRUCIFORM (INVERTED REPEAT) ==========
+
 def find_cruciform(seq):
-    """Detect cruciform-forming palindromes with a spacer (0–3 bases) and arm (10–100 bases)."""
     results = []
-    for i in range(len(seq) - 2*10):  # minimum required for two arms
-        for arm_len in range(10, 101):  # arm length from 10 to 100
-            for spacer_len in range(0, 4):  # spacer length from 0 to 3
+    for i in range(len(seq) - 2*10):
+        for arm_len in range(10, min(101, (len(seq)-i)//2)):
+            for spacer_len in range(0, 4):
                 arm = seq[i:i+arm_len]
                 rev_arm = reverse_complement(arm)
                 mid = i + arm_len + spacer_len
@@ -580,30 +420,19 @@ def find_cruciform(seq):
                     })
     return results
 
-####++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++##################################
-################################################6. Triplex DNA #######################################################
-import re
+# ========== 6. TRIPLEX DNA (H-DNA, MIRROR REPEAT) ==========
 
 def purine_fraction(seq):
-    """Return fraction of purines (A/G) in the sequence."""
     return (seq.count('A') + seq.count('G')) / max(1, len(seq))
 
 def pyrimidine_fraction(seq):
-    """Return fraction of pyrimidines (C/T) in the sequence."""
     return (seq.count('C') + seq.count('T')) / max(1, len(seq))
 
-def wrap(seq, width=60):
-    """Wrap sequence output to fixed width (for display)."""
-    return '\n'.join(seq[i:i+width] for i in range(0, len(seq), width))
-
 def find_hdna(seq):
-    """Detects mirror repeats suitable for triplex (H-DNA) formation with spacer 0–8 nt."""
     results = []
     n = len(seq)
-    # Repeat length: 10–100nt, Spacer: 0–8nt
     for rep_len in range(10, min(101, n//2)):
-        for spacer in range(0, 9):  # Spacer 0–8 nt inclusive
-            # Pattern: (repeat)[spacer](repeat)
+        for spacer in range(0, 9):
             pattern = re.compile(rf"(?=(([ATGC]{{{rep_len}}})[ATGC]{{{spacer}}}\2))", re.IGNORECASE)
             for m in pattern.finditer(seq):
                 repeat = m.group(2)
@@ -628,22 +457,10 @@ def find_hdna(seq):
                 })
     return results
 
-
-####++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++##################################
-################################################7. Sticky DNA #######################################################
-import re
+# ========== 7. STICKY DNA ==========
 
 def find_sticky_dna(seq):
-    """
-    Detects uninterrupted (GAA)n or (TTC)n tracts where n = 59–270 (potential sticky DNA partners).
-    Sticky DNA forms only when two such tracts are present (on separate molecules).
-    References:
-      - Sakamoto N et al., Molecular Cell, 1999.
-      - Potaman VN et al., Nucleic Acids Res, 2004.
-      - Grabczyk E et al., Biochemistry, 2000.
-    """
     motifs = []
-    # Simple regex: matches uninterrupted GAA or TTC repeats, n = 59–270
     pattern = r"(?:GAA){59,270}|(?:TTC){59,270}"
     for m in re.finditer(pattern, seq):
         repeat_count = len(m.group()) // 3
@@ -654,7 +471,7 @@ def find_sticky_dna(seq):
             "End": m.end(),
             "Length": len(m.group()),
             "RepeatCount": repeat_count,
-            "Sequence": m.group(),  # or wrap(m.group()) if you want wrapped output
+            "Sequence": m.group(),
             "ScoreMethod": "Sakamoto1999",
             "Score": f"{min(1.0, repeat_count/270):.2f}",
             "References": (
@@ -665,10 +482,7 @@ def find_sticky_dna(seq):
         })
     return motifs
 
-
-#######################################++++++++++##########################################################
-####++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++##################################
-################################################8. G-Triplex DNA #######################################################
+# ========== 8. G-TRIPLEX DNA & G4 VARIANTS ==========
 
 def find_gtriplex(seq):
     results = []
@@ -755,6 +569,8 @@ def find_hybrids(seq):
         for c_start, c_end, c_seq in im_regions
         if (g_start <= c_end) and (c_start <= g_end)]
 
+# ========== 9. HOTSPOTS ==========
+
 def find_hotspots(motif_hits, seq_len, window=100, min_count=3):
     hotspots = []
     positions = [(hit['Start'], hit['End']) for hit in motif_hits]
@@ -784,32 +600,23 @@ def merge_hotspots(hotspots):
             merged.append(current)
     return merged
 
-# ========== NEW: NON-OVERLAPPING MOTIF SELECTION ==========
+# ========== NON-OVERLAPPING MOTIF SELECTION ==========
 
 def select_best_nonoverlapping_motifs(motifs: List[Dict], motif_priority: List[str] = None) -> List[Dict]:
-    """
-    Given a list of motif dicts, return a non-overlapping list, keeping the best motif in overlapping regions.
-    Priority: motif type > best score > longest motif.
-    motif_priority: list from highest to lowest priority, using motif 'Subtype' field.
-    """
     if motif_priority is None:
         motif_priority = [
-            'Multimeric_G4', 'Bipartite_G4', 'Dimeric_G4', 'Canonical_G4', 
+            'Multimeric_G4', 'Bipartite_G4', 'Dimeric_G4', 'Canonical_G4',
             'Relaxed_G4', 'Non_canonical_G4', 'Bulged_G4', 'Three_G-Runs'
         ]
-    # Map subtype to rank (lower is higher priority)
     subtype_rank = {subtype: i for i, subtype in enumerate(motif_priority)}
     def motif_key(m):
-        # Lower rank is better; if subtype not in priority, assign lowest priority
         rank = subtype_rank.get(m.get('Subtype'), len(subtype_rank))
         try:
             score = float(m.get('Score', 0))
         except ValueError:
             score = 0.0
         length = m.get('Length', 0)
-        return (rank, -score, -length)  # Lower rank, higher score, longer
-
-    # Sort all motifs by best-to-worst (for tie-breaking)
+        return (rank, -score, -length)
     sorted_motifs = sorted(motifs, key=motif_key)
     selected = []
     occupied = set()
@@ -820,21 +627,43 @@ def select_best_nonoverlapping_motifs(motifs: List[Dict], motif_priority: List[s
             occupied.update(region)
     return selected
 
-# ========== END NEW SECTION ==========
-
 def validate_motif(motif, seq_length):
-    """
-    Checks that a motif dict has required keys and valid coordinates.
-    Returns True if the motif is valid, False otherwise.
-    """
     required_keys = ["Class", "Subtype", "Start", "End", "Length", "Sequence"]
-    # Check all required fields exist
     if not all(key in motif for key in required_keys):
         return False
-    # Check valid coordinates
     if not (1 <= motif["Start"] <= motif["End"] <= seq_length):
         return False
-    # Check non-empty sequence
     if len(motif["Sequence"].replace('\n', '')) == 0:
         return False
     return True
+
+# ========== MASTER MOTIF DISCOVERY ==========
+
+def all_motifs(seq, nonoverlap=False):
+    """Identifies all non-B DNA motifs in the input sequence."""
+    if not seq or not re.match("^[ATGC]+$", seq, re.IGNORECASE):
+        return []
+    seq = seq.upper()
+    results = (
+        find_curved_DNA(seq) +
+        find_zdna(seq) +
+        find_slipped_dna(seq) +
+        find_rlfs(seq) +
+        find_cruciform(seq) +
+        find_hdna(seq) +
+        find_gtriplex(seq) +
+        find_gquadruplex(seq) +
+        find_relaxed_gquadruplex(seq) +
+        find_bulged_gquadruplex(seq) +
+        find_bipartite_gquadruplex(seq) +
+        find_multimeric_gquadruplex(seq) +
+        find_imotif(seq) +
+        find_hybrids(seq) +
+        find_sticky_dna(seq)
+    )
+    motifs = [m for m in results if validate_motif(m, len(seq))]
+    if nonoverlap:
+        motifs = select_best_nonoverlapping_motifs(motifs)
+    return motifs
+
+# ========== END OF FILE ==========
