@@ -642,6 +642,7 @@ def all_motifs(seq, nonoverlap=False):
         return []
     seq = seq.upper()
     results = (
+        find_sticky_dna(seq +
         find_curved_DNA(seq) +
         find_zdna(seq) +
         find_slipped_dna(seq) +
