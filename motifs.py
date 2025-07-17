@@ -715,20 +715,54 @@ def imotif_score(seq):
     loop_score = sum(1/(len(l)+1) for l in loops) / max(1, len(loops)) if loops else 0.5
     return min(1.0, sum(c_runs)/16 + c_fraction*0.5 + loop_score*0.3)
 
-def find_hybrids(seq):
-    g4_regions = [(m.start()+1, m.end(), m.group(1)) for m in overlapping_finditer(r"(G{3,}\w{1,12}G{3,}\w{1,12}G{3,}\w{1,12}G{3,})", seq)]
-    im_regions = [(m.start()+1, m.start()+len(m.group(1)), m.group(1)) for m in overlapping_finditer(r"(C{3,}\w{0,7}C{3,}\w{0,7}C{3,}\w{0,7}C{3,})", seq)]
-    return [{
-        "Class": "Hybrid", "Subtype": "G4_iM_Overlap", "Start": min(g_start, c_start),
-        "End": max(g_end, c_end), "Length": max(g_end, c_end)-min(g_start, c_start)+1,
-        "Sequence": wrap(seq[min(g_start,c_start)-1:max(g_end,c_end)]),
-        "ScoreMethod": "Hybrid_Score",
-        "Score": f"{min(1.0, (g4hunter_score(g_seq)+imotif_score(c_seq))/2*1.1):.2f}"}
-        for g_start, g_end, g_seq in g4_regions
-        for c_start, c_end, c_seq in im_regions
-        if (g_start <= c_end) and (c_start <= g_end)]
+#########################
+def find_hybrids(motifs):
+    """
+    Detects all regions where two or more unique motif classes overlap.
 
-# ========== 9. HOTSPOTS ==========
+    motifs: list of motif dicts, each with 'Class', 'Start', 'End', 'Sequence', etc.
+
+    Returns a list of hybrid region dicts, with interval, unique classes, and contributing motifs.
+    """
+    # Build event points for sweep line
+    events = []
+    for idx, m in enumerate(motifs):
+        events.append((m['Start'], 'start', idx))
+        events.append((m['End'] + 1, 'end', idx))
+    events.sort()
+
+    active = set()
+    region_start = None
+    results = []
+
+    for pos, typ, idx in events:
+        if typ == 'start':
+            active.add(idx)
+            if len(active) == 2:  # New overlap begins
+                region_start = pos
+        elif typ == 'end':
+            if len(active) == 2:  # Overlap ends at pos-1
+                region_end = pos - 1
+                # Get motif classes in this region
+                involved_idxs = list(active)
+                involved_classes = {motifs[i]['Class'] for i in involved_idxs}
+                if len(involved_classes) >= 2:
+                    region_motifs = [motifs[i] for i in involved_idxs]
+                    results.append({
+                        "Class": "Hybrid",
+                        "Subtype": "_".join(sorted(involved_classes)) + "_Overlap",
+                        "Start": region_start,
+                        "End": region_end,
+                        "Length": region_end - region_start + 1,
+                        "MotifClasses": sorted(involved_classes),
+                        "ContributingMotifs": region_motifs,
+                        "ScoreMethod": "HybridOverlap",
+                        "Score": f"{min(1.0, len(involved_classes)/5 + len(region_motifs)/10):.2f}",
+                        # "Sequence": wrap(seq[region_start-1:region_end])  # if you want, and have seq in scope
+                    })
+            active.discard(idx)
+    return results
+# ========== 10. HOTSPOTS  or  non-B- DNA cluster regions==========
 
 def find_hotspots(motif_hits, seq_len, window=100, min_count=3):
     hotspots = []
