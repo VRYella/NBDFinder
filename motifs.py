@@ -481,77 +481,239 @@ def find_sticky_dna(seq):
 
 # ========== 8. G-TRIPLEX DNA & G4 VARIANTS ==========
 
-def find_gtriplex(seq):
+import re
+
+def wrap(seq, width=60):
+    # Simple sequence wrapper; adjust as needed
+    return seq
+
+def overlapping_finditer(pattern, seq):
+    regex = re.compile(pattern)
+    for i in range(len(seq)):
+        m = regex.match(seq, i)
+        if m:
+            yield m
+
+def mask_sequence(seq, start, end):
+    # Mask region [start, end) with "N"
+    return seq[:start] + "N"*(end-start) + seq[end:]
+
+# ---- G4Hunter scoring (example, adjust as needed) ----
+def g4hunter_score(seq):
+    g_runs = [len(r) for r in re.findall(r"G{2,}", seq)]
+    g_fraction = seq.count('G') / len(seq) if seq else 0
+    if len(g_runs) < 4:
+        return 0
+    return min(2.0, sum(g_runs)/16 + g_fraction*1.0)
+
+# ---- 1. Multimeric G4 ----
+def find_multimeric_gquadruplex(seq):
     results = []
-    for m in overlapping_finditer(r"(?=(G{3,}\w{1,7}G{3,}\w{1,7}G{3,}))", seq):
-        seq_frag = m.group(1)
-        g_runs = [len(r) for r in re.findall(r"G{3,}", seq_frag)]
-        if len(g_runs) < 3: continue
-        loops = [len(l) for l in re.findall(r"G{3,}(\w{1,7})G{3,}", seq_frag)]
-        score = min(1.0, sum(g_runs)/15 + sum(1/l if l > 0 else 0.5 for l in loops)/3)
-        results.append({
-            "Class": "G-Triplex", "Subtype": "Three_G-Runs", "Start": m.start()+1,
-            "End": m.start()+len(seq_frag), "Length": len(seq_frag), "Sequence": wrap(seq_frag),
-            "ScoreMethod": "G3_Stability", "Score": f"{score:.2f}"})
+    pattern = r"(G{3,}\w{1,12}){4,}"
+    for m in overlapping_finditer(pattern, seq):
+        motif_seq = m.group(0)
+        if g4hunter_score(motif_seq) >= 1.0:
+            results.append({
+                "Class": "G4",
+                "Subtype": "Multimeric_G4",
+                "Start": m.start()+1,
+                "End": m.end(),
+                "Length": len(motif_seq),
+                "Sequence": wrap(motif_seq),
+                "ScoreMethod": "G4Hunter_Multimer",
+                "Score": f"{g4hunter_score(motif_seq)*1.2:.2f}"})
     return results
 
-def find_gquadruplex(seq):
-    return [{
-        "Class": "G4", "Subtype": "Canonical_G4", "Start": m.start()+1, "End": m.end(),
-        "Length": len(m.group(1)), "Sequence": wrap(m.group(1)), "ScoreMethod": "G4Hunter_v2",
-        "Score": f"{g4hunter_score(m.group(1)):.2f}"}
-        for m in overlapping_finditer(r"(G{3,}\w{1,7}G{3,}\w{1,7}G{3,}\w{1,7}G{3,})", seq)
-        if g4hunter_score(m.group(1)) >= 1.2]
-
-def find_relaxed_gquadruplex(seq):
-    return [{
-        "Class": "G4", "Subtype": "Relaxed_G4", "Start": m.start()+1, "End": m.end(),
-        "Length": len(m.group(1)), "Sequence": wrap(m.group(1)), "ScoreMethod": "G4Hunter_LongLoop",
-        "Score": f"{g4hunter_score(m.group(1))*0.8:.2f}"}
-        for m in overlapping_finditer(r"(G{3,}\w{1,12}G{3,}\w{1,12}G{3,}\w{1,12}G{3,})", seq)
-        if g4hunter_score(m.group(1)) >= 0.8]
-
-def find_bulged_gquadruplex(seq):
-    return [{
-        "Class": "G4", "Subtype": "Bulged_G4", "Start": m.start()+1, "End": m.end(),
-        "Length": len(m.group(1)), "Sequence": wrap(m.group(1)), "ScoreMethod": "G4Hunter_Bulge",
-        "Score": f"{g4hunter_score(m.group(1))*0.7:.2f}"}
-        for m in overlapping_finditer(r"(G{3,}\w{0,3}G{3,}\w{0,3}G{3,}\w{0,3}G{3,})", seq)
-        if len(re.findall(r"G{3,}", m.group(1))) >= 4]
-
+# ---- 2. Bipartite G4 ----
 def find_bipartite_gquadruplex(seq):
     results = []
-    for m in overlapping_finditer(r"(G{3,}\w{1,30}G{3,}\w{1,30}G{3,}\w{1,30}G{3,}\w{1,30}G{3,}\w{1,30}G{3,})", seq):
-        seq_frag = m.group(1)
-        if len(re.findall(r"G{3,}", seq_frag)) < 6: continue
-        unit1, unit2 = seq_frag[:len(seq_frag)//2], seq_frag[len(seq_frag)//2:]
+    pattern = r"(G{3,}\w{1,30}G{3,}\w{1,30}G{3,}\w{1,30}G{3,}\w{10,30}G{3,}\w{1,30}G{3,}\w{1,30}G{3,}\w{1,30}G{3,})"
+    for m in overlapping_finditer(pattern, seq):
+        motif_seq = m.group(1)
+        if len(re.findall(r"G{3,}", motif_seq)) < 8:
+            continue
+        half = len(motif_seq)//2
+        unit1, unit2 = motif_seq[:half], motif_seq[half:]
         score = max(g4hunter_score(unit1), g4hunter_score(unit2)) * 0.9
         if score >= 0.9:
             results.append({
-                "Class": "G4", "Subtype": "Bipartite_G4", "Start": m.start()+1, "End": m.end(),
-                "Length": len(seq_frag), "Sequence": wrap(seq_frag), "ScoreMethod": "Bipartite_Score",
+                "Class": "G4",
+                "Subtype": "Bipartite_G4",
+                "Start": m.start()+1,
+                "End": m.end(),
+                "Length": len(motif_seq),
+                "Sequence": wrap(motif_seq),
+                "ScoreMethod": "Bipartite_Score",
                 "Score": f"{score:.2f}"})
     return results
 
-def find_multimeric_gquadruplex(seq):
-    return [{
-        "Class": "G4", "Subtype": "Multimeric_G4", "Start": m.start()+1, "End": m.end(),
-        "Length": len(m.group(1)), "Sequence": wrap(m.group(1)), "ScoreMethod": "G4Hunter_Multimer",
-        "Score": f"{g4hunter_score(m.group(1))*1.2:.2f}"}
-        for m in overlapping_finditer(r"(G{3,}\w{1,12}){4,}", seq)
-        if g4hunter_score(m.group(1)) >= 1.0]
+# ---- 3. Canonical G4 ----
+def find_gquadruplex(seq):
+    pattern = r"(G{3,}\w{1,7}G{3,}\w{1,7}G{3,}\w{1,7}G{3,})"
+    results = []
+    for m in overlapping_finditer(pattern, seq):
+        motif_seq = m.group(1)
+        score = g4hunter_score(motif_seq)
+        if score >= 1.2:
+            results.append({
+                "Class": "G4",
+                "Subtype": "Canonical_G4",
+                "Start": m.start()+1,
+                "End": m.end(),
+                "Length": len(motif_seq),
+                "Sequence": wrap(motif_seq),
+                "ScoreMethod": "G4Hunter_v2",
+                "Score": f"{score:.2f}"})
+    return results
+
+# ---- 4. Relaxed G4 ----
+def find_relaxed_gquadruplex(seq):
+    pattern = r"(G{3,}\w{8,12}G{3,}\w{8,12}G{3,}\w{8,12}G{3,})"
+    results = []
+    for m in overlapping_finditer(pattern, seq):
+        motif_seq = m.group(1)
+        score = g4hunter_score(motif_seq)
+        if score >= 0.8:
+            results.append({
+                "Class": "G4",
+                "Subtype": "Relaxed_G4",
+                "Start": m.start()+1,
+                "End": m.end(),
+                "Length": len(motif_seq),
+                "Sequence": wrap(motif_seq),
+                "ScoreMethod": "G4Hunter_LongLoop",
+                "Score": f"{score*0.8:.2f}"})
+    return results
+
+# ---- 5. Bulged G4 ----
+def find_bulged_gquadruplex(seq):
+    pattern = r"(G{3,}\w{0,3}G{3,}\w{0,3}G{3,}\w{0,3}G{3,})"
+    results = []
+    for m in overlapping_finditer(pattern, seq):
+        motif_seq = m.group(1)
+        if len(re.findall(r"G{3,}", motif_seq)) >= 4:
+            score = g4hunter_score(motif_seq)
+            results.append({
+                "Class": "G4",
+                "Subtype": "Bulged_G4",
+                "Start": m.start()+1,
+                "End": m.end(),
+                "Length": len(motif_seq),
+                "Sequence": wrap(motif_seq),
+                "ScoreMethod": "G4Hunter_Bulge",
+                "Score": f"{score*0.7:.2f}"})
+    return results
+
+# ---- 6. Imperfect G4 ----
+def find_imperfect_gquadruplex(seq):
+    # One G-run can be G2, rest G3+
+    pattern = r"(G{2,3}\w{1,7}G{3,}\w{1,7}G{3,}\w{1,7}G{3,})"\
+              r"|(G{3,}\w{1,7}G{2,3}\w{1,7}G{3,}\w{1,7}G{3,})"\
+              r"|(G{3,}\w{1,7}G{3,}\w{1,7}G{2,3}\w{1,7}G{3,})"\
+              r"|(G{3,}\w{1,7}G{3,}\w{1,7}G{3,}\w{1,7}G{2,3})"
+    results = []
+    for m in overlapping_finditer(pattern, seq):
+        motif_seq = m.group(0)
+        score = g4hunter_score(motif_seq)
+        if score >= 1.2:
+            results.append({
+                "Class": "G4",
+                "Subtype": "Imperfect_G4",
+                "Start": m.start()+1,
+                "End": m.end(),
+                "Length": len(motif_seq),
+                "Sequence": wrap(motif_seq),
+                "ScoreMethod": "G4Hunter_Imperfect",
+                "Score": f"{score:.2f}"})
+    return results
+
+# ---- 7. G-Triplex ----
+def find_gtriplex(seq):
+    pattern = r"(G{3,}\w{1,7}G{3,}\w{1,7}G{3,})"
+    results = []
+    for m in overlapping_finditer(pattern, seq):
+        motif_seq = m.group(1)
+        g_runs = [len(r) for r in re.findall(r"G{3,}", motif_seq)]
+        if len(g_runs) < 3: continue
+        loops = [len(l) for l in re.findall(r"G{3,}(\w{1,7})G{3,}", motif_seq)]
+        score = min(1.0, sum(g_runs)/15 + sum(1/l if l > 0 else 0.5 for l in loops)/3)
+        results.append({
+            "Class": "G-Triplex",
+            "Subtype": "Three_G-Runs",
+            "Start": m.start()+1,
+            "End": m.end(),
+            "Length": len(motif_seq),
+            "Sequence": wrap(motif_seq),
+            "ScoreMethod": "G3_Stability",
+            "Score": f"{score:.2f}"})
+    return results
+
+# ---- 8. Non-overlapping motif detection pipeline ----
+def find_nonoverlapping_g4_variants(seq):
+    mask = [False]*len(seq)
+    results = []
+
+    # List of (finder_function, motif_label)
+    finders = [
+        find_multimeric_gquadruplex,
+        find_bipartite_gquadruplex,
+        find_gquadruplex,
+        find_relaxed_gquadruplex,
+        find_bulged_gquadruplex,
+        find_imperfect_gquadruplex,
+        find_gtriplex
+    ]
+
+    for finder in finders:
+        motifs = finder(seq)
+        for motif in motifs:
+            region = range(motif["Start"]-1, motif["End"])
+            if not any(mask[i] for i in region):
+                results.append(motif)
+                for i in region:
+                    mask[i] = True  # Mask region
+
+    return sorted(results, key=lambda x: x["Start"])
+
+# ========== 9. I-motif &  VARIANTS ==========
+
 
 def find_imotif(seq):
-    return [{
-        "Class": "i-Motif", "Subtype": "C_Quadruplex", "Start": m.start()+1,
-        "End": m.start()+len(m.group(1)), "Length": len(m.group(1)), "Sequence": wrap(m.group(1)),
-        "ScoreMethod": "iM_Stability", "Score": f"{imotif_score(m.group(1)):.2f}"}
-        for m in overlapping_finditer(r"(?=(C{3,}\w{0,7}C{3,}\w{0,7}C{3,}\w{0,7}C{3,}))", seq)
-        if imotif_score(m.group(1)) >= 0.7]
+    results = []
+    # Pattern for canonical and long-loop: 4 C-runs, loops 1-12 nt (in vivo evidence)
+    pattern = r"(?=(C{3,}\w{1,12}C{3,}\w{1,12}C{3,}\w{1,12}C{3,}))"
+    for m in overlapping_finditer(pattern, seq):
+        motif_seq = m.group(1)
+        score = imotif_score(motif_seq)
+        if score >= 0.7:
+            # Compute loop lengths for subtype assignment
+            loops = [len(l) for l in re.findall(r"C{3,}(\w{1,12})C{3,}", motif_seq)]
+            if loops and all(1 <= l <= 7 for l in loops):
+                subtype = "Canonical_iMotif"
+            elif loops and any(8 <= l <= 12 for l in loops):
+                subtype = "LongLoop_iMotif"
+            else:
+                subtype = "Other_iMotif"
+            results.append({
+                "Class": "i-Motif",
+                "Subtype": subtype,
+                "Start": m.start() + 1,
+                "End": m.start() + len(motif_seq),
+                "Length": len(motif_seq),
+                "Sequence": wrap(motif_seq),
+                "ScoreMethod": "iM_G4HunterStyle",
+                "Score": f"{score:.2f}"
+            })
+    return results
 
 def imotif_score(seq):
     c_runs = [len(r) for r in re.findall(r"C{3,}", seq)]
-    return min(1.0, sum(c_runs)/16 + (seq.count('C')/len(seq))*0.5) if len(c_runs) >= 4 else 0
+    c_fraction = seq.count('C') / len(seq) if seq else 0
+    if len(c_runs) < 4:
+        return 0
+    loops = re.findall(r"C{3,}(\w{1,12})C{3,}", seq)
+    loop_score = sum(1/(len(l)+1) for l in loops) / max(1, len(loops)) if loops else 0.5
+    return min(1.0, sum(c_runs)/16 + c_fraction*0.5 + loop_score*0.3)
 
 def find_hybrids(seq):
     g4_regions = [(m.start()+1, m.end(), m.group(1)) for m in overlapping_finditer(r"(G{3,}\w{1,12}G{3,}\w{1,12}G{3,}\w{1,12}G{3,})", seq)]
