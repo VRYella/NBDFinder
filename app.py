@@ -54,6 +54,77 @@ def fetch_ncbi_entry(db, query, query_type="accession", rettype="fasta", retmax=
 def wrap(seq, width=70):
     return "\n".join([seq[i:i+width] for i in range(0, len(seq), width)])
 
+def parse_multi_fasta(fasta_content: str) -> tuple:
+    """Parse multi-FASTA content and return sequences and names."""
+    seqs, seq_names = [], []
+    cur_seq, cur_name = "", ""
+    
+    for line in fasta_content.strip().splitlines():
+        line = line.strip()
+        if line.startswith(">"):
+            if cur_seq:
+                seqs.append(cur_seq.upper().replace(" ", "").replace("U", "T"))
+                seq_names.append(cur_name)
+            cur_name = line[1:].strip()
+            cur_seq = ""
+        else:
+            cur_seq += line
+    
+    if cur_seq:
+        seqs.append(cur_seq.upper().replace(" ", "").replace("U", "T"))
+        seq_names.append(cur_name)
+    
+    return seqs, seq_names
+
+def validate_multi_fasta(seqs: list, require_same_length: bool = True) -> tuple:
+    """Validate multi-FASTA sequences and return (is_valid, error_message)."""
+    if not seqs:
+        return False, "No sequences found in the input."
+    
+    # Check for valid DNA characters
+    valid_chars = set('ATGC')
+    for i, seq in enumerate(seqs):
+        invalid_chars = set(seq) - valid_chars
+        if invalid_chars:
+            return False, f"Sequence {i+1} contains invalid characters: {', '.join(sorted(invalid_chars))}"
+    
+    # Check length consistency if required
+    if require_same_length:
+        lengths = [len(seq) for seq in seqs]
+        if len(set(lengths)) > 1:
+            return False, f"All sequences must be the same length. Found lengths: {sorted(set(lengths))}"
+    
+    return True, ""
+
+def get_example_ncbi_queries():
+    """Return example NCBI queries for famous motif loci."""
+    return {
+        "G-quadruplex regions": {
+            "query": "G4 motif OR G-quadruplex OR telomere",
+            "description": "Sequences containing G-quadruplex forming regions"
+        },
+        "Z-DNA forming sequences": {
+            "query": "Z-DNA OR alternating purine pyrimidine",
+            "description": "Sequences with Z-DNA forming potential"
+        },
+        "R-loop regions": {
+            "query": "R-loop OR GC skew OR transcription bubble",
+            "description": "Regions prone to R-loop formation"
+        },
+        "Cruciform DNA": {
+            "query": "cruciform OR inverted repeat OR palindromic sequence",
+            "description": "Sequences that can form cruciform structures"
+        },
+        "Triplex DNA": {
+            "query": "triplex DNA OR mirror repeat OR H-DNA",
+            "description": "Sequences capable of triplex formation"
+        },
+        "Human telomere": {
+            "query": "NC_000001.11[1:10000] OR human telomere TTAGGG",
+            "description": "Human telomeric sequences with G-quadruplex motifs"
+        }
+    }
+
 # Import motif functions
 try:
     from motifs import (
@@ -86,6 +157,7 @@ CTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCT
 # Session state initialization
 for k, v in {
     'seq': "",
+    'multi_seqs': [],
     'df': pd.DataFrame(),
     'motif_results': [],
     'motif_results_nonoverlap': [],
@@ -159,40 +231,175 @@ elif page == "Upload & Analyze":
     st.header("Sequence Input")
     with st.expander("Input Options", expanded=True):
         input_method = st.radio("Select input method:", 
-            ["File Upload", "Example Sequence", "Paste Sequence", "NCBI Fetch"])
-        if input_method == "File Upload":
-            fasta_file = st.file_uploader("Upload FASTA file", type=["fa", "fasta", "txt"])
+            ["Single FASTA Upload", "Multi-FASTA Upload", "Example Sequence", "Paste Sequence", "NCBI Fetch"])
+        
+        # Single FASTA Upload
+        if input_method == "Single FASTA Upload":
+            st.markdown("**Upload a single FASTA file** - *Supports .fa, .fasta, .txt files up to 200MB*")
+            fasta_file = st.file_uploader(
+                "Choose file", 
+                type=["fa", "fasta", "txt"],
+                help="Upload a single FASTA file containing one DNA sequence"
+            )
             if fasta_file:
                 try:
-                    seq = parse_fasta(fasta_file.read().decode("utf-8"))
-                    st.session_state.seq = seq
-                    st.success(f"Loaded sequence: {len(seq):,} bp")
+                    content = fasta_file.read().decode("utf-8")
+                    seq = parse_fasta(content)
+                    if not seq:
+                        st.error("No valid DNA sequence found in the file.")
+                    else:
+                        st.session_state.seq = seq
+                        st.session_state.multi_seqs = []  # Clear multi-sequence data
+                        st.success(f"✅ Single sequence loaded: {len(seq):,} bp")
+                        st.info(f"**GC Content:** {gc_content(seq):.1f}%")
                 except Exception as e:
-                    st.error(f"Error reading file: {str(e)}")
-        elif input_method == "Example Sequence":
-            if st.button("Load Example"):
-                st.session_state.seq = parse_fasta(EXAMPLE_FASTA)
-                st.success(f"Example loaded: {len(st.session_state.seq):,} bp")
-                st.code(EXAMPLE_FASTA, language="fasta")
-        elif input_method == "Paste Sequence":
-            seq_input = st.text_area("Paste DNA Sequence (FASTA or raw):", height=150)
-            if seq_input:
+                    st.error(f"❌ Error reading file: {str(e)}")
+        
+        # Multi-FASTA Upload  
+        elif input_method == "Multi-FASTA Upload":
+            st.markdown("**Upload a multi-FASTA file** - *All sequences must be the same length*")
+            fasta_file = st.file_uploader(
+                "Choose multi-FASTA file", 
+                type=["fa", "fasta", "txt"],
+                help="Upload a FASTA file containing multiple DNA sequences of equal length"
+            )
+            if fasta_file:
                 try:
-                    st.session_state.seq = parse_fasta(seq_input)
-                    st.success(f"Sequence parsed: {len(st.session_state.seq):,} bp")
+                    content = fasta_file.read().decode("utf-8")
+                    seqs, seq_names = parse_multi_fasta(content)
+                    is_valid, error_msg = validate_multi_fasta(seqs, require_same_length=True)
+                    
+                    if not is_valid:
+                        st.error(f"❌ {error_msg}")
+                    else:
+                        st.session_state.multi_seqs = seqs
+                        st.session_state.seq = ""  # Clear single sequence data
+                        seq_len = len(seqs[0]) if seqs else 0
+                        avg_gc = np.mean([gc_content(seq) for seq in seqs])
+                        st.success(f"✅ Multi-FASTA loaded: {len(seqs)} sequences, each {seq_len:,} bp")
+                        st.info(f"**Average GC Content:** {avg_gc:.1f}%")
+                        
+                        # Show sequence summary
+                        with st.expander("📋 Sequence Summary", expanded=False):
+                            for i, (name, seq) in enumerate(zip(seq_names, seqs)):
+                                st.text(f"{i+1}. {name[:50]}{'...' if len(name) > 50 else ''} ({len(seq)} bp)")
+                                
                 except Exception as e:
-                    st.error(f"Invalid sequence: {str(e)}")
+                    st.error(f"❌ Error processing file: {str(e)}")
+        
+        # Example Sequence
+        elif input_method == "Example Sequence":
+            st.markdown("**Load example sequences** - *Pre-defined sequences with known motifs*")
+            example_type = st.radio("Choose example type:", ["Single Sequence", "Multi-FASTA"])
+            
+            if example_type == "Single Sequence":
+                if st.button("Load Single Example", type="secondary"):
+                    st.session_state.seq = parse_fasta(EXAMPLE_FASTA)
+                    st.session_state.multi_seqs = []
+                    st.success(f"✅ Single example loaded: {len(st.session_state.seq):,} bp")
+                    st.code(EXAMPLE_FASTA, language="fasta")
+            else:
+                # Multi-FASTA example
+                EXAMPLE_MULTI_FASTA = """>Example_Seq_1
+ATCGATCGATCGAAAATTTTATTTAAATTTAAATTTGGGTTAGGGTTAGGGTTAGGGCCCCCTCCCCCTCCCCCTCCCC
+>Example_Seq_2  
+ATCGATCGCGCGCGCGATCGCACACACACAGCTGCTGCTGCTTGGGAAAGGGGAAGGGTTAGGGAAAGGGGTTT
+>Example_Seq_3
+GGGTTTAGGGGGGAGGGGCTGCTGCTGCATGCGGGAAGGGAGGGTAGAGGGTCCGGTAGGAACCCCTAACCCCTAA"""
+                
+                if st.button("Load Multi-FASTA Example", type="secondary"):
+                    seqs, seq_names = parse_multi_fasta(EXAMPLE_MULTI_FASTA)
+                    st.session_state.multi_seqs = seqs
+                    st.session_state.seq = ""
+                    st.success(f"✅ Multi-FASTA example loaded: {len(seqs)} sequences")
+                    st.code(EXAMPLE_MULTI_FASTA, language="fasta")
+        
+        # Paste Sequence
+        elif input_method == "Paste Sequence":
+            st.markdown("**Paste DNA sequences** - *Supports both raw sequence and FASTA format*")
+            sequence_type = st.radio("Choose sequence type:", ["Single Sequence", "Multi-FASTA"])
+            
+            if sequence_type == "Single Sequence":
+                seq_input = st.text_area(
+                    "Paste single DNA sequence (FASTA or raw):", 
+                    height=150,
+                    help="Paste a single DNA sequence in FASTA format or as raw sequence"
+                )
+                if seq_input.strip():
+                    try:
+                        seq = parse_fasta(seq_input)
+                        if not seq:
+                            st.error("❌ No valid DNA sequence found in the input.")
+                        else:
+                            st.session_state.seq = seq
+                            st.session_state.multi_seqs = []
+                            st.success(f"✅ Single sequence parsed: {len(seq):,} bp")
+                            st.info(f"**GC Content:** {gc_content(seq):.1f}%")
+                    except Exception as e:
+                        st.error(f"❌ Invalid sequence: {str(e)}")
+            else:
+                seq_input = st.text_area(
+                    "Paste multi-FASTA sequences:", 
+                    height=200,
+                    help="Paste multiple DNA sequences in FASTA format"
+                )
+                if seq_input.strip():
+                    try:
+                        seqs, seq_names = parse_multi_fasta(seq_input)
+                        is_valid, error_msg = validate_multi_fasta(seqs, require_same_length=False)
+                        
+                        if not is_valid:
+                            st.error(f"❌ {error_msg}")
+                        else:
+                            st.session_state.multi_seqs = seqs
+                            st.session_state.seq = ""
+                            lengths = [len(seq) for seq in seqs]
+                            avg_gc = np.mean([gc_content(seq) for seq in seqs])
+                            st.success(f"✅ Multi-FASTA parsed: {len(seqs)} sequences")
+                            st.info(f"**Sequence lengths:** {min(lengths)}-{max(lengths)} bp | **Average GC:** {avg_gc:.1f}%")
+                            
+                            if len(set(lengths)) > 1:
+                                st.warning("⚠️ Sequences have different lengths - some analyses may be limited")
+                                
+                    except Exception as e:
+                        st.error(f"❌ Error parsing sequences: {str(e)}")
+        
+        # NCBI Fetch  
         elif input_method == "NCBI Fetch":
-            st.markdown("Fetch a sequence from NCBI by accession, gene name, or custom query.")
+            st.markdown("**Fetch sequences from NCBI** - *Retrieve sequences by accession, gene name, or custom query*")
+            
+            # Example queries section
+            with st.expander("💡 Example Queries for Famous Motif Loci", expanded=False):
+                example_queries = get_example_ncbi_queries()
+                for category, info in example_queries.items():
+                    st.markdown(f"**{category}:**")
+                    st.code(info["query"], language="text")
+                    st.caption(info["description"])
+                    st.divider()
+            
             ncbi_db = st.selectbox("NCBI Database", ["nucleotide", "protein", "gene"])
             ncbi_query_type = st.radio("Query Type", ["Accession", "Gene Name", "Custom Query"])
-            ncbi_query = st.text_input("Enter your query (accession, gene name, or Entrez term):")
-            ncbi_rettype = st.selectbox("Return format", ["fasta", "gb"])
-            ncbi_retmax = st.number_input("Max records (for gene/custom)", min_value=1, max_value=20, value=5)
-            if st.button("Fetch from NCBI"):
+            ncbi_query = st.text_input(
+                "Enter your query:",
+                help="Enter accession number, gene name, or custom Entrez query"
+            )
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                ncbi_rettype = st.selectbox("Return format", ["fasta", "gb"])
+            with col2:
+                ncbi_retmax = st.number_input(
+                    "Max records", 
+                    min_value=1, 
+                    max_value=20, 
+                    value=5,
+                    help="Maximum number of sequences to fetch"
+                )
+            
+            if st.button("🔍 Fetch from NCBI", type="primary"):
                 if ncbi_query:
                     qtype = {"Accession": "accession", "Gene Name": "gene", "Custom Query": "custom"}[ncbi_query_type]
-                    with st.spinner("Contacting NCBI..."):
+                    with st.spinner("🔄 Contacting NCBI..."):
                         records = fetch_ncbi_entry(
                             db=ncbi_db,
                             query=ncbi_query,
@@ -201,45 +408,112 @@ elif page == "Upload & Analyze":
                             retmax=ncbi_retmax
                         )
                     if not records:
-                        st.error("No sequence found for this query.")
-                    else:
+                        st.error("❌ No sequence found for this query.")
+                    elif len(records) == 1:
+                        # Single sequence
                         seq = str(records[0].seq)
                         st.session_state.seq = seq
-                        st.success(f"Fetched sequence: {len(seq):,} bp")
+                        st.session_state.multi_seqs = []
+                        st.success(f"✅ Single sequence fetched: {len(seq):,} bp")
+                        st.info(f"**ID:** {records[0].id} | **GC Content:** {gc_content(seq):.1f}%")
                         st.code(f">{records[0].id}\n{wrap(seq)}", language="fasta")
-                else:
-                    st.warning("Enter a query before fetching.")
-
-    if st.session_state.seq:
-        st.subheader("Sequence Preview")
-        col1, col2 = st.columns(2)
-        with col1:
-            st.text(wrap(st.session_state.seq[:500]))
-        with col2:
-            st.metric("GC Content", f"{gc_content(st.session_state.seq):.1f}%")
-            st.metric("Sequence Length", f"{len(st.session_state.seq):,} bp")
-        if st.button("Run Full Analysis", type="primary"):
-            with st.spinner("Analyzing sequence for 12 motif types..."):
-                try:
-                    st.session_state.motif_results = all_motifs(st.session_state.seq)
-                    # Only keep non-overlapping results for all visual sections except Download
-                    st.session_state.motif_results_nonoverlap = select_best_nonoverlapping_motifs(
-                        st.session_state.motif_results
-                    )
-                    st.session_state.df = pd.DataFrame(st.session_state.motif_results_nonoverlap)
-                    st.session_state.hotspots = find_hotspots(
-                        st.session_state.motif_results_nonoverlap,
-                        len(st.session_state.seq)
-                    )
-                    if st.session_state.motif_results_nonoverlap:
-                        st.success(f"Found {len(st.session_state.motif_results_nonoverlap)} motifs across {st.session_state.df['Class'].nunique()} classes")
-                        st.session_state.analysis_status = "Complete"
                     else:
-                        st.warning("No motifs detected")
-                        st.session_state.analysis_status = "Complete"
-                except Exception as e:
-                    st.error(f"Analysis failed: {str(e)}")
-                    st.session_state.analysis_status = "Error"
+                        # Multiple sequences
+                        seqs = [str(record.seq) for record in records]
+                        st.session_state.multi_seqs = seqs
+                        st.session_state.seq = ""
+                        lengths = [len(seq) for seq in seqs]
+                        avg_gc = np.mean([gc_content(seq) for seq in seqs])
+                        st.success(f"✅ Multiple sequences fetched: {len(seqs)} sequences")
+                        st.info(f"**Lengths:** {min(lengths)}-{max(lengths)} bp | **Average GC:** {avg_gc:.1f}%")
+                        
+                        # Show summary
+                        with st.expander("📋 Fetched Sequences", expanded=False):
+                            for i, record in enumerate(records):
+                                st.text(f"{i+1}. {record.id} ({len(record.seq)} bp)")
+                else:
+                    st.warning("⚠️ Please enter a query before fetching.")
+
+    # Analysis section
+    has_single_seq = bool(st.session_state.seq)
+    has_multi_seqs = bool(st.session_state.multi_seqs)
+    
+    if has_single_seq or has_multi_seqs:
+        st.subheader("🧬 Sequence Preview")
+        
+        if has_single_seq:
+            col1, col2 = st.columns(2)
+            with col1:
+                st.text_area("Single Sequence Preview:", value=wrap(st.session_state.seq[:500]), height=150, disabled=True)
+            with col2:
+                st.metric("GC Content", f"{gc_content(st.session_state.seq):.1f}%")
+                st.metric("Sequence Length", f"{len(st.session_state.seq):,} bp")
+                
+        if has_multi_seqs:
+            col1, col2 = st.columns(2)
+            with col1:
+                st.metric("Number of Sequences", len(st.session_state.multi_seqs))
+                lengths = [len(seq) for seq in st.session_state.multi_seqs]
+                st.metric("Sequence Lengths", f"{min(lengths)}-{max(lengths)} bp")
+            with col2:
+                avg_gc = np.mean([gc_content(seq) for seq in st.session_state.multi_seqs])
+                st.metric("Average GC Content", f"{avg_gc:.1f}%")
+                total_bp = sum(lengths)
+                st.metric("Total Base Pairs", f"{total_bp:,} bp")
+        
+        # Analysis button
+        if st.button("🚀 Run Full Analysis", type="primary"):
+            if has_single_seq:
+                # Single sequence analysis
+                with st.spinner("🔬 Analyzing single sequence for 12 motif types..."):
+                    try:
+                        st.session_state.motif_results = all_motifs(st.session_state.seq)
+                        st.session_state.motif_results_nonoverlap = select_best_nonoverlapping_motifs(
+                            st.session_state.motif_results
+                        )
+                        st.session_state.df = pd.DataFrame(st.session_state.motif_results_nonoverlap)
+                        st.session_state.hotspots = find_hotspots(
+                            st.session_state.motif_results_nonoverlap,
+                            len(st.session_state.seq)
+                        )
+                        if st.session_state.motif_results_nonoverlap:
+                            st.success(f"✅ Found {len(st.session_state.motif_results_nonoverlap)} motifs across {st.session_state.df['Class'].nunique()} classes")
+                            st.session_state.analysis_status = "Complete"
+                        else:
+                            st.warning("⚠️ No motifs detected")
+                            st.session_state.analysis_status = "Complete"
+                    except Exception as e:
+                        st.error(f"❌ Analysis failed: {str(e)}")
+                        st.session_state.analysis_status = "Error"
+            
+            elif has_multi_seqs:
+                # Multi-sequence analysis
+                with st.spinner("🔬 Analyzing multiple sequences for motif patterns..."):
+                    try:
+                        # Store results for multi-sequence analysis (similar to Advanced page logic)
+                        all_results = []
+                        for i, seq in enumerate(st.session_state.multi_seqs):
+                            seq_results = all_motifs(seq)
+                            for result in seq_results:
+                                result['Sequence_ID'] = i + 1
+                            all_results.extend(seq_results)
+                        
+                        st.session_state.motif_results = all_results
+                        st.session_state.motif_results_nonoverlap = select_best_nonoverlapping_motifs(all_results)
+                        st.session_state.df = pd.DataFrame(st.session_state.motif_results_nonoverlap)
+                        
+                        if all_results:
+                            unique_classes = set(result['Class'] for result in all_results)
+                            st.success(f"✅ Found {len(all_results)} total motifs across {len(unique_classes)} classes in {len(st.session_state.multi_seqs)} sequences")
+                            st.session_state.analysis_status = "Complete"
+                        else:
+                            st.warning("⚠️ No motifs detected in any sequence")
+                            st.session_state.analysis_status = "Complete"
+                    except Exception as e:
+                        st.error(f"❌ Multi-sequence analysis failed: {str(e)}")
+                        st.session_state.analysis_status = "Error"
+    else:
+        st.info("👆 Please select an input method and load sequences to begin analysis.")
 
 # --- Results page (non-overlapping only) ---
 # --- Results page (non-overlapping only) ---
