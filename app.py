@@ -154,38 +154,168 @@ if page == "Home":
         """, unsafe_allow_html=True
     )
 
-# --- Upload & Analyze ---
 elif page == "Upload & Analyze":
     st.header("Sequence Input")
     with st.expander("Input Options", expanded=True):
-        input_method = st.radio("Select input method:", 
-            ["File Upload", "Example Sequence", "Paste Sequence", "NCBI Fetch"])
-        if input_method == "File Upload":
-            fasta_file = st.file_uploader("Upload FASTA file", type=["fa", "fasta", "txt"])
+        input_method = st.radio(
+            "Select input method:",
+            [
+                "Single FASTA Upload",
+                "Multi-FASTA Upload",
+                "Example Sequence",
+                "Paste Sequence",
+                "NCBI Fetch"
+            ]
+        )
+        st.caption("Supported formats: .fa, .fasta, .txt | Limit: 200MB per file.")
+
+        # --- Single FASTA Upload ---
+        if input_method == "Single FASTA Upload":
+            st.markdown("Upload a single DNA sequence in FASTA, FA or TXT format.")
+            fasta_file = st.file_uploader(
+                "Drag and drop single FASTA file here", 
+                type=["fa", "fasta", "txt"], 
+                accept_multiple_files=False
+            )
             if fasta_file:
                 try:
                     seq = parse_fasta(fasta_file.read().decode("utf-8"))
                     st.session_state.seq = seq
+                    st.session_state.multi_seqs = []
                     st.success(f"Loaded sequence: {len(seq):,} bp")
                 except Exception as e:
                     st.error(f"Error reading file: {str(e)}")
+        
+        # --- Multi-FASTA Upload ---
+        elif input_method == "Multi-FASTA Upload":
+            st.markdown("Upload a multi-FASTA file (multiple entries, all the same length).")
+            multi_fasta_file = st.file_uploader(
+                "Drag and drop multi-FASTA file here",
+                type=["fa", "fasta", "txt"],
+                accept_multiple_files=False
+            )
+            if multi_fasta_file:
+                try:
+                    content = multi_fasta_file.read().decode("utf-8")
+                    seqs, seq_names = [], []
+                    cur_seq, cur_name = "", ""
+                    for line in content.splitlines():
+                        if line.startswith(">"):
+                            if cur_seq:
+                                seqs.append(cur_seq.upper())
+                                seq_names.append(cur_name)
+                            cur_name = line.strip().lstrip(">")
+                            cur_seq = ""
+                        else:
+                            cur_seq += line.strip()
+                    if cur_seq:
+                        seqs.append(cur_seq.upper())
+                        seq_names.append(cur_name)
+                    if not seqs:
+                        st.error("No sequences found in file.")
+                    elif len(set(len(s) for s in seqs)) != 1:
+                        st.error("All sequences in the multi-FASTA file must be of the same length!")
+                    else:
+                        st.session_state.multi_seqs = seqs
+                        st.session_state.seq = ""
+                        st.success(f"Loaded {len(seqs)} sequences, each {len(seqs[0])} bp.")
+                except Exception as e:
+                    st.error(f"Error reading multi-FASTA file: {str(e)}")
+
+        # --- Example Sequence ---
         elif input_method == "Example Sequence":
-            if st.button("Load Example"):
-                st.session_state.seq = parse_fasta(EXAMPLE_FASTA)
-                st.success(f"Example loaded: {len(st.session_state.seq):,} bp")
-                st.code(EXAMPLE_FASTA, language="fasta")
+            example_type = st.radio("Example type:", ["Single Sequence", "Multi-FASTA"])
+            if example_type == "Single Sequence":
+                if st.button("Load Example"):
+                    st.session_state.seq = parse_fasta(EXAMPLE_FASTA)
+                    st.session_state.multi_seqs = []
+                    st.success(f"Example loaded: {len(st.session_state.seq):,} bp")
+                    st.code(EXAMPLE_FASTA, language="fasta")
+            else:
+                multi_example = """>Example_Seq1
+ATCGATCGATCGAAAATTTTATTTAAATTTAAATTTGGGTTAGGGTTAGGGTTAGGGCCCCCTCCCCCTCCCCCTCCCC
+ATCGATCGCGCGCGCGATCGCACACACACAGCTGCTGCTGCTTGGGAAAGGGGAAGGGTTAGGGAAAGGGGTTT
+>Example_Seq2
+GGGTTTAGGGGGGAGGGGCTGCTGCTGCATGCGGGAAGGGAGGGTAGAGGGTCCGGTAGGAACCCCTAACCCCTAA
+GAAAGAAGAAGAAGAAGAAGAAAGGAAGGAAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGG
+"""
+                if st.button("Load Multi-FASTA Example"):
+                    seqs, seq_names = [], []
+                    cur_seq, cur_name = "", ""
+                    for line in multi_example.splitlines():
+                        if line.startswith(">"):
+                            if cur_seq:
+                                seqs.append(cur_seq.upper())
+                                seq_names.append(cur_name)
+                            cur_name = line.strip().lstrip(">")
+                            cur_seq = ""
+                        else:
+                            cur_seq += line.strip()
+                    if cur_seq:
+                        seqs.append(cur_seq.upper())
+                        seq_names.append(cur_name)
+                    if not seqs:
+                        st.error("No sequences found in example.")
+                    elif len(set(len(s) for s in seqs)) != 1:
+                        st.error("All sequences in the example multi-FASTA must be of the same length!")
+                    else:
+                        st.session_state.multi_seqs = seqs
+                        st.session_state.seq = ""
+                        st.success(f"Loaded {len(seqs)} example sequences, each {len(seqs[0])} bp.")
+                        st.code(multi_example, language="fasta")
+
+        # --- Paste Sequence ---
         elif input_method == "Paste Sequence":
+            paste_type = st.radio("Paste type:", ["Single Sequence", "Multi-FASTA"])
             seq_input = st.text_area("Paste DNA Sequence (FASTA or raw):", height=150)
             if seq_input:
-                try:
-                    st.session_state.seq = parse_fasta(seq_input)
-                    st.success(f"Sequence parsed: {len(st.session_state.seq):,} bp")
-                except Exception as e:
-                    st.error(f"Invalid sequence: {str(e)}")
+                if paste_type == "Single Sequence":
+                    try:
+                        st.session_state.seq = parse_fasta(seq_input)
+                        st.session_state.multi_seqs = []
+                        st.success(f"Sequence parsed: {len(st.session_state.seq):,} bp")
+                    except Exception as e:
+                        st.error(f"Invalid sequence: {str(e)}")
+                else:
+                    try:
+                        seqs, seq_names = [], []
+                        cur_seq, cur_name = "", ""
+                        for line in seq_input.splitlines():
+                            if line.startswith(">"):
+                                if cur_seq:
+                                    seqs.append(cur_seq.upper())
+                                    seq_names.append(cur_name)
+                                cur_name = line.strip().lstrip(">")
+                                cur_seq = ""
+                            else:
+                                cur_seq += line.strip()
+                        if cur_seq:
+                            seqs.append(cur_seq.upper())
+                            seq_names.append(cur_name)
+                        if not seqs:
+                            st.error("No sequences found in pasted text.")
+                        elif len(set(len(s) for s in seqs)) != 1:
+                            st.error("All sequences must be of the same length in multi-FASTA paste!")
+                        else:
+                            st.session_state.multi_seqs = seqs
+                            st.session_state.seq = ""
+                            st.success(f"Parsed {len(seqs)} sequences from pasted text, each {len(seqs[0])} bp.")
+                    except Exception as e:
+                        st.error(f"Invalid multi-FASTA: {str(e)}")
+
+        # --- NCBI Fetch ---
         elif input_method == "NCBI Fetch":
             st.markdown("Fetch a sequence from NCBI by accession, gene name, or custom query.")
             ncbi_db = st.selectbox("NCBI Database", ["nucleotide", "protein", "gene"])
             ncbi_query_type = st.radio("Query Type", ["Accession", "Gene Name", "Custom Query"])
+            motif_examples = {
+                "G-quadruplex": "NR_003287.2 (human telomerase RNA)",
+                "Z-DNA": "NM_001126112.2 (human ADAR1 gene)",
+                "R-loop": "NR_024540.1 (human SNRPN gene)"
+            }
+            with st.expander("Famous motif examples"):
+                for motif, example in motif_examples.items():
+                    st.write(f"**{motif}**: `{example}`")
             ncbi_query = st.text_input("Enter your query (accession, gene name, or Entrez term):")
             ncbi_rettype = st.selectbox("Return format", ["fasta", "gb"])
             ncbi_retmax = st.number_input("Max records (for gene/custom)", min_value=1, max_value=20, value=5)
@@ -205,11 +335,14 @@ elif page == "Upload & Analyze":
                     else:
                         seq = str(records[0].seq)
                         st.session_state.seq = seq
+                        st.session_state.multi_seqs = []
                         st.success(f"Fetched sequence: {len(seq):,} bp")
                         st.code(f">{records[0].id}\n{wrap(seq)}", language="fasta")
                 else:
                     st.warning("Enter a query before fetching.")
 
+    # --- Sequence Preview and Analysis Trigger ---
+    # Use single or multi sequence preview depending on what's loaded
     if st.session_state.seq:
         st.subheader("Sequence Preview")
         col1, col2 = st.columns(2)
@@ -222,7 +355,6 @@ elif page == "Upload & Analyze":
             with st.spinner("Analyzing sequence for 12 motif types..."):
                 try:
                     st.session_state.motif_results = all_motifs(st.session_state.seq)
-                    # Only keep non-overlapping results for all visual sections except Download
                     st.session_state.motif_results_nonoverlap = select_best_nonoverlapping_motifs(
                         st.session_state.motif_results
                     )
@@ -240,7 +372,12 @@ elif page == "Upload & Analyze":
                 except Exception as e:
                     st.error(f"Analysis failed: {str(e)}")
                     st.session_state.analysis_status = "Error"
-
+    elif st.session_state.multi_seqs:
+        st.subheader("Multi-FASTA Sequence Preview")
+        st.write(f"Loaded {len(st.session_state.multi_seqs)} sequences, each {len(st.session_state.multi_seqs[0])} bp.")
+        # Optionally show first sequence
+        st.text(wrap(st.session_state.multi_seqs[0][:500]))
+        # You can trigger your multi-sequence analysis here or in the Advanced page
 # --- Results page (non-overlapping only) ---
 # --- Results page (non-overlapping only) ---
 elif page == "Results":
