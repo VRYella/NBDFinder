@@ -4,11 +4,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import io
+from collections import Counter
 from datetime import datetime
 from PIL import Image
 from Bio import Entrez, SeqIO
 
-# Motif functions (import your motifs.py or paste as a module)
+# Import motif functions (from your motifs.py)
 from motifs import (
     all_motifs, 
     find_hotspots,
@@ -25,6 +26,26 @@ st.set_page_config(
     page_icon="🧬",
     menu_items={'About': "Non-B DNA Motif Finder | Developed by Dr. Venkata Rajesh Yella"}
 )
+
+EXAMPLE_FASTA = """>Example_Sequence
+ATCGATCGATCGAAAATTTTATTTAAATTTAAATTTGGGTTAGGGTTAGGGTTAGGGCCCCCTCCCCCTCCCCCTCCCC
+ATCGATCGCGCGCGCGATCGCACACACACAGCTGCTGCTGCTTGGGAAAGGGGAAGGGTTAGGGAAAGGGGTTT
+GGGTTTAGGGGGGAGGGGCTGCTGCTGCATGCGGGAAGGGAGGGTAGAGGGTCCGGTAGGAACCCCTAACCCCTAA
+GAAAGAAGAAGAAGAAGAAGAAAGGAAGGAAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGG
+CGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGC
+GAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAA
+CTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCT
+"""
+EXAMPLE_MULTI_FASTA = """>Seq1
+ATCGATCGATCGAAAATTTTATTTAAATTTAAATTTGGGTTAGGGTTAGGGTTAGGGCCCCCTCCCCCTCCCCCTCCCC
+ATCGATCGCGCGCGCGATCGCACACACACAGCTGCTGCTGCTTGGGAAAGGGGAAGGGTTAGGGAAAGGGGTTT
+>Seq2
+GGGTTTAGGGGGGAGGGGCTGCTGCTGCATGCGGGAAGGGAGGGTAGAGGGTCCGGTAGGAACCCCTAACCCCTAA
+GAAAGAAGAAGAAGAAGAAGAAAGGAAGGAAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGG
+>Seq3
+CGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGC
+GAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAA
+"""
 
 # --- Session state initialization ---
 for k, v in {
@@ -58,7 +79,10 @@ page = st.sidebar.radio("", list(PAGES.keys()))
 # --- Home page ---
 if page == "Home":
     st.markdown("<h1 style='color:#0A3D62;'>Non-B DNA Motif Finder</h1>", unsafe_allow_html=True)
-    st.image("nbd3.png", use_container_width=True)
+    try:
+        st.image("nbd3.png", use_container_width=True)
+    except Exception:
+        pass
     st.markdown(
         """
         <div style='background: #eaf6fb; border-radius: 14px; padding: 22px 22px; box-shadow: 0px 4px 16px #e0e5ea; font-size: 18px;'>
@@ -76,11 +100,13 @@ if page == "Home":
 # --- Upload & Analyze page ---
 elif page == "Upload & Analyze":
     st.markdown("<h2 style='color:#0A3D62;'>Sequence Input</h2>", unsafe_allow_html=True)
-    st.markdown("Supports <b>multi-FASTA</b> (multiple sequences) and single FASTA. Paste, upload, or fetch from NCBI.", unsafe_allow_html=True)
+    st.markdown("Supports <b>multi-FASTA</b> (multiple sequences) and single FASTA. Paste, upload, select example, or fetch from NCBI.", unsafe_allow_html=True)
     st.caption("Supported formats: .fa, .fasta, .txt | Limit: 200MB/file.")
+
     input_method = st.radio("Input method:", [
         "Upload FASTA / multi-FASTA file",
         "Paste Sequence(s)",
+        "Example Sequence",
         "NCBI Fetch"
     ])
     
@@ -136,6 +162,32 @@ elif page == "Upload & Analyze":
                     st.caption(f"...and {len(seqs)-3} more.")
             else:
                 st.warning("No sequences found.")
+    elif input_method == "Example Sequence":
+        ex_type = st.radio("Example type:", ["Single Example", "Multi-FASTA Example"])
+        if ex_type == "Single Example":
+            if st.button("Load Single Example"):
+                seqs = [parse_fasta(EXAMPLE_FASTA)]
+                names = ["Example_Sequence"]
+                st.success("Single example sequence loaded.")
+                st.code(EXAMPLE_FASTA, language="fasta")
+        else:
+            if st.button("Load Multi-FASTA Example"):
+                seqs, names = [], []
+                cur_seq, cur_name = "", ""
+                for line in EXAMPLE_MULTI_FASTA.splitlines():
+                    if line.startswith(">"):
+                        if cur_seq:
+                            seqs.append(parse_fasta(cur_seq))
+                            names.append(cur_name if cur_name else f"Seq{len(seqs)}")
+                        cur_name = line.strip().lstrip(">")
+                        cur_seq = ""
+                    else:
+                        cur_seq += line.strip()
+                if cur_seq:
+                    seqs.append(parse_fasta(cur_seq))
+                    names.append(cur_name if cur_name else f"Seq{len(seqs)}")
+                st.success(f"Multi-FASTA example loaded with {len(seqs)} sequences.")
+                st.code(EXAMPLE_MULTI_FASTA, language="fasta")
     elif input_method == "NCBI Fetch":
         db = st.selectbox("NCBI Database", ["nucleotide", "protein", "gene"])
         query_type = st.radio("Query Type", ["Accession", "Gene Name", "Custom Query"])
@@ -222,7 +274,7 @@ elif page == "Results":
             st.markdown("#### Motif Type Distribution")
             fig, ax = plt.subplots(figsize=(8,6))
             class_counts = df['Class'].value_counts().reindex(motif_class_order, fill_value=0)
-            bars = ax.barh(class_counts.index, class_counts.values, color=[MOTIF_COLORS.get(c, "#888") for c in class_counts.index])
+            ax.barh(class_counts.index, class_counts.values, color=[MOTIF_COLORS.get(c, "#888") for c in class_counts.index])
             ax.set_xlabel("Motif Count")
             st.pyplot(fig)
             st.markdown("<br>", unsafe_allow_html=True)
