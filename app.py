@@ -120,8 +120,7 @@ PAGES = {
     "Results": "View detected motifs and statistics", 
     "Visualization": "Graphical representation of motifs",
     "Download": "Export results for further analysis",
-    "Documentation": "Scientific methods and references",
-    "Advanced": "Advanced sequence/multifasta analysis"
+    "Documentation": "Scientific methods and references"
 }
 
 # --- Sidebar navigation ---
@@ -181,7 +180,7 @@ elif page == "Upload & Analyze":
         
         # --- Multi-FASTA Upload ---
         elif input_method == "Multi-FASTA Upload":
-            st.markdown("Upload a multi-FASTA file (multiple entries, all the same length).")
+            st.markdown("Upload a multi-FASTA file (multiple entries).")
             multi_fasta_file = st.file_uploader(
                 "Drag and drop multi-FASTA file here",
                 type=["fa", "fasta", "txt"],
@@ -206,12 +205,10 @@ elif page == "Upload & Analyze":
                         seq_names.append(cur_name)
                     if not seqs:
                         st.error("No sequences found in file.")
-                    elif len(set(len(s) for s in seqs)) != 1:
-                        st.error("All sequences in the multi-FASTA file must be of the same length!")
                     else:
                         st.session_state.multi_seqs = seqs
                         st.session_state.seq = ""
-                        st.success(f"Loaded {len(seqs)} sequences, each {len(seqs[0])} bp.")
+                        st.success(f"Loaded {len(seqs)} sequences.")
                 except Exception as e:
                     st.error(f"Error reading multi-FASTA file: {str(e)}")
 
@@ -249,12 +246,10 @@ GAAAGAAGAAGAAGAAGAAGAAAGGAAGGAAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGG
                         seq_names.append(cur_name)
                     if not seqs:
                         st.error("No sequences found in example.")
-                    elif len(set(len(s) for s in seqs)) != 1:
-                        st.error("All sequences in the example multi-FASTA must be of the same length!")
                     else:
                         st.session_state.multi_seqs = seqs
                         st.session_state.seq = ""
-                        st.success(f"Loaded {len(seqs)} example sequences, each {len(seqs[0])} bp.")
+                        st.success(f"Loaded {len(seqs)} example sequences.")
                         st.code(multi_example, language="fasta")
 
         # --- Paste Sequence ---
@@ -287,12 +282,10 @@ GAAAGAAGAAGAAGAAGAAGAAAGGAAGGAAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGG
                             seq_names.append(cur_name)
                         if not seqs:
                             st.error("No sequences found in pasted text.")
-                        elif len(set(len(s) for s in seqs)) != 1:
-                            st.error("All sequences must be of the same length in multi-FASTA paste!")
                         else:
                             st.session_state.multi_seqs = seqs
                             st.session_state.seq = ""
-                            st.success(f"Parsed {len(seqs)} sequences from pasted text, each {len(seqs[0])} bp.")
+                            st.success(f"Parsed {len(seqs)} sequences from pasted text.")
                     except Exception as e:
                         st.error(f"Invalid multi-FASTA: {str(e)}")
 
@@ -366,9 +359,9 @@ GAAAGAAGAAGAAGAAGAAGAAAGGAAGGAAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGG
                     st.session_state.analysis_status = "Error"
     elif st.session_state.multi_seqs:
         st.subheader("Multi-FASTA Sequence Preview")
-        st.write(f"Loaded {len(st.session_state.multi_seqs)} sequences, each {len(st.session_state.multi_seqs[0])} bp.")
+        st.write(f"Loaded {len(st.session_state.multi_seqs)} sequences.")
         st.text(wrap(st.session_state.multi_seqs[0][:500]))
-        # Multi-sequence analysis can be triggered on the Advanced page
+        # Multi-sequence analysis can be triggered in other code/pages if desired
 
 # --- Results page (non-overlapping only) ---
 elif page == "Results":
@@ -618,86 +611,6 @@ elif page == "Download":
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
         st.info("Choose which result type you want to download. Non-overlapping are filtered motifs, while 'All' includes overlapping hits.")
-
-# --- Advanced page ---
-elif page == "Advanced":
-    st.header("Advanced Analysis: All Non-B DNA Motifs from Multi-FASTA")
-    st.markdown("""
-    Upload a multi-FASTA file (all sequences must be of the same length).
-    The app will automatically detect all 12 non-B DNA motif classes as defined in motifs.py and plot, for each class, a histogram of the motif positions across all sequences.
-    """)
-
-    fasta_file = st.file_uploader("Upload multi-FASTA file", type=["fa", "fasta", "txt"])
-    run_analysis = st.button("Run Analysis", type="primary", disabled=not fasta_file)
-
-    if fasta_file and run_analysis:
-        try:
-            content = fasta_file.read().decode("utf-8")
-            seqs, seq_names = [], []
-            cur_seq, cur_name = "", ""
-            for line in content.splitlines():
-                if line.startswith(">"):
-                    if cur_seq:
-                        seqs.append(cur_seq.upper())
-                        seq_names.append(cur_name)
-                    cur_name = line.strip().lstrip(">")
-                    cur_seq = ""
-                else:
-                    cur_seq += line.strip()
-            if cur_seq:
-                seqs.append(cur_seq.upper())
-                seq_names.append(cur_name)
-            if len(set(len(s) for s in seqs)) != 1:
-                st.error("All FASTA sequences must be of the same length!")
-            else:
-                seq_len = len(seqs[0])
-                st.success(f"Loaded {len(seqs)} sequences, each {seq_len} bp long.")
-                motif_pos_dict = {}
-                motif_count_dict = {}
-                motif_names_dict = {}
-                for idx, seq in enumerate(seqs):
-                    hits = all_motifs(seq)
-                    for hit in hits:
-                        motif_class = hit["Class"]
-                        start = hit["Start"] - 1
-                        if motif_class not in motif_pos_dict:
-                            motif_pos_dict[motif_class] = []
-                            motif_names_dict[motif_class] = set()
-                            motif_count_dict[motif_class] = 0
-                        motif_pos_dict[motif_class].append(start)
-                        motif_names_dict[motif_class].add(hit.get("Subtype", ""))
-                        motif_count_dict[motif_class] += 1
-                if not motif_pos_dict:
-                    st.warning("No motifs found in the provided sequences.")
-                else:
-                    motif_classes = sorted(motif_pos_dict.keys())
-                    n = len(motif_classes)
-                    fig, axes = plt.subplots(n, 1, figsize=(10, 3*n), sharex=True)
-                    if n == 1:
-                        axes = [axes]
-                    for ax, motif_class in zip(axes, motif_classes):
-                        positions = motif_pos_dict[motif_class]
-                        ax.hist(positions, bins=np.arange(seq_len+1)-0.5, color='skyblue', edgecolor='black')
-                        ax.set_title(
-                            f"{motif_class} (Subtypes: {', '.join(sorted(motif_names_dict[motif_class]))})"
-                        )
-                        ax.set_ylabel("Count")
-                        ax.set_xlim(-0.5, seq_len-0.5)
-                        ax.grid(axis='y')
-                    axes[-1].set_xlabel("Position in Sequence (0-based)")
-                    plt.tight_layout()
-                    st.pyplot(fig)
-                    st.success("All motif histograms generated!")
-                    df_summary = pd.DataFrame({
-                        "Motif Class": motif_classes,
-                        "Total Hits": [motif_count_dict[m] for m in motif_classes],
-                        "Unique Subtypes": [", ".join(sorted(motif_names_dict[m])) for m in motif_classes]
-                    })
-                    st.dataframe(df_summary)
-        except Exception as e:
-            st.error(f"Error processing file: {str(e)}")
-    else:
-        st.info("Please upload a multi-FASTA file and click 'Run Analysis'.")
 
 # --- Documentation page ---
 elif page == "Documentation":
