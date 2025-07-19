@@ -6,65 +6,18 @@ import seaborn as sns
 import io
 from datetime import datetime
 from PIL import Image
-
-# ---- NCBI section ----
 from Bio import Entrez, SeqIO
 
+# Motif functions (import your motifs.py or paste as a module)
+from motifs import (
+    all_motifs, 
+    find_hotspots,
+    parse_fasta, gc_content, reverse_complement,
+    select_best_nonoverlapping_motifs, wrap
+)
+
 Entrez.email = "raazbiochem@gmail.com"
-Entrez.api_key = None  # Optional: Add your API key here for higher rate limit
-
-def fetch_ncbi_entry(db, query, query_type="accession", rettype="fasta", retmax=5):
-    try:
-        if query_type == "accession":
-            handle = Entrez.efetch(db=db, id=query, rettype=rettype, retmode="text")
-            records = list(SeqIO.parse(handle, rettype))
-            handle.close()
-            return records
-        elif query_type == "gene":
-            search = Entrez.esearch(db="gene", term=query, retmax=retmax)
-            result = Entrez.read(search)
-            if not result["IdList"]:
-                return []
-            gene_id = result["IdList"][0]
-            link = Entrez.elink(dbfrom="gene", db=db, id=gene_id)
-            link_result = Entrez.read(link)
-            if not link_result[0]["LinkSetDb"]:
-                return []
-            linked_ids = [l['Id'] for l in link_result[0]['LinkSetDb'][0]['Link']]
-            handle = Entrez.efetch(db=db, id=",".join(linked_ids), rettype=rettype, retmode="text")
-            records = list(SeqIO.parse(handle, rettype))
-            handle.close()
-            return records
-        elif query_type == "custom":
-            search = Entrez.esearch(db=db, term=query, retmax=retmax)
-            result = Entrez.read(search)
-            ids = result["IdList"]
-            if not ids:
-                return []
-            handle = Entrez.efetch(db=db, id=",".join(ids), rettype=rettype, retmode="text")
-            records = list(SeqIO.parse(handle, rettype))
-            handle.close()
-            return records
-        else:
-            return []
-    except Exception as e:
-        st.error(f"NCBI fetch failed: {str(e)}")
-        return []
-
-def wrap(seq, width=70):
-    return "\n".join([seq[i:i+width] for i in range(0, len(seq), width)])
-
-# Import motif functions
-try:
-    from motifs import (
-        all_motifs, 
-        find_hotspots,
-        parse_fasta, gc_content, reverse_complement,
-        select_best_nonoverlapping_motifs
-    )
-except ImportError as e:
-    st.error(f"Critical Import Error: {str(e)}")
-    st.stop()
+Entrez.api_key = None
 
 st.set_page_config(
     page_title="Non-B DNA Motif Finder",
@@ -73,601 +26,280 @@ st.set_page_config(
     menu_items={'About': "Non-B DNA Motif Finder | Developed by Dr. Venkata Rajesh Yella"}
 )
 
-EXAMPLE_FASTA = """>Example_Sequence
-ATCGATCGATCGAAAATTTTATTTAAATTTAAATTTGGGTTAGGGTTAGGGTTAGGGCCCCCTCCCCCTCCCCCTCCCC
-ATCGATCGCGCGCGCGATCGCACACACACAGCTGCTGCTGCTTGGGAAAGGGGAAGGGTTAGGGAAAGGGGTTT
-GGGTTTAGGGGGGAGGGGCTGCTGCTGCATGCGGGAAGGGAGGGTAGAGGGTCCGGTAGGAACCCCTAACCCCTAA
-GAAAGAAGAAGAAGAAGAAGAAAGGAAGGAAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGG
-CGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGC
-GAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAA
-CTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCT
-"""
-
 # --- Session state initialization ---
 for k, v in {
-    'seq': "",
-    'df': pd.DataFrame(),
-    'motif_results': [],
-    'motif_results_nonoverlap': [],
-    'analysis_status': "Ready",
+    'seqs': [],   # List of sequences (single or multi)
+    'names': [],  # Sequence names
+    'results': [],  # List of motif results per sequence
+    'summary_df': pd.DataFrame(),
     'hotspots': [],
-    'multi_seqs': [],
+    'analysis_status': "Ready",
 }.items():
     if k not in st.session_state:
         st.session_state[k] = v
 
-MOTIF_CLASSES = {
-    "Curved DNA": "#FF9AA2",
-    "Z DNA": "#FFB7B2",
-    "Slipped DNA": "#FFDAC1",
-    "R Loop": "#FFD3B6",
-    "Cruciform": "#E2F0CB",
-    "Triplex DNA": "#B5EAD7",
-    "Sticky DNA": "#DCB8CB",
-    "G Triplex": "#C7CEEA",
-    "G quadruplex": "#A2D7D8",
-    "i Motif": "#B0C4DE",    
-    "Hybrid": "#C1A192",
-    "Non-B DNA Clusters": "#A2C8CC"
+MOTIF_COLORS = {
+    "Curved_DNA": "#FF9AA2", "Z-DNA": "#FFB7B2", "Slipped_DNA": "#FFDAC1", "R-Loop": "#FFD3B6",
+    "Cruciform": "#E2F0CB", "Triplex_DNA": "#B5EAD7", "Sticky_DNA": "#DCB8CB", "G-Triplex": "#C7CEEA",
+    "G4": "#A2D7D8", "i-Motif": "#B0C4DE", "Hybrid": "#C1A192", "Non-B DNA Clusters": "#A2C8CC"
 }
-
-def motif_class_with_spaces(motif):
-    return motif.replace("_", " ")
 
 PAGES = {
-    "Home": "Introduction and overview",
-    "Upload & Analyze": "Submit DNA sequence for analysis",
-    "Results": "View detected motifs and statistics", 
-    "Visualization": "Graphical representation of motifs",
-    "Download": "Export results for further analysis",
-    "Documentation": "Scientific methods and references"
+    "Home": "Overview",
+    "Upload & Analyze": "Upload DNA (multi-FASTA supported!)",
+    "Results": "Motif summary and visualization",
+    "Download": "Export results",
+    "Documentation": "Scientific methods & references"
 }
 
-# --- Sidebar navigation ---
 st.sidebar.title("Navigation")
-page = st.sidebar.radio("Go to", list(PAGES.keys()))
+page = st.sidebar.radio("", list(PAGES.keys()))
 
 # --- Home page ---
 if page == "Home":
-    st.title("Non-B DNA Motif Finder")
-    try:
-        nbd_image = Image.open("nbd3.png")
-        st.image(nbd_image, use_container_width=True)
-    except Exception:
-        pass
-
+    st.markdown("<h1 style='color:#0A3D62;'>Non-B DNA Motif Finder</h1>", unsafe_allow_html=True)
+    st.image("nbd3.png", use_container_width=True)
     st.markdown(
         """
-        <div style='margin-top: 34px; font-size: 18px; line-height: 1.7; background: #f1f8fa; border-radius: 8px; padding: 22px 22px 18px 22px; box-shadow: 0px 2px 10px #e0e5ea;'>
-        <b>The Non-B DNA Motif Finder</b> provides comprehensive detection of 12 distinct non-canonical DNA structure types, employing scientifically validated algorithms and established thresholds for exploratory genome-wide motif scanning (scientifically reasonable). Users benefit from interactive visualizations resembling a genome browser and versatile export options including CSV, Excel, and images.<br><br>
-        <b>How to use:</b> Simply upload or paste your DNA sequence, execute the analysis, explore interactive visual representations, and download the detailed results for further examination.
+        <div style='background: #eaf6fb; border-radius: 14px; padding: 22px 22px; box-shadow: 0px 4px 16px #e0e5ea; font-size: 18px;'>
+        <b>Detect 12+ Non-Canonical DNA Motifs</b> in any DNA sequence or multi-FASTA file.<br>
+        <ul>
+        <li>Upload FASTA or multi-FASTA files (no need to specify single/multi format)</li>
+        <li>Motifs detected include Z-DNA, G4, i-Motif, R-loop, Cruciform, Triplex, Hybrids, and more</li>
+        <li>Interactive motif visualizations and downloadable results</li>
+        </ul>
+        <b>Developed by Dr. Venkata Rajesh Yella</b>
         </div>
         """, unsafe_allow_html=True
     )
 
-# --- Upload & Analyze ---
+# --- Upload & Analyze page ---
 elif page == "Upload & Analyze":
-    st.header("Sequence Input")
-    with st.expander("Input Options", expanded=True):
-        input_method = st.radio(
-            "Select input method:",
-            [
-                "Single FASTA Upload",
-                "Multi-FASTA Upload",
-                "Example Sequence",
-                "Paste Sequence",
-                "NCBI Fetch"
-            ]
-        )
-        st.caption("Supported formats: .fa, .fasta, .txt | Limit: 200MB per file.")
-
-        # --- Single FASTA Upload ---
-        if input_method == "Single FASTA Upload":
-            st.markdown("Upload a single DNA sequence in FASTA, FA or TXT format.")
-            fasta_file = st.file_uploader(
-                "Drag and drop single FASTA file here", 
-                type=["fa", "fasta", "txt"], 
-                accept_multiple_files=False
-            )
-            if fasta_file:
-                try:
-                    seq = parse_fasta(fasta_file.read().decode("utf-8"))
-                    st.session_state.seq = seq
-                    st.session_state.multi_seqs = []
-                    st.success(f"Loaded sequence: {len(seq):,} bp")
-                except Exception as e:
-                    st.error(f"Error reading file: {str(e)}")
-        
-        # --- Multi-FASTA Upload ---
-        elif input_method == "Multi-FASTA Upload":
-            st.markdown("Upload a multi-FASTA file (multiple entries).")
-            multi_fasta_file = st.file_uploader(
-                "Drag and drop multi-FASTA file here",
-                type=["fa", "fasta", "txt"],
-                accept_multiple_files=False
-            )
-            if multi_fasta_file:
-                try:
-                    content = multi_fasta_file.read().decode("utf-8")
-                    seqs, seq_names = [], []
-                    cur_seq, cur_name = "", ""
-                    for line in content.splitlines():
-                        if line.startswith(">"):
-                            if cur_seq:
-                                seqs.append(cur_seq.upper())
-                                seq_names.append(cur_name)
-                            cur_name = line.strip().lstrip(">")
-                            cur_seq = ""
-                        else:
-                            cur_seq += line.strip()
+    st.markdown("<h2 style='color:#0A3D62;'>Sequence Input</h2>", unsafe_allow_html=True)
+    st.markdown("Supports <b>multi-FASTA</b> (multiple sequences) and single FASTA. Paste, upload, or fetch from NCBI.", unsafe_allow_html=True)
+    st.caption("Supported formats: .fa, .fasta, .txt | Limit: 200MB/file.")
+    input_method = st.radio("Input method:", [
+        "Upload FASTA / multi-FASTA file",
+        "Paste Sequence(s)",
+        "NCBI Fetch"
+    ])
+    
+    seqs, names = [], []
+    if input_method == "Upload FASTA / multi-FASTA file":
+        fasta_file = st.file_uploader("Drag and drop FASTA/multi-FASTA file here", type=["fa", "fasta", "txt"])
+        if fasta_file:
+            content = fasta_file.read().decode("utf-8")
+            seqs, names = [], []
+            cur_seq, cur_name = "", ""
+            for line in content.splitlines():
+                if line.startswith(">"):
                     if cur_seq:
-                        seqs.append(cur_seq.upper())
-                        seq_names.append(cur_name)
-                    if not seqs:
-                        st.error("No sequences found in file.")
-                    else:
-                        st.session_state.multi_seqs = seqs
-                        st.session_state.seq = ""
-                        st.success(f"Loaded {len(seqs)} sequences.")
-                except Exception as e:
-                    st.error(f"Error reading multi-FASTA file: {str(e)}")
-
-        # --- Example Sequence ---
-        elif input_method == "Example Sequence":
-            example_type = st.radio("Example type:", ["Single Sequence", "Multi-FASTA"])
-            if example_type == "Single Sequence":
-                if st.button("Load Example"):
-                    st.session_state.seq = parse_fasta(EXAMPLE_FASTA)
-                    st.session_state.multi_seqs = []
-                    st.success(f"Example loaded: {len(st.session_state.seq):,} bp")
-                    st.code(EXAMPLE_FASTA, language="fasta")
+                        seqs.append(parse_fasta(cur_seq))
+                        names.append(cur_name if cur_name else f"Seq{len(seqs)}")
+                    cur_name = line.strip().lstrip(">")
+                    cur_seq = ""
+                else:
+                    cur_seq += line.strip()
+            if cur_seq:
+                seqs.append(parse_fasta(cur_seq))
+                names.append(cur_name if cur_name else f"Seq{len(seqs)}")
+            if seqs:
+                st.success(f"Loaded {len(seqs)} sequences.")
+                for i, seq in enumerate(seqs[:3]):
+                    st.markdown(f"<b>{names[i]}</b>: <span style='color:#576574'>{len(seq):,} bp</span>", unsafe_allow_html=True)
+                if len(seqs) > 3:
+                    st.caption(f"...and {len(seqs)-3} more.")
             else:
-                multi_example = """>Example_Seq1
-ATCGATCGATCGAAAATTTTATTTAAATTTAAATTTGGGTTAGGGTTAGGGTTAGGGCCCCCTCCCCCTCCCCCTCCCC
-ATCGATCGCGCGCGCGATCGCACACACACAGCTGCTGCTGCTTGGGAAAGGGGAAGGGTTAGGGAAAGGGGTTT
->Example_Seq2
-GGGTTTAGGGGGGAGGGGCTGCTGCTGCATGCGGGAAGGGAGGGTAGAGGGTCCGGTAGGAACCCCTAACCCCTAA
-GAAAGAAGAAGAAGAAGAAGAAAGGAAGGAAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGG
-"""
-                if st.button("Load Multi-FASTA Example"):
-                    seqs, seq_names = [], []
-                    cur_seq, cur_name = "", ""
-                    for line in multi_example.splitlines():
-                        if line.startswith(">"):
-                            if cur_seq:
-                                seqs.append(cur_seq.upper())
-                                seq_names.append(cur_name)
-                            cur_name = line.strip().lstrip(">")
-                            cur_seq = ""
-                        else:
-                            cur_seq += line.strip()
+                st.warning("No sequences found.")
+    elif input_method == "Paste Sequence(s)":
+        seq_input = st.text_area("Paste single or multi-FASTA here:", height=150)
+        if seq_input:
+            seqs, names = [], []
+            cur_seq, cur_name = "", ""
+            for line in seq_input.splitlines():
+                if line.startswith(">"):
                     if cur_seq:
-                        seqs.append(cur_seq.upper())
-                        seq_names.append(cur_name)
-                    if not seqs:
-                        st.error("No sequences found in example.")
-                    else:
-                        st.session_state.multi_seqs = seqs
-                        st.session_state.seq = ""
-                        st.success(f"Loaded {len(seqs)} example sequences.")
-                        st.code(multi_example, language="fasta")
-
-        # --- Paste Sequence ---
-        elif input_method == "Paste Sequence":
-            paste_type = st.radio("Paste type:", ["Single Sequence", "Multi-FASTA"])
-            seq_input = st.text_area("Paste DNA Sequence (FASTA or raw):", height=150)
-            if seq_input:
-                if paste_type == "Single Sequence":
-                    try:
-                        st.session_state.seq = parse_fasta(seq_input)
-                        st.session_state.multi_seqs = []
-                        st.success(f"Sequence parsed: {len(st.session_state.seq):,} bp")
-                    except Exception as e:
-                        st.error(f"Invalid sequence: {str(e)}")
+                        seqs.append(parse_fasta(cur_seq))
+                        names.append(cur_name if cur_name else f"Seq{len(seqs)}")
+                    cur_name = line.strip().lstrip(">")
+                    cur_seq = ""
                 else:
-                    try:
-                        seqs, seq_names = [], []
-                        cur_seq, cur_name = "", ""
-                        for line in seq_input.splitlines():
-                            if line.startswith(">"):
-                                if cur_seq:
-                                    seqs.append(cur_seq.upper())
-                                    seq_names.append(cur_name)
-                                cur_name = line.strip().lstrip(">")
-                                cur_seq = ""
-                            else:
-                                cur_seq += line.strip()
-                        if cur_seq:
-                            seqs.append(cur_seq.upper())
-                            seq_names.append(cur_name)
-                        if not seqs:
-                            st.error("No sequences found in pasted text.")
-                        else:
-                            st.session_state.multi_seqs = seqs
-                            st.session_state.seq = ""
-                            st.success(f"Parsed {len(seqs)} sequences from pasted text.")
-                    except Exception as e:
-                        st.error(f"Invalid multi-FASTA: {str(e)}")
+                    cur_seq += line.strip()
+            if cur_seq:
+                seqs.append(parse_fasta(cur_seq))
+                names.append(cur_name if cur_name else f"Seq{len(seqs)}")
+            if seqs:
+                st.success(f"Pasted {len(seqs)} sequences.")
+                for i, seq in enumerate(seqs[:3]):
+                    st.markdown(f"<b>{names[i]}</b>: <span style='color:#576574'>{len(seq):,} bp</span>", unsafe_allow_html=True)
+                if len(seqs) > 3:
+                    st.caption(f"...and {len(seqs)-3} more.")
+            else:
+                st.warning("No sequences found.")
+    elif input_method == "NCBI Fetch":
+        db = st.selectbox("NCBI Database", ["nucleotide", "protein", "gene"])
+        query_type = st.radio("Query Type", ["Accession", "Gene Name", "Custom Query"])
+        motif_examples = {
+            "G-quadruplex": "NR_003287.2 (human telomerase RNA)",
+            "Z-DNA": "NM_001126112.2 (human ADAR1 gene)",
+            "R-loop": "NR_024540.1 (human SNRPN gene)"
+        }
+        with st.expander("Motif example queries"):
+            for motif, example in motif_examples.items():
+                st.write(f"**{motif}**: `{example}`")
+        query = st.text_input("Enter query (accession, gene, etc.):")
+        rettype = st.selectbox("Return format", ["fasta", "gb"])
+        retmax = st.number_input("Max records", min_value=1, max_value=20, value=3)
+        if st.button("Fetch from NCBI"):
+            if query:
+                qtype = {"Accession": "accession", "Gene Name": "gene", "Custom Query": "custom"}[query_type]
+                with st.spinner("Contacting NCBI..."):
+                    handle = Entrez.efetch(db=db, id=query, rettype=rettype, retmode="text")
+                    records = list(SeqIO.parse(handle, rettype))
+                    handle.close()
+                    seqs = [str(rec.seq).upper().replace("U", "T") for rec in records]
+                    names = [rec.id for rec in records]
+                if seqs:
+                    st.success(f"Fetched {len(seqs)} sequences.")
+            else:
+                st.warning("Enter a query before fetching.")
 
-        # --- NCBI Fetch ---
-        elif input_method == "NCBI Fetch":
-            st.markdown("Fetch a sequence from NCBI by accession, gene name, or custom query.")
-            ncbi_db = st.selectbox("NCBI Database", ["nucleotide", "protein", "gene"])
-            ncbi_query_type = st.radio("Query Type", ["Accession", "Gene Name", "Custom Query"])
-            motif_examples = {
-                "G-quadruplex": "NR_003287.2 (human telomerase RNA)",
-                "Z-DNA": "NM_001126112.2 (human ADAR1 gene)",
-                "R-loop": "NR_024540.1 (human SNRPN gene)"
-            }
-            with st.expander("Famous motif examples"):
-                for motif, example in motif_examples.items():
-                    st.write(f"**{motif}**: `{example}`")
-            ncbi_query = st.text_input("Enter your query (accession, gene name, or Entrez term):")
-            ncbi_rettype = st.selectbox("Return format", ["fasta", "gb"])
-            ncbi_retmax = st.number_input("Max records (for gene/custom)", min_value=1, max_value=20, value=5)
-            if st.button("Fetch from NCBI"):
-                if ncbi_query:
-                    qtype = {"Accession": "accession", "Gene Name": "gene", "Custom Query": "custom"}[ncbi_query_type]
-                    with st.spinner("Contacting NCBI..."):
-                        records = fetch_ncbi_entry(
-                            db=ncbi_db,
-                            query=ncbi_query,
-                            query_type=qtype,
-                            rettype=ncbi_rettype,
-                            retmax=ncbi_retmax
-                        )
-                    if not records:
-                        st.error("No sequence found for this query.")
-                    else:
-                        seq = str(records[0].seq)
-                        st.session_state.seq = seq
-                        st.session_state.multi_seqs = []
-                        st.success(f"Fetched sequence: {len(seq):,} bp")
-                        st.code(f">{records[0].id}\n{wrap(seq)}", language="fasta")
-                else:
-                    st.warning("Enter a query before fetching.")
+    # Save to session state if sequences loaded
+    if seqs:
+        st.session_state.seqs = seqs
+        st.session_state.names = names
+        st.session_state.results = []  # reset previous results
 
-    # --- Sequence Preview and Analysis Trigger ---
-    if st.session_state.seq:
+    # Preview
+    if st.session_state.seqs:
         st.subheader("Sequence Preview")
-        col1, col2 = st.columns(2)
-        with col1:
-            st.text(wrap(st.session_state.seq[:500]))
-        with col2:
-            st.metric("GC Content", f"{gc_content(st.session_state.seq):.1f}%")
-            st.metric("Sequence Length", f"{len(st.session_state.seq):,} bp")
-        if st.button("Run Full Analysis", type="primary"):
-            with st.spinner("Analyzing sequence for 12 motif types..."):
-                try:
-                    st.session_state.motif_results = all_motifs(st.session_state.seq)
-                    st.session_state.motif_results_nonoverlap = select_best_nonoverlapping_motifs(
-                        st.session_state.motif_results
-                    )
-                    st.session_state.df = pd.DataFrame(st.session_state.motif_results_nonoverlap)
-                    st.session_state.hotspots = find_hotspots(
-                        st.session_state.motif_results_nonoverlap,
-                        len(st.session_state.seq)
-                    )
-                    if st.session_state.motif_results_nonoverlap:
-                        st.success(f"Found {len(st.session_state.motif_results_nonoverlap)} motifs across {st.session_state.df['Class'].nunique()} classes")
-                        st.session_state.analysis_status = "Complete"
-                    else:
-                        st.warning("No motifs detected")
-                        st.session_state.analysis_status = "Complete"
-                except Exception as e:
-                    st.error(f"Analysis failed: {str(e)}")
-                    st.session_state.analysis_status = "Error"
-    elif st.session_state.multi_seqs:
-        st.subheader("Multi-FASTA Sequence Preview")
-        st.write(f"Loaded {len(st.session_state.multi_seqs)} sequences.")
-        st.text(wrap(st.session_state.multi_seqs[0][:500]))
-        # Multi-sequence analysis can be triggered in other code/pages if desired
+        for i, seq in enumerate(st.session_state.seqs[:2]):
+            st.markdown(f"<b>{st.session_state.names[i]}</b> ({len(seq):,} bp)", unsafe_allow_html=True)
+            st.code(wrap(seq[:400]), language="fasta")
+        if len(st.session_state.seqs) > 2:
+            st.caption(f"...and {len(st.session_state.seqs)-2} more.")
 
-# --- Results page (non-overlapping only) ---
+        if st.button("Run Motif Analysis", type="primary"):
+            st.session_state.analysis_status = "Running"
+            motif_results = []
+            for seq in st.session_state.seqs:
+                motif_results.append(all_motifs(seq))
+            st.session_state.results = motif_results
+
+            # Summary DataFrame
+            summary = []
+            for i, motifs in enumerate(motif_results):
+                motif_types = Counter([m['Class'] for m in motifs])
+                summary.append({
+                    "Sequence": st.session_state.names[i],
+                    "Length": len(st.session_state.seqs[i]),
+                    "Motif Count": len(motifs),
+                    "Motif Types": ", ".join(f"{k}({v})" for k, v in motif_types.items())
+                })
+            st.session_state.summary_df = pd.DataFrame(summary)
+            st.success("Analysis complete! See 'Results' tab for details.")
+            st.session_state.analysis_status = "Complete"
+
+# --- Results page ---
 elif page == "Results":
-    st.header("Analysis Results")
-    if not st.session_state.motif_results_nonoverlap:
-        st.session_state.motif_results_nonoverlap = select_best_nonoverlapping_motifs(
-            st.session_state.motif_results
-        )
-    df = pd.DataFrame(st.session_state.motif_results_nonoverlap)
-    if df.empty or df.shape[0] == 0:
-        st.info("No results available. Please run analysis first.")
+    st.markdown("<h2 style='color:#0A3D62;'>Motif Summary & Visualization</h2>", unsafe_allow_html=True)
+    if not st.session_state.results:
+        st.info("No analysis results. Please run motif analysis first.")
     else:
-        if 'Score' in df.columns:
-            df['Score'] = pd.to_numeric(df['Score'], errors='coerce')
-            df = df.dropna(subset=['Score'])
+        st.dataframe(st.session_state.summary_df, use_container_width=True)
+        seq_idx = 0
+        if len(st.session_state.seqs) > 1:
+            seq_idx = st.selectbox("Choose sequence for details:", range(len(st.session_state.seqs)), format_func=lambda i: st.session_state.names[i])
+        motifs = st.session_state.results[seq_idx]
+        if not motifs:
+            st.warning("No motifs detected for this sequence.")
         else:
-            df['Score'] = np.nan
-
-        if 'Length' not in df.columns:
-            df['Length'] = df['End'] - df['Start'] + 1 if 'Start' in df.columns and 'End' in df.columns else 0
-
-        if 'Subtype' not in df.columns:
-            df['Subtype'] = ""
-
-        with st.expander("📊 Summary Statistics", expanded=True):
-            cols = st.columns(4)
-            cols[0].metric("Total Motifs", len(df))
-            cols[1].metric("Unique Types", df['Subtype'].nunique() if 'Subtype' in df.columns else 0)
-            seq_len = len(st.session_state.seq) if st.session_state.seq else 1
-            seq_coverage = sum(df['Length']) / seq_len * 100 if seq_len > 0 else 0
-            cols[2].metric("Sequence Coverage", f"{seq_coverage:.1f}%")
-            max_score = df['Score'].max() if 'Score' in df.columns else 0
-            cols[3].metric("Top Score", f"{max_score:.2f}")
-            st.progress(
-                min(100, int(seq_coverage)),
-                text=f"Sequence coverage: {seq_coverage:.1f}%"
-            )
-
-        st.subheader("🧬 Detected Motifs")
-        show_cols = ['Class', 'Subtype', 'Start', 'End', 'Length', 'Score', 'Sequence']
-        display_df = df.copy()
-        if 'Class' in display_df.columns:
-            display_df['Class'] = display_df['Class'].apply(lambda x: x.replace("_", " "))
-        if 'Subtype' in display_df.columns:
-            display_df['Subtype'] = display_df['Subtype'].apply(lambda x: x.replace("_", " "))
-
-        show_cols_actual = [col for col in show_cols if col in display_df.columns]
-
-        st.dataframe(
-            display_df[show_cols_actual],
-            use_container_width=True,
-            height=400
-        )
-
-        st.subheader("📈 Distribution Analysis")
-        tab1, tab2, tab3, tab4 = st.tabs(["By Type", "By Length", "By Score", "Motif Density"])
-
-        with tab1:
-            fig, ax = plt.subplots(figsize=(10, 6))
-            if 'Class' in display_df.columns:
-                sns.countplot(
-                    data=display_df,
-                    y='Class',
-                    order=display_df['Class'].value_counts().index,
-                    palette=list(MOTIF_CLASSES.values())
-                )
-                ax.set_title("Motif Count by Class")
+            df = pd.DataFrame(motifs)
+            st.markdown(f"### Motif Table for <b>{st.session_state.names[seq_idx]}</b>", unsafe_allow_html=True)
+            st.dataframe(df, use_container_width=True, height=360)
+            # Distribution plots
+            motif_class_order = list(MOTIF_COLORS.keys())
+            st.markdown("#### Motif Type Distribution")
+            fig, ax = plt.subplots(figsize=(8,6))
+            class_counts = df['Class'].value_counts().reindex(motif_class_order, fill_value=0)
+            bars = ax.barh(class_counts.index, class_counts.values, color=[MOTIF_COLORS.get(c, "#888") for c in class_counts.index])
+            ax.set_xlabel("Motif Count")
             st.pyplot(fig)
-
-        with tab2:
-            fig, ax = plt.subplots(figsize=(10, 6))
-            if 'Length' in display_df.columns and 'Class' in display_df.columns:
-                sns.boxplot(
-                    data=display_df,
-                    x='Length',
-                    y='Class',
-                    palette=list(MOTIF_CLASSES.values())
-                )
-                ax.set_title("Motif Length Distribution")
-            st.pyplot(fig)
-
-        with tab3:
-            fig, ax = plt.subplots(figsize=(10, 6))
-            if 'Score' in display_df.columns and 'Class' in display_df.columns:
-                sns.violinplot(
-                    data=display_df,
-                    x='Score',
-                    y='Class',
-                    palette=list(MOTIF_CLASSES.values())
-                )
-                ax.set_title("Score Distribution by Class")
-            st.pyplot(fig)
-
-        with tab4:
-            fig, ax = plt.subplots(figsize=(12, 3))
-            pos = []
-            if 'Start' in display_df.columns and 'End' in display_df.columns:
-                for _, row in display_df.iterrows():
-                    pos.extend(range(int(row['Start']), int(row['End']) + 1))
-            if pos:
-                sns.kdeplot(pos, fill=True, color='navy', ax=ax)
-                ax.set_xlim(0, seq_len)
-                ax.set_xlabel("Sequence Position (bp)")
-                ax.set_ylabel("Motif Density")
-                ax.set_title("Motif Density Along Sequence")
-            st.pyplot(fig)
-
-        st.subheader("🔥 Non-B DNA Clustered Regions (Hotspots)")
-        if st.session_state.hotspots:
-            hotspot_df = pd.DataFrame(st.session_state.hotspots)
-            st.dataframe(
-                hotspot_df.sort_values('Score', ascending=False),
-                use_container_width=True
-            )
-            palette = sns.color_palette("tab20", len(hotspot_df))
-            fig, ax = plt.subplots(figsize=(12, 3))
-            for idx, (_, row) in enumerate(hotspot_df.iterrows()):
-                ax.axvspan(
-                    row['RegionStart'], 
-                    row['RegionEnd'], 
-                    alpha=0.5, 
-                    color=palette[idx],
-                    label=f"Cluster {idx+1}"
-                )
-                ax.text(
-                    (row['RegionStart'] + row['RegionEnd'])/2,
-                    0.7 + 0.1*(idx%2),
-                    f"{row['RegionStart']}–{row['RegionEnd']}",
-                    color='black',
-                    fontsize=9,
-                    ha='center',
-                    va='bottom',
-                    rotation=45
-                )
-            ax.set_xlim(0, seq_len)
-            ax.set_xlabel("Sequence Position (bp)")
+            st.markdown("<br>", unsafe_allow_html=True)
+            # Motif positions
+            st.markdown("#### Motif Map")
+            fig, ax = plt.subplots(figsize=(12,3))
+            y = 1
+            for _, row in df.iterrows():
+                color = MOTIF_COLORS.get(row['Class'], "#888")
+                ax.plot([row['Start'], row['End']], [y, y], lw=8, color=color, alpha=0.8)
+                y += 0.12
             ax.set_yticks([])
-            ax.set_title("Non-B DNA Clustered Regions (Hotspots)")
-            ax.legend(loc='upper right', fontsize=8)
-            st.pyplot(fig)
-            st.info("These regions represent clusters of non-B DNA motifs, i.e., hotspots where multiple motif types overlap or are concentrated.")
-        else:
-            st.info("No hotspot regions detected.")
-
-# --- Visualization page: Non-overlapping motif tracks, no scores ---
-elif page == "Visualization":
-    st.header("Motif Map (Non-Overlapping Motif Tracks)")
-    if not st.session_state.motif_results_nonoverlap:
-        st.session_state.motif_results_nonoverlap = select_best_nonoverlapping_motifs(
-            st.session_state.motif_results
-        )
-    df = pd.DataFrame(st.session_state.motif_results_nonoverlap)
-    if df.empty:
-        st.info("No results to visualize. Please run analysis first.")
-    else:
-        display_df = df.copy()
-        display_df['Class'] = display_df['Class'].apply(lambda x: x.replace("_", " "))
-        seq_len = len(st.session_state.seq)
-        st.sidebar.subheader("Motif Map Settings")
-        show_classes = st.sidebar.multiselect(
-            "Select motif classes to display:",
-            sorted(display_df['Class'].unique()),
-            default=sorted(display_df['Class'].unique())
-        )
-        position_range = st.sidebar.slider(
-            "Sequence position range:",
-            0, seq_len, (0, min(5000, seq_len))
-        )
-        viz_df = display_df[
-            (display_df['Class'].isin(show_classes)) &
-            (display_df['Start'] >= position_range[0]) & 
-            (display_df['End'] <= position_range[1])
-        ].copy()
-        if viz_df.empty:
-            st.warning("No motifs match the selected filters")
-        else:
-            classes = sorted(viz_df['Class'].unique())
-            y_pos = {motif:i+1 for i, motif in enumerate(classes)}
-            color_map = dict(zip(classes, sns.color_palette("tab20", len(classes))))
-            fig, ax = plt.subplots(figsize=(15, max(6, len(classes)//2+2)))
-            for _, row in viz_df.iterrows():
-                ax.hlines(
-                    y_pos[row['Class']],
-                    row['Start'],
-                    row['End'],
-                    linewidth=13,
-                    color=color_map.get(row['Class'], "#888"),
-                    alpha=0.88
-                )
-            ax.set_yticks(list(y_pos.values()))
-            ax.set_yticklabels(list(y_pos.keys()))
-            ax.set_xlim(position_range[0], position_range[1])
             ax.set_xlabel("Sequence Position (bp)")
-            ax.set_title(f"Non-B DNA Motifs ({position_range[0]:,}-{position_range[1]:,} bp, non-overlapping)")
-            plt.tight_layout()
+            ax.set_xlim(0, len(st.session_state.seqs[seq_idx]))
+            ax.set_title(f"Motif tracks: {st.session_state.names[seq_idx]}")
             st.pyplot(fig)
-            st.dataframe(
-                viz_df[['Class', 'Subtype', 'Start', 'End', 'Length', 'Score']],
-                height=300
-            )
-            st.markdown(
-                "<div style='display:flex;flex-wrap:wrap;gap:10px;'>"
-                + "".join(
-                    f"<div style='background:{color_map.get(s, '#ccc')};padding:7px 15px;border-radius:3px;margin:2px 5px;color:black;'>"
-                    f"{s}</div>" for s in classes
-                )
-                + "</div>", unsafe_allow_html=True
-            )
 
 # --- Download page ---
 elif page == "Download":
     st.header("Download Results")
-    has_nonoverlap = not st.session_state.df.empty
-    has_overlap = len(st.session_state.motif_results) > 0
-
-    if not has_nonoverlap and not has_overlap:
-        st.info("No results available to download. Please run analysis first.")
+    if not st.session_state.results:
+        st.info("No results available to download.")
     else:
-        st.markdown("Download detected motifs and results as CSV or Excel.")
-        choices = []
-        if has_nonoverlap:
-            choices.append("Non-Overlapping Motifs")
-        if has_overlap:
-            choices.append("All (Overlapping) Motifs")
-        result_type = st.radio("Select result type to download:", choices)
-        if result_type == "Non-Overlapping Motifs":
-            df_download = st.session_state.df
-            fname = "motif_results_nonoverlap"
-        else:
-            df_download = pd.DataFrame(st.session_state.motif_results)
-            fname = "motif_results_all"
-        csv_data = df_download.to_csv(index=False).encode("utf-8")
-        st.download_button(
-            label="Download CSV",
-            data=csv_data,
-            file_name=f"{fname}.csv",
-            mime="text/csv"
-        )
+        df_all = []
+        for i, motifs in enumerate(st.session_state.results):
+            for m in motifs:
+                m['SequenceName'] = st.session_state.names[i]
+                df_all.append(m)
+        df_all = pd.DataFrame(df_all)
+        st.dataframe(df_all, use_container_width=True, height=350)
+        csv_data = df_all.to_csv(index=False).encode("utf-8")
+        st.download_button("Download CSV", data=csv_data, file_name="motif_results.csv", mime="text/csv")
         excel_data = io.BytesIO()
         with pd.ExcelWriter(excel_data, engine='xlsxwriter') as writer:
-            df_download.to_excel(writer, index=False, sheet_name="Motifs")
+            df_all.to_excel(writer, index=False, sheet_name="Motifs")
         excel_data.seek(0)
-        st.download_button(
-            label="Download Excel",
-            data=excel_data,
-            file_name=f"{fname}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-        st.info("Choose which result type you want to download. Non-overlapping are filtered motifs, while 'All' includes overlapping hits.")
+        st.download_button("Download Excel", data=excel_data, file_name="motif_results.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 # --- Documentation page ---
 elif page == "Documentation":
     st.header("Scientific Documentation")
-    with st.expander("All 12 Motif Types", expanded=True):
-        st.markdown("""
-        | Motif Type | Detection Method | Key References |
-        |------------|------------------|----------------|
-        | Curved DNA | A-tract phasing | Brukner et al. 1995 |
-        | Z-DNA | Alternating Pu/Py | Ho et al. 2010 |
-        | Slipped DNA | Direct repeats | Bacolla et al. 2006 |
-        | Cruciform | Inverted repeats | Lilley 1985 |
-        | Triplex DNA | Mirror repeats | Mirkin 1994 |
-        | G-Triplex | Three G-runs | Karsisiotis 2011 |
-        | G4 | G4Hunter | Bedrat et al. 2016 |
-        | i-Motif | C-rich sequences | Zeraati et al. 2018 |
-        | R-Loop | GC skew + G-clusters | Sanz et al. 2016 |
-        | Sticky DNA | (GAA/TTC)n | Potaman et al. 2003 |
-        | A-Phased Repeats | 10.5bp spacing | Trifonov 1980 |
-        | Mirror Repeats | Self-complementary | Frank-Kamenetskii 1990 |
-        """)
-    with st.expander("Scoring Systems"):
-        st.markdown("""
-        ### G4Hunter Score
-        ```
-        score = mean(G-run contributions) - mean(C-run penalties)
-        ```
-        **Thresholds:**
-        - Canonical: ≥1.2
-        - Relaxed: ≥0.8
-        - Bulged: ≥1.0
-
-        ### Z-DNA Score
-        ```
-        score = (CG_pairs/5) + (total_alternating/15)
-        ```
-        ### i-Motif Score
-        ```
-        score = (sum(C_tracts)/16) + (C_content/2)
-        ```
-        """)
     st.markdown("""
-    ## References
-    1. Bedrat et al. (2016) Nucleic Acids Research  
-    2. Ho et al. (2010) Nature Chemical Biology  
-    3. Zeraati et al. (2018) Nature Chemistry  
-    4. Bacolla et al. (2006) Nucleic Acids Research  
-    5. Mirkin & Frank-Kamenetskii (1994) Annual Review of Biophysics
-    """)
+    <div style='background:#f4faff; border-radius:10px; padding:18px 18px 8px 18px; font-size:17px;'>
+    <b>Motif Classes Detected:</b><br>
+    <ul>
+        <li><b>Curved DNA:</b> Detects phasing of A/T tracts and global/local curvature. <i>Brukner et al., 1995</i>.</li>
+        <li><b>Z-DNA:</b> Alternating purine/pyrimidine patterns via Z-Seeker scoring. <i>Ho et al., 2010</i>.</li>
+        <li><b>Slipped DNA:</b> Direct repeats and short tandem repeats. <i>Bacolla et al., 2006</i>.</li>
+        <li><b>R-Loop:</b> RLFS models for G-rich skew and thermodynamic stability. <i>Sanz et al., 2016</i>.</li>
+        <li><b>Cruciform:</b> Inverted repeats with AT-rich arms. <i>Lilley, 1985</i>.</li>
+        <li><b>Triplex DNA / Mirror Repeat:</b> Purine/pyrimidine-rich mirror repeats and triplex-forming motifs. <i>Mirkin, 1994</i>.</li>
+        <li><b>Sticky DNA:</b> Extended GAA/TTC repeats. <i>Potaman et al., 2003</i>.</li>
+        <li><b>G-Triplex & G4:</b> Canonical, relaxed, bulged, bipartite, multimeric, and imperfect G-quadruplexes. <i>Bedrat et al., 2016</i>.</li>
+        <li><b>i-Motif:</b> C-rich, looped sequences. <i>Zeraati et al., 2018</i>.</li>
+        <li><b>Hybrids:</b> Overlapping regions of two or more motif classes.</li>
+        <li><b>Non-B DNA Clusters:</b> Hotspot regions with high motif density and diversity.</li>
+    </ul>
+    <b>Scoring:</b><br>
+    - <b>G4Hunter</b> score for G4 and i-Motif, Z-Seeker for Z-DNA, tract length and A/T content for Curved DNA, repeat count for Sticky DNA, etc.<br>
+    <b>References:</b>
+    <ul>
+        <li>Bedrat et al., 2016 Nucleic Acids Research</li>
+        <li>Ho et al., 2010 Nature Chemical Biology</li>
+        <li>Zeraati et al., 2018 Nature Chemistry</li>
+        <li>Bacolla et al., 2006 Nucleic Acids Research</li>
+        <li>Mirkin & Frank-Kamenetskii, 1994 Annual Review of Biophysics</li>
+    </ul>
+    </div>
+    """, unsafe_allow_html=True)
 
-# --- Footer: developer info, always at bottom ---
+# --- Footer ---
 st.markdown("""
 ---
 <div style='font-size: 15px; color: #1e293b; margin-top: 40px; text-align: left;'>
 <b>Developed by</b><br>
 Dr. Venkata Rajesh Yella<br>
-<a href='mailto:yvrajesh_bt@kluniversity.in'>yvrajesh_bt@kluniversity.in</a><br>
+<a href='mailto:yvrajesh_bt@kluniversity.in'>yvrajesh_bt@kluniversity.in</a> |
 <a href='https://github.com/VRYella' target='_blank'>GitHub: VRYella</a>
 </div>
 """, unsafe_allow_html=True)
