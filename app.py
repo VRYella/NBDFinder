@@ -83,14 +83,15 @@ GAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAA
 CTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCT
 """
 
-# Session state initialization
+# --- Session state initialization ---
 for k, v in {
     'seq': "",
     'df': pd.DataFrame(),
     'motif_results': [],
     'motif_results_nonoverlap': [],
     'analysis_status': "Ready",
-    'hotspots': []
+    'hotspots': [],
+    'multi_seqs': [],
 }.items():
     if k not in st.session_state:
         st.session_state[k] = v
@@ -113,11 +114,6 @@ MOTIF_CLASSES = {
 def motif_class_with_spaces(motif):
     return motif.replace("_", " ")
 
-# ... (your existing imports)
-from Bio import Entrez, SeqIO
-
-# ... (your session state and motif class setup)
-
 PAGES = {
     "Home": "Introduction and overview",
     "Upload & Analyze": "Submit DNA sequence for analysis",
@@ -128,7 +124,6 @@ PAGES = {
     "Advanced": "Advanced sequence/multifasta analysis"
 }
 
-
 # --- Sidebar navigation ---
 st.sidebar.title("Navigation")
 page = st.sidebar.radio("Go to", list(PAGES.keys()))
@@ -136,14 +131,11 @@ page = st.sidebar.radio("Go to", list(PAGES.keys()))
 # --- Home page ---
 if page == "Home":
     st.title("Non-B DNA Motif Finder")
-    #st.markdown("This tool identifies **12 classes** of non-canonical DNA structures using published algorithms:")
     try:
         nbd_image = Image.open("nbd3.png")
         st.image(nbd_image, use_container_width=True)
     except Exception:
         pass
-
-
 
     st.markdown(
         """
@@ -154,6 +146,7 @@ if page == "Home":
         """, unsafe_allow_html=True
     )
 
+# --- Upload & Analyze ---
 elif page == "Upload & Analyze":
     st.header("Sequence Input")
     with st.expander("Input Options", expanded=True):
@@ -342,7 +335,6 @@ GAAAGAAGAAGAAGAAGAAGAAAGGAAGGAAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGG
                     st.warning("Enter a query before fetching.")
 
     # --- Sequence Preview and Analysis Trigger ---
-    # Use single or multi sequence preview depending on what's loaded
     if st.session_state.seq:
         st.subheader("Sequence Preview")
         col1, col2 = st.columns(2)
@@ -375,14 +367,12 @@ GAAAGAAGAAGAAGAAGAAGAAAGGAAGGAAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGG
     elif st.session_state.multi_seqs:
         st.subheader("Multi-FASTA Sequence Preview")
         st.write(f"Loaded {len(st.session_state.multi_seqs)} sequences, each {len(st.session_state.multi_seqs[0])} bp.")
-        # Optionally show first sequence
         st.text(wrap(st.session_state.multi_seqs[0][:500]))
-        # You can trigger your multi-sequence analysis here or in the Advanced page
-# --- Results page (non-overlapping only) ---
+        # Multi-sequence analysis can be triggered on the Advanced page
+
 # --- Results page (non-overlapping only) ---
 elif page == "Results":
     st.header("Analysis Results")
-    # Ensure non-overlapping motifs are prepared
     if not st.session_state.motif_results_nonoverlap:
         st.session_state.motif_results_nonoverlap = select_best_nonoverlapping_motifs(
             st.session_state.motif_results
@@ -391,18 +381,15 @@ elif page == "Results":
     if df.empty or df.shape[0] == 0:
         st.info("No results available. Please run analysis first.")
     else:
-        # Ensure numeric conversion for Score
         if 'Score' in df.columns:
             df['Score'] = pd.to_numeric(df['Score'], errors='coerce')
             df = df.dropna(subset=['Score'])
         else:
             df['Score'] = np.nan
 
-        # Handle missing Length column
         if 'Length' not in df.columns:
             df['Length'] = df['End'] - df['Start'] + 1 if 'Start' in df.columns and 'End' in df.columns else 0
 
-        # Handle missing Subtype column
         if 'Subtype' not in df.columns:
             df['Subtype'] = ""
 
@@ -428,7 +415,6 @@ elif page == "Results":
         if 'Subtype' in display_df.columns:
             display_df['Subtype'] = display_df['Subtype'].apply(lambda x: x.replace("_", " "))
 
-        # Only display columns that exist in DF
         show_cols_actual = [col for col in show_cols if col in display_df.columns]
 
         st.dataframe(
@@ -526,6 +512,7 @@ elif page == "Results":
             st.info("These regions represent clusters of non-B DNA motifs, i.e., hotspots where multiple motif types overlap or are concentrated.")
         else:
             st.info("No hotspot regions detected.")
+
 # --- Visualization page: Non-overlapping motif tracks, no scores ---
 elif page == "Visualization":
     st.header("Motif Map (Non-Overlapping Motif Tracks)")
@@ -594,7 +581,6 @@ elif page == "Visualization":
 # --- Download page ---
 elif page == "Download":
     st.header("Download Results")
-    # Check for data existence
     has_nonoverlap = not st.session_state.df.empty
     has_overlap = len(st.session_state.motif_results) > 0
 
@@ -602,21 +588,18 @@ elif page == "Download":
         st.info("No results available to download. Please run analysis first.")
     else:
         st.markdown("Download detected motifs and results as CSV or Excel.")
-        # Select which results to download
         choices = []
         if has_nonoverlap:
             choices.append("Non-Overlapping Motifs")
         if has_overlap:
             choices.append("All (Overlapping) Motifs")
         result_type = st.radio("Select result type to download:", choices)
-        # Prepare data
         if result_type == "Non-Overlapping Motifs":
             df_download = st.session_state.df
             fname = "motif_results_nonoverlap"
         else:
             df_download = pd.DataFrame(st.session_state.motif_results)
             fname = "motif_results_all"
-        # CSV
         csv_data = df_download.to_csv(index=False).encode("utf-8")
         st.download_button(
             label="Download CSV",
@@ -624,7 +607,6 @@ elif page == "Download":
             file_name=f"{fname}.csv",
             mime="text/csv"
         )
-        # Excel
         excel_data = io.BytesIO()
         with pd.ExcelWriter(excel_data, engine='xlsxwriter') as writer:
             df_download.to_excel(writer, index=False, sheet_name="Motifs")
@@ -636,6 +618,7 @@ elif page == "Download":
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
         st.info("Choose which result type you want to download. Non-overlapping are filtered motifs, while 'All' includes overlapping hits.")
+
 # --- Advanced page ---
 elif page == "Advanced":
     st.header("Advanced Analysis: All Non-B DNA Motifs from Multi-FASTA")
@@ -669,15 +652,14 @@ elif page == "Advanced":
             else:
                 seq_len = len(seqs[0])
                 st.success(f"Loaded {len(seqs)} sequences, each {seq_len} bp long.")
-                # Collect motif occurrences for all classes
-                motif_pos_dict = {}  # {class: [positions]}
-                motif_count_dict = {}  # {class: hit count}
-                motif_names_dict = {}  # {class: [subtype list]}
+                motif_pos_dict = {}
+                motif_count_dict = {}
+                motif_names_dict = {}
                 for idx, seq in enumerate(seqs):
                     hits = all_motifs(seq)
                     for hit in hits:
                         motif_class = hit["Class"]
-                        start = hit["Start"] - 1  # 0-based
+                        start = hit["Start"] - 1
                         if motif_class not in motif_pos_dict:
                             motif_pos_dict[motif_class] = []
                             motif_names_dict[motif_class] = set()
@@ -706,7 +688,6 @@ elif page == "Advanced":
                     plt.tight_layout()
                     st.pyplot(fig)
                     st.success("All motif histograms generated!")
-                    # Show summary table
                     df_summary = pd.DataFrame({
                         "Motif Class": motif_classes,
                         "Total Hits": [motif_count_dict[m] for m in motif_classes],
@@ -717,7 +698,7 @@ elif page == "Advanced":
             st.error(f"Error processing file: {str(e)}")
     else:
         st.info("Please upload a multi-FASTA file and click 'Run Analysis'.")
-# ... (footer and remaining code)
+
 # --- Documentation page ---
 elif page == "Documentation":
     st.header("Scientific Documentation")
