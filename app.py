@@ -235,7 +235,9 @@ elif page == "Upload & Analyze":
             st.session_state.analysis_status = "Running"
             motif_results = []
             for seq in st.session_state.seqs:
-                motif_results.append(all_motifs(seq))
+                motifs = all_motifs(seq)
+                nonoverlapping = select_best_nonoverlapping_motifs(motifs)
+                motif_results.append(nonoverlapping)
             st.session_state.results = motif_results
 
             # Summary DataFrame
