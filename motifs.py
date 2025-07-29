@@ -7,11 +7,9 @@ import random
 # ========= UTILITY FUNCTIONS =========
 
 def parse_fasta(fasta_str: str) -> str:
-    """Parse FASTA string, return clean DNA sequence (A/T/G/C only, U->T, uppercased)."""
     return "".join([line.strip() for line in fasta_str.split('\n') if not line.startswith(">")]).upper().replace(" ", "").replace("U", "T")
 
 def wrap(seq: str, width: int = 60) -> str:
-    """Wraps sequence for display purposes (optional)."""
     return "\n".join(seq[i:i+width] for i in range(0, len(seq), width))
 
 def gc_content(seq: str) -> float:
@@ -23,18 +21,6 @@ def reverse_complement(seq: str) -> str:
 
 def is_palindrome(seq: str) -> bool:
     return seq == reverse_complement(seq)
-
-def g4hunter_score(seq: str) -> float:
-    """Computes G4Hunter-style score for a sequence."""
-    scores = []
-    for c in seq.upper():
-        if c == 'G':
-            scores.append(1)
-        elif c == 'C':
-            scores.append(-1)
-        else:
-            scores.append(0)
-    return np.mean(scores) if scores else 0
 
 def percentileofscore(a, score, kind='rank'):
     a = np.asarray(a)
@@ -48,7 +34,6 @@ def percentileofscore(a, score, kind='rank'):
 # ========== MOTIF DETECTION HELPERS ==========
 
 def overlapping_finditer(pattern, seq):
-    """Regex finditer with overlapping matches."""
     regex = re.compile(pattern, re.IGNORECASE)
     pos = 0
     while pos < len(seq):
@@ -56,7 +41,7 @@ def overlapping_finditer(pattern, seq):
         if not m:
             break
         yield m
-        pos = m.start() + 1  # allow overlap
+        pos = m.start() + 1
 
 # ========== 1. CURVED DNA ==========
 
@@ -287,7 +272,6 @@ def find_zdna(
 
 def find_slipped_dna(seq):
     results = []
-    # Direct repeats (>=10bp unit, 2 copies, up to 300bp unit)
     min_len_dr = 10
     max_len_dr = 300
     for i in range(len(seq) - min_len_dr * 2 + 1):
@@ -304,7 +288,6 @@ def find_slipped_dna(seq):
                     "ScoreMethod": "nBST_DR",
                     "Score": f"{min(1.0, l/300):.2f}"
                 })
-    # Short Tandem Repeats (microsatellites: 1-6bp unit, >=5 copies, at least 15bp array)
     min_unit_str = 1
     max_unit_str = 6
     min_reps_str = 5
@@ -480,15 +463,16 @@ def find_sticky_dna(seq):
 
 # ========== 8. G-TRIPLEX DNA & G4 VARIANTS ==========
 
-def mask_sequence(seq, start, end):
-    return seq[:start] + "N"*(end-start) + seq[end:]
-
 def g4hunter_score(seq):
-    g_runs = [len(r) for r in re.findall(r"G{2,}", seq)]
-    g_fraction = seq.count('G') / len(seq) if seq else 0
-    if len(g_runs) < 4:
-        return 0
-    return min(2.0, sum(g_runs)/16 + g_fraction*1.0)
+    scores = []
+    for c in seq.upper():
+        if c == 'G':
+            scores.append(1)
+        elif c == 'C':
+            scores.append(-1)
+        else:
+            scores.append(0)
+    return np.mean(scores) if scores else 0
 
 def find_multimeric_gquadruplex(seq):
     results = []
@@ -696,14 +680,6 @@ def imotif_score(seq):
 # ========== 10. AC-MOTIF ==========
 
 def find_ac_motifs(seq):
-    """
-    Finds AC-motif consensus sequences in a DNA string.
-    Consensus Definition (Hur et al., Nucleic Acids Res., 2021, 49:10150–10165):
-      - Pattern: A3 N{4-6} C3 N{4-6} C3 N{4-6} C3
-      - Or:      C3 N{4-6} C3 N{4-6} C3 N{4-6} A3
-    Returns:
-        list of motif dicts.
-    """
     pattern = re.compile(
         r"(?=(?:A{3}[ACGT]{4,6}C{3}[ACGT]{4,6}C{3}[ACGT]{4,6}C{3}|"
         r"C{3}[ACGT]{4,6}C{3}[ACGT]{4,6}C{3}[ACGT]{4,6}A{3}))",
@@ -738,10 +714,10 @@ def find_hybrids(motifs, seq):
     for pos, typ, idx in events:
         if typ == 'start':
             active.add(idx)
-            if len(active) == 2:  # New overlap begins
+            if len(active) == 2:
                 region_start = pos
         elif typ == 'end':
-            if len(active) == 2:  # Overlap ends at pos-1
+            if len(active) == 2:
                 region_end = pos - 1
                 involved_idxs = list(active)
                 involved_classes = {motifs[i]['Class'] for i in involved_idxs}
@@ -773,10 +749,20 @@ def find_hotspots(motif_hits, seq_len, window=100, min_count=3):
         if count >= min_count:
             motifs_in_region = [m for m in motif_hits if m['Start'] <= region_end and m['End'] >= region_start]
             type_div = len({m['Subtype'] for m in motifs_in_region})
+            # Add motif-like dictionary for hotspot region
+            seq_region = motif_hits[0]['Sequence'] if motif_hits else ""
             hotspots.append({
-                "RegionStart": region_start, "RegionEnd": region_end,
-                "MotifCount": count, "TypeDiversity": type_div,
-                "Score": f"{min(1.0, count/10 + type_div/5):.2f}"})
+                "Class": "Non-B DNA Clusters",
+                "Subtype": "Hotspot",
+                "Start": region_start,
+                "End": region_end,
+                "Length": region_end - region_start + 1,
+                "Sequence": "",  # Optionally extract from full seq
+                "ScoreMethod": "Hotspot",
+                "Score": f"{min(1.0, count/10 + type_div/5):.2f}",
+                "MotifCount": count,
+                "TypeDiversity": type_div
+            })
     return merge_hotspots(hotspots)
 
 def merge_hotspots(hotspots):
@@ -784,8 +770,9 @@ def merge_hotspots(hotspots):
     merged = [hotspots[0]]
     for current in hotspots[1:]:
         last = merged[-1]
-        if current['RegionStart'] <= last['RegionEnd']:
-            last['RegionEnd'] = max(last['RegionEnd'], current['RegionEnd'])
+        if current['Start'] <= last['End']:
+            last['End'] = max(last['End'], current['End'])
+            last['Length'] = last['End'] - last['Start'] + 1
             last['MotifCount'] += current['MotifCount']
             last['TypeDiversity'] = max(last['TypeDiversity'], current['TypeDiversity'])
             last['Score'] = f"{min(1.0, float(last['Score']) + float(current['Score'])):.2f}"
@@ -836,7 +823,6 @@ def validate_motif(motif, seq_length):
 # ========== MASTER MOTIF DISCOVERY ==========
 
 def all_motifs(seq, nonoverlap=False, report_hotspots=False):
-    """Identifies all non-B DNA motifs in the input sequence."""
     if not seq or not re.match("^[ATGC]+$", seq, re.IGNORECASE):
         return []
     seq = seq.upper()
