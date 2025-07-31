@@ -45,7 +45,7 @@ Entrez.api_key = None
 st.set_page_config(
     page_title="Non-B DNA Motif Finder",
     layout="wide",
-    page_icon="🧬",
+    page_icon="",
     menu_items={'About': "Non-B DNA Motif Finder | Developed by Dr. Venkata Rajesh Yella"}
 )
 
@@ -137,8 +137,8 @@ if page == "Home":
         pass
     st.markdown(
         """
-        <div style='background: #eaf6fb; border-radius: 14px; padding: 22px 22px; box-shadow: 0px 4px 16px #e0e5ea; font-size: 18px;'>
-        <b>Detect 14+ Non-Canonical DNA Motifs</b> in any DNA sequence or multi-FASTA file.<br>
+        <div style='background: #eaf6fb; border-radius: 16px; padding: 22px 22px; box-shadow: 0px 4px 16px #e0e5ea; font-size: 18px;'>
+        <b>Detect 18 Non-Canonical DNA Motifs</b> in any DNA sequence or multi-FASTA file.<br>
         <ul>
         <li>Upload FASTA or multi-FASTA files (no need to specify single/multi format)</li>
         <li>Motifs detected include Z-DNA, eGZ-motif, AC-motif, G4, i-Motif, R-loop, Cruciform, Triplex, Hybrids, and more</li>
