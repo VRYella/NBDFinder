@@ -129,7 +129,7 @@ def basic_stats(seq):
 st.sidebar.markdown(
     """
     <div style='padding: 12px 0 18px 0; border-bottom: 1px solid #e0e0e0;'>
-        <span style='font-family: "Montserrat", Arial, Helvetica, sans-serif; font-weight: bold; font-size: 24px; color: #222;'>
+        <span style='font-family: "Montserrat", Arial, Helvetica, sans-serif; font-weight: bold; font-size: 28px; color: #222;'>
             Navigation
         </span>
     </div>
