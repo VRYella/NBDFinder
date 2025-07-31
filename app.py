@@ -130,34 +130,17 @@ page = st.sidebar.radio("", list(PAGES.keys()))
 
 # --- Home page ---
 if page == "Home":
-    st.markdown("<h1 style='color:#0A3D62; font-family:Montserrat,sans-serif;'>Non-B DNA Motif Finder</h1>", unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div style='background: #f8f9fa; border-radius: 16px; padding: 24px 24px; box-shadow: 0px 4px 16px #e0e5ea; font-size: 18px; color: #222;'>
+        Non-canonical DNA structures have significant roles in genome stability, regulation, and evolution. This application enables detection and analysis of 18 distinct Non-B DNA motifs within any DNA sequence or multi-FASTA file. The motifs are scientifically classified as follows: G-quadruplex-related structures (G4, Relaxed G4, Bulged G4, Bipartite G4, Multimeric G4, G-Triplex, i-Motif, Hybrid), helix and curvature motifs (Z-DNA, eGZ (extruded-G), Curved DNA, AC-Motif), repeat and junction motifs (Slipped DNA, Cruciform, Sticky DNA, Triplex DNA), and hybrid or cluster motifs (R-Loop, Non-B DNA Clusters). Users can upload single or multi-FASTA files and obtain interactive motif visualizations along with downloadable results for further analysis.
+        </div>
+        """, unsafe_allow_html=True
+    )
     try:
         st.image("nbd3.png", use_container_width=True)
     except Exception:
         pass
-    st.markdown(
-        """
-        <div style='background: linear-gradient(90deg,#eaf6fb 60%, #FFDAC1 100%); border-radius: 18px; padding: 26px 26px; box-shadow: 0px 4px 18px #e0e5ea; font-size: 19px; font-family: "Segoe UI", Helvetica, Arial, sans-serif;'>
-        <b style='font-size:22px; color:#2d3436;'>Detect 18 Non-Canonical DNA Motifs in Genomic Sequences</b><br><br>
-        <span style='font-size:17px;'>
-        Non-B DNA structures are crucial for genome regulation, stability, and evolution. <br>
-        This tool identifies and visualizes the following motifs, grouped by their biological context:
-        </span><br>
-        <ul style='font-size:17px;'>
-            <li><span style='color:#A2D7D8'><b>G-Quadruplexes & Related:</b></span> G4, Relaxed G4, Bulged G4, Bipartite G4, Multimeric G4, G-Triplex, i-Motif, Hybrid</li>
-            <li><span style='color:#FFB7B2'><b>Helix Structures:</b></span> Z-DNA, eGZ (extruded-G), Curved DNA, AC-Motif</li>
-            <li><span style='color:#FFD3B6'><b>Repeats & Junctions:</b></span> Slipped DNA, Cruciform, Sticky DNA, Triplex DNA</li>
-            <li><span style='color:#F5B041'><b>RNA/DNA Hybrids:</b></span> R-Loop, Non-B DNA Clusters</li>
-        </ul>
-        <span style='font-size:17px;'>
-        Simply upload your DNA sequence in FASTA or multi-FASTA format—no need to specify the type.
-        Enjoy interactive motif visualizations and downloadable results for in-depth analysis.
-        </span>
-        <br><br>
-        <b style='font-size:15px; color:#6A4C93;'>Developed by Dr. Venkata Rajesh Yella</b>
-        </div>
-        """, unsafe_allow_html=True
-    )
 # --- Upload & Analyze page ---
 elif page == "Upload & Analyze":
     st.markdown("<h2 style='color:#0A3D62;'>Sequence Input</h2>", unsafe_allow_html=True)
