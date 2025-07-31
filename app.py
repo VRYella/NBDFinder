@@ -17,7 +17,7 @@ from motifs import (
     select_best_nonoverlapping_motifs, wrap
 )
 
-# Motif order as defined in motifs.py (all_motifs function)
+# Motif order as found in motifs.py
 MOTIF_ORDER = [
     "Sticky_DNA",
     "Curved_DNA",
@@ -36,7 +36,7 @@ MOTIF_ORDER = [
     "i-Motif",
     "AC-Motif",
     "Hybrid",
-    "Non-B DNA Clusters",
+    "Non-B DNA Clusters"
 ]
 
 Entrez.email = "raazbiochem@gmail.com"
@@ -69,7 +69,6 @@ CGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGC
 GAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAA
 """
 
-# --- Session state initialization ---
 for k, v in {
     'seqs': [],
     'names': [],
@@ -82,23 +81,23 @@ for k, v in {
         st.session_state[k] = v
 
 MOTIF_COLORS = {
-    "Curved_DNA": "#FF9AA2",
-    "Z-DNA": "#FFB7B2",
-    "Slipped_DNA": "#FFDAC1",
+    "Curved_DNA": "#FF9AA2", 
+    "Z-DNA": "#FFB7B2", 
+    "eGZ (extruded-G)": "#6A4C93",
+    "Slipped_DNA": "#FFDAC1", 
     "R-Loop": "#FFD3B6",
-    "Cruciform": "#E2F0CB",
-    "Triplex_DNA": "#B5EAD7",
-    "Sticky_DNA": "#DCB8CB",
+    "Cruciform": "#E2F0CB", 
+    "Triplex_DNA": "#B5EAD7", 
+    "Sticky_DNA": "#DCB8CB", 
     "G-Triplex": "#C7CEEA",
-    "G4": "#A2D7D8",
+    "G4": "#A2D7D8", 
     "Relaxed_G4": "#A2D7B8",
     "Bulged_G4": "#A2A7D8",
     "Bipartite_G4": "#A2D788",
     "Multimeric_G4": "#A2A7B8",
-    "i-Motif": "#B0C4DE",
-    "Hybrid": "#C1A192",
+    "i-Motif": "#B0C4DE", 
+    "Hybrid": "#C1A192", 
     "Non-B DNA Clusters": "#A2C8CC",
-    "eGZ (extruded-G)": "#6A4C93",
     "AC-Motif": "#F5B041"
 }
 
@@ -152,10 +151,183 @@ if page == "Home":
 
 # --- Upload & Analyze page ---
 elif page == "Upload & Analyze":
-    # ... (same as your original code for upload/input/preview) ...
-    pass
+    st.markdown("<h2 style='color:#0A3D62;'>Sequence Input</h2>", unsafe_allow_html=True)
+    st.markdown("Supports <b>multi-FASTA</b> (multiple sequences) and single FASTA. Paste, upload, select example, or fetch from NCBI.", unsafe_allow_html=True)
+    st.caption("Supported formats: .fa, .fasta, .txt | Limit: 200MB/file.")
 
-# --- Results page ---
+    input_method = st.radio("Input method:", [
+        "Upload FASTA / multi-FASTA file",
+        "Paste Sequence(s)",
+        "Example Sequence",
+        "NCBI Fetch"
+    ])
+    
+    seqs, names = [], []
+    if input_method == "Upload FASTA / multi-FASTA file":
+        fasta_file = st.file_uploader("Drag and drop FASTA/multi-FASTA file here", type=["fa", "fasta", "txt"])
+        if fasta_file:
+            content = fasta_file.read().decode("utf-8")
+            seqs, names = [], []
+            cur_seq, cur_name = "", ""
+            for line in content.splitlines():
+                if line.startswith(">"):
+                    if cur_seq:
+                        seqs.append(parse_fasta(cur_seq))
+                        names.append(cur_name if cur_name else f"Seq{len(seqs)}")
+                    cur_name = line.strip().lstrip(">")
+                    cur_seq = ""
+                else:
+                    cur_seq += line.strip()
+            if cur_seq:
+                seqs.append(parse_fasta(cur_seq))
+                names.append(cur_name if cur_name else f"Seq{len(seqs)}")
+            if seqs:
+                st.success(f"Loaded {len(seqs)} sequences.")
+                for i, seq in enumerate(seqs[:3]):
+                    st.markdown(f"<b>{names[i]}</b>: <span style='color:#576574'>{len(seq):,} bp</span>", unsafe_allow_html=True)
+                    stats = basic_stats(seq)
+                    st.markdown(f"GC%: {stats['GC%']} | AT%: {stats['AT%']} | A: {stats['A']} | T: {stats['T']} | G: {stats['G']} | C: {stats['C']}")
+                if len(seqs) > 3:
+                    st.caption(f"...and {len(seqs)-3} more.")
+            else:
+                st.warning("No sequences found.")
+    elif input_method == "Paste Sequence(s)":
+        seq_input = st.text_area("Paste single or multi-FASTA here:", height=150)
+        if seq_input:
+            seqs, names = [], []
+            cur_seq, cur_name = "", ""
+            for line in seq_input.splitlines():
+                if line.startswith(">"):
+                    if cur_seq:
+                        seqs.append(parse_fasta(cur_seq))
+                        names.append(cur_name if cur_name else f"Seq{len(seqs)}")
+                    cur_name = line.strip().lstrip(">")
+                    cur_seq = ""
+                else:
+                    cur_seq += line.strip()
+            if cur_seq:
+                seqs.append(parse_fasta(cur_seq))
+                names.append(cur_name if cur_name else f"Seq{len(seqs)}")
+            if seqs:
+                st.success(f"Pasted {len(seqs)} sequences.")
+                for i, seq in enumerate(seqs[:3]):
+                    st.markdown(f"<b>{names[i]}</b>: <span style='color:#576574'>{len(seq):,} bp</span>", unsafe_allow_html=True)
+                    stats = basic_stats(seq)
+                    st.markdown(f"GC%: {stats['GC%']} | AT%: {stats['AT%']} | A: {stats['A']} | T: {stats['T']} | G: {stats['G']} | C: {stats['C']}")
+                if len(seqs) > 3:
+                    st.caption(f"...and {len(seqs)-3} more.")
+            else:
+                st.warning("No sequences found.")
+    elif input_method == "Example Sequence":
+        ex_type = st.radio("Example type:", ["Single Example", "Multi-FASTA Example"])
+        if ex_type == "Single Example":
+            if st.button("Load Single Example"):
+                seqs = [parse_fasta(EXAMPLE_FASTA)]
+                names = ["Example_Sequence"]
+                st.success("Single example sequence loaded.")
+                stats = basic_stats(seqs[0])
+                st.code(EXAMPLE_FASTA, language="fasta")
+                st.markdown(f"GC%: {stats['GC%']} | AT%: {stats['AT%']} | A: {stats['A']} | T: {stats['T']} | G: {stats['G']} | C: {stats['C']}")
+        else:
+            if st.button("Load Multi-FASTA Example"):
+                seqs, names = [], []
+                cur_seq, cur_name = "", ""
+                for line in EXAMPLE_MULTI_FASTA.splitlines():
+                    if line.startswith(">"):
+                        if cur_seq:
+                            seqs.append(parse_fasta(cur_seq))
+                            names.append(cur_name if cur_name else f"Seq{len(seqs)}")
+                        cur_name = line.strip().lstrip(">")
+                        cur_seq = ""
+                    else:
+                        cur_seq += line.strip()
+                if cur_seq:
+                    seqs.append(parse_fasta(cur_seq))
+                    names.append(cur_name if cur_name else f"Seq{len(seqs)}")
+                st.success(f"Multi-FASTA example loaded with {len(seqs)} sequences.")
+                for i, seq in enumerate(seqs[:3]):
+                    stats = basic_stats(seq)
+                    st.markdown(f"<b>{names[i]}</b>: <span style='color:#576574'>{len(seq):,} bp</span>", unsafe_allow_html=True)
+                    st.markdown(f"GC%: {stats['GC%']} | AT%: {stats['AT%']} | A: {stats['A']} | T: {stats['T']} | G: {stats['G']} | C: {stats['C']}")
+                st.code(EXAMPLE_MULTI_FASTA, language="fasta")
+    elif input_method == "NCBI Fetch":
+        db = st.selectbox("NCBI Database", ["nucleotide", "protein", "gene"])
+        query_type = st.radio("Query Type", ["Accession", "Gene Name", "Custom Query"])
+        motif_examples = {
+            "G-quadruplex": "NR_003287.2 (human telomerase RNA)",
+            "Z-DNA": "NM_001126112.2 (human ADAR1 gene)",
+            "R-loop": "NR_024540.1 (human SNRPN gene)",
+            "eGZ-motif": "CGG repeat region",
+            "AC-motif": "A-rich/C-rich consensus region"
+        }
+        with st.expander("Motif example queries"):
+            for motif, example in motif_examples.items():
+                st.write(f"**{motif}**: `{example}`")
+        query = st.text_input("Enter query (accession, gene, etc.):")
+        rettype = st.selectbox("Return format", ["fasta", "gb"])
+        retmax = st.number_input("Max records", min_value=1, max_value=20, value=3)
+        if st.button("Fetch from NCBI"):
+            if query:
+                qtype = {"Accession": "accession", "Gene Name": "gene", "Custom Query": "custom"}[query_type]
+                with st.spinner("Contacting NCBI..."):
+                    handle = Entrez.efetch(db=db, id=query, rettype=rettype, retmode="text")
+                    records = list(SeqIO.parse(handle, rettype))
+                    handle.close()
+                    seqs = [str(rec.seq).upper().replace("U", "T") for rec in records]
+                    names = [rec.id for rec in records]
+                if seqs:
+                    st.success(f"Fetched {len(seqs)} sequences.")
+                    for i, seq in enumerate(seqs[:3]):
+                        stats = basic_stats(seq)
+                        st.markdown(f"<b>{names[i]}</b>: <span style='color:#576574'>{len(seq):,} bp</span>", unsafe_allow_html=True)
+                        st.markdown(f"GC%: {stats['GC%']} | AT%: {stats['AT%']} | A: {stats['A']} | T: {stats['T']} | G: {stats['G']} | C: {stats['C']}")
+            else:
+                st.warning("Enter a query before fetching.")
+
+    if seqs:
+        st.session_state.seqs = seqs
+        st.session_state.names = names
+        st.session_state.results = []
+
+    if st.session_state.seqs:
+        st.subheader("Sequence Preview")
+        for i, seq in enumerate(st.session_state.seqs[:2]):
+            stats = basic_stats(seq)
+            st.markdown(f"<b>{st.session_state.names[i]}</b> ({len(seq):,} bp) | GC%: {stats['GC%']} | AT%: {stats['AT%']} | A: {stats['A']} | T: {stats['T']} | G: {stats['G']} | C: {stats['C']}", unsafe_allow_html=True)
+            st.code(wrap(seq[:400]), language="fasta")
+        if len(st.session_state.seqs) > 2:
+            st.caption(f"...and {len(st.session_state.seqs)-2} more.")
+
+        if st.button("Run Motif Analysis", type="primary"):
+            st.session_state.analysis_status = "Running"
+            motif_results = []
+            for seq in st.session_state.seqs:
+                motifs = all_motifs(seq)
+                nonoverlapping = select_best_nonoverlapping_motifs(motifs)
+                motif_results.append(nonoverlapping)
+            st.session_state.results = motif_results
+
+            # Summary DataFrame
+            summary = []
+            for i, motifs in enumerate(motif_results):
+                motif_types = Counter([m['Class'] if m['Class'] != "Z-DNA" or m.get("Subclass") != "eGZ (extruded-G)" else "eGZ (extruded-G)" for m in motifs])
+                stats = basic_stats(st.session_state.seqs[i])
+                summary.append({
+                    "Sequence": st.session_state.names[i],
+                    "Length": stats['Length'],
+                    "GC%": stats['GC%'],
+                    "AT%": stats['AT%'],
+                    "A": stats['A'],
+                    "T": stats['T'],
+                    "G": stats['G'],
+                    "C": stats['C'],
+                    "Motif Count": len(motifs),
+                    "Motif Types": ", ".join(f"{k}({v})" for k, v in motif_types.items())
+                })
+            st.session_state.summary_df = pd.DataFrame(summary)
+            st.success("Analysis complete! See 'Results' tab for details.")
+            st.session_state.analysis_status = "Complete"
+
 elif page == "Results":
     st.markdown("<h2 style='color:#0A3D62;'>Motif Summary & Visualization</h2>", unsafe_allow_html=True)
     if not st.session_state.results:
@@ -201,10 +373,6 @@ elif page == "Results":
             ax.set_title(f"Motif tracks: {st.session_state.names[seq_idx]}")
             st.pyplot(fig)
 
-# --- Download/Documentation/Footer pages ---
-# ... (same as your original code) ...
-
-# --- Download page ---
 elif page == "Download":
     st.header("Download Results")
     if not st.session_state.results:
@@ -227,7 +395,6 @@ elif page == "Download":
         excel_data.seek(0)
         st.download_button("Download Excel", data=excel_data, file_name="motif_results.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
-# --- Documentation page ---
 elif page == "Documentation":
     st.header("Scientific Documentation")
     st.markdown("""
@@ -263,7 +430,6 @@ elif page == "Documentation":
     </div>
     """, unsafe_allow_html=True)
 
-# --- Footer ---
 st.markdown("""
 ---
 <div style='font-size: 15px; color: #1e293b; margin-top: 40px; text-align: left;'>
