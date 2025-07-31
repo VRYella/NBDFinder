@@ -142,8 +142,8 @@ def basic_stats(seq, motifs=None):
         stats["Motif Coverage %"] = round(coverage_pct, 2)
 
     return stats
+
 # Improved Sidebar Navigation
-# Sidebar Navigation - Enhanced
 st.sidebar.markdown(
     """
     <div style='padding: 12px 0 18px 0; border-bottom: 1px solid #e0e0e0;'>
@@ -160,6 +160,7 @@ page = st.sidebar.radio(
     list(PAGES.keys()),
     label_visibility='collapsed'
 )
+
 # --- Home page ---
 if page == "Home":
     # 1. Tool Name
@@ -184,7 +185,6 @@ if page == "Home":
         unsafe_allow_html=True
     )
 
- 
 # --- Upload & Analyze page ---
 elif page == "Upload & Analyze":
     st.markdown("<h2 style='color:#0A3D62;'>Sequence Input</h2>", unsafe_allow_html=True)
