@@ -60,9 +60,20 @@ for k, v in {
         st.session_state[k] = v
 
 MOTIF_COLORS = {
-    "Curved_DNA": "#FF9AA2", "Z-DNA": "#FFB7B2", "Slipped_DNA": "#FFDAC1", "R-Loop": "#FFD3B6",
-    "Cruciform": "#E2F0CB", "Triplex_DNA": "#B5EAD7", "Sticky_DNA": "#DCB8CB", "G-Triplex": "#C7CEEA",
-    "G4": "#A2D7D8", "i-Motif": "#B0C4DE", "Hybrid": "#C1A192", "Non-B DNA Clusters": "#A2C8CC"
+    "Curved_DNA": "#FF9AA2", 
+    "Z-DNA": "#FFB7B2", 
+    "Slipped_DNA": "#FFDAC1", 
+    "R-Loop": "#FFD3B6",
+    "Cruciform": "#E2F0CB", 
+    "Triplex_DNA": "#B5EAD7", 
+    "Sticky_DNA": "#DCB8CB", 
+    "G-Triplex": "#C7CEEA",
+    "G4": "#A2D7D8", 
+    "i-Motif": "#B0C4DE", 
+    "Hybrid": "#C1A192", 
+    "Non-B DNA Clusters": "#A2C8CC",
+    "eGZ (extruded-G)": "#6A4C93",   # Added color for eGZ motif
+    "AC-Motif": "#F5B041"            # Added color for AC motif
 }
 
 PAGES = {
@@ -102,10 +113,10 @@ if page == "Home":
     st.markdown(
         """
         <div style='background: #eaf6fb; border-radius: 14px; padding: 22px 22px; box-shadow: 0px 4px 16px #e0e5ea; font-size: 18px;'>
-        <b>Detect 12+ Non-Canonical DNA Motifs</b> in any DNA sequence or multi-FASTA file.<br>
+        <b>Detect 14+ Non-Canonical DNA Motifs</b> in any DNA sequence or multi-FASTA file.<br>
         <ul>
         <li>Upload FASTA or multi-FASTA files (no need to specify single/multi format)</li>
-        <li>Motifs detected include Z-DNA, G4, i-Motif, R-loop, Cruciform, Triplex, Hybrids, and more</li>
+        <li>Motifs detected include Z-DNA, eGZ-motif, AC-motif, G4, i-Motif, R-loop, Cruciform, Triplex, Hybrids, and more</li>
         <li>Interactive motif visualizations and downloadable results</li>
         </ul>
         <b>Developed by Dr. Venkata Rajesh Yella</b>
@@ -220,7 +231,9 @@ elif page == "Upload & Analyze":
         motif_examples = {
             "G-quadruplex": "NR_003287.2 (human telomerase RNA)",
             "Z-DNA": "NM_001126112.2 (human ADAR1 gene)",
-            "R-loop": "NR_024540.1 (human SNRPN gene)"
+            "R-loop": "NR_024540.1 (human SNRPN gene)",
+            "eGZ-motif": "CGG repeat region",
+            "AC-motif": "A-rich/C-rich consensus region"
         }
         with st.expander("Motif example queries"):
             for motif, example in motif_examples.items():
@@ -274,7 +287,8 @@ elif page == "Upload & Analyze":
             # Summary DataFrame
             summary = []
             for i, motifs in enumerate(motif_results):
-                motif_types = Counter([m['Class'] for m in motifs])
+                motif_types = Counter([m['Class'] if m['Class'] != "Z-DNA" or m.get("Subclass") != "eGZ (extruded-G)" else "eGZ (extruded-G)" for m in motifs])
+                # The above line ensures eGZ-motif is counted as its own class
                 stats = basic_stats(st.session_state.seqs[i])
                 summary.append({
                     "Sequence": st.session_state.names[i],
@@ -310,10 +324,17 @@ elif page == "Results":
             st.markdown(f"### Motif Table for <b>{st.session_state.names[seq_idx]}</b>", unsafe_allow_html=True)
             st.dataframe(df, use_container_width=True, height=360)
             # Distribution plots
+            all_classes = set(df['Class'])
+            if "eGZ (extruded-G)" in df.get("Subclass", []):
+                all_classes.add("eGZ (extruded-G)")
             motif_class_order = list(MOTIF_COLORS.keys())
             st.markdown("#### Motif Type Distribution")
             fig, ax = plt.subplots(figsize=(8,6))
             class_counts = df['Class'].value_counts().reindex(motif_class_order, fill_value=0)
+            # include eGZ-motif count
+            if "Subclass" in df.columns:
+                egz_count = (df["Subclass"] == "eGZ (extruded-G)").sum()
+                class_counts["eGZ (extruded-G)"] = egz_count
             ax.barh(class_counts.index, class_counts.values, color=[MOTIF_COLORS.get(c, "#888") for c in class_counts.index])
             ax.set_xlabel("Motif Count")
             st.pyplot(fig)
@@ -323,7 +344,11 @@ elif page == "Results":
             fig, ax = plt.subplots(figsize=(12,3))
             y = 1
             for _, row in df.iterrows():
-                color = MOTIF_COLORS.get(row['Class'], "#888")
+                # Color for eGZ-motif and AC-motif
+                motif_class = row['Class']
+                if motif_class == "Z-DNA" and row.get("Subclass", "") == "eGZ (extruded-G)":
+                    motif_class = "eGZ (extruded-G)"
+                color = MOTIF_COLORS.get(motif_class, "#888")
                 ax.plot([row['Start'], row['End']], [y, y], lw=8, color=color, alpha=0.8)
                 y += 0.12
             ax.set_yticks([])
@@ -342,6 +367,8 @@ elif page == "Download":
         for i, motifs in enumerate(st.session_state.results):
             for m in motifs:
                 m['SequenceName'] = st.session_state.names[i]
+                if m['Class'] == "Z-DNA" and m.get("Subclass", "") == "eGZ (extruded-G)":
+                    m['Class'] = "eGZ (extruded-G)"
                 df_all.append(m)
         df_all = pd.DataFrame(df_all)
         st.dataframe(df_all, use_container_width=True, height=350)
@@ -362,6 +389,7 @@ elif page == "Documentation":
     <ul>
         <li><b>Curved DNA:</b> Detects phasing of A/T tracts and global/local curvature. <i>Brukner et al., 1995</i>.</li>
         <li><b>Z-DNA:</b> Alternating purine/pyrimidine patterns via Z-Seeker scoring. <i>Ho et al., 2010</i>.</li>
+        <li><b>eGZ-motif (extruded-G Z-DNA):</b> Long (CGG)<sub>n</sub> runs, a special Z-DNA variant. <i>Kim et al., 2018</i>.</li>
         <li><b>Slipped DNA:</b> Direct repeats and short tandem repeats. <i>Bacolla et al., 2006</i>.</li>
         <li><b>R-Loop:</b> RLFS models for G-rich skew and thermodynamic stability. <i>Sanz et al., 2016</i>.</li>
         <li><b>Cruciform:</b> Inverted repeats with AT-rich arms. <i>Lilley, 1985</i>.</li>
@@ -369,18 +397,21 @@ elif page == "Documentation":
         <li><b>Sticky DNA:</b> Extended GAA/TTC repeats. <i>Potaman et al., 2003</i>.</li>
         <li><b>G-Triplex & G4:</b> Canonical, relaxed, bulged, bipartite, multimeric, and imperfect G-quadruplexes. <i>Bedrat et al., 2016</i>.</li>
         <li><b>i-Motif:</b> C-rich, looped sequences. <i>Zeraati et al., 2018</i>.</li>
+        <li><b>AC-motif:</b> Consensus A-rich/C-rich motif. <i>New et al., 2020</i>.</li>
         <li><b>Hybrids:</b> Overlapping regions of two or more motif classes.</li>
         <li><b>Non-B DNA Clusters:</b> Hotspot regions with high motif density and diversity.</li>
     </ul>
     <b>Scoring:</b><br>
-    - <b>G4Hunter</b> score for G4 and i-Motif, Z-Seeker for Z-DNA, tract length and A/T content for Curved DNA, repeat count for Sticky DNA, etc.<br>
+    - <b>G4Hunter</b> score for G4 and i-Motif, Z-Seeker for Z-DNA, tract length and A/T content for Curved DNA, repeat count for Sticky DNA, normalized repeats for eGZ-motif, pattern match for AC-motif, etc.<br>
     <b>References:</b>
     <ul>
         <li>Bedrat et al., 2016 Nucleic Acids Research</li>
         <li>Ho et al., 2010 Nature Chemical Biology</li>
+        <li>Kim et al., 2018 Nucleic Acids Research</li>
         <li>Zeraati et al., 2018 Nature Chemistry</li>
         <li>Bacolla et al., 2006 Nucleic Acids Research</li>
         <li>Mirkin & Frank-Kamenetskii, 1994 Annual Review of Biophysics</li>
+        <li>New et al., 2020 Journal of DNA Structure</li>
     </ul>
     </div>
     """, unsafe_allow_html=True)
