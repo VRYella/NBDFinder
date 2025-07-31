@@ -125,22 +125,23 @@ def basic_stats(seq):
     }
     return stats
 # Improved Sidebar Navigation
+# Sidebar Navigation - Enhanced
 st.sidebar.markdown(
     """
-    <div style='padding: 8px 0 12px 0; border-bottom: 1px solid #e0e0e0;'>
-        <h2 style='color: #222; font-family: Arial, Helvetica, sans-serif; margin-bottom: 0;'>Navigation</h2>
+    <div style='padding: 12px 0 18px 0; border-bottom: 1px solid #e0e0e0;'>
+        <span style='font-family: "Montserrat", Arial, Helvetica, sans-serif; font-weight: bold; font-size: 24px; color: #222;'>
+            Navigation
+        </span>
     </div>
     """,
     unsafe_allow_html=True
 )
 
-# Custom radio button styling for Streamlit (limited by Streamlit's API)
 page = st.sidebar.radio(
     "",
     list(PAGES.keys()),
     label_visibility='collapsed'
 )
-
 # --- Home page ---
 if page == "Home":
     # 1. Tool Name
