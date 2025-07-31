@@ -346,8 +346,8 @@ elif page == "Upload & Analyze":
             # Summary DataFrame
             summary = []
             for i, motifs in enumerate(motif_results):
+                stats = basic_stats(st.session_state.seqs[i], motifs)   # include motifs for coverage
                 motif_types = Counter([m['Class'] if m['Class'] != "Z-DNA" or m.get("Subclass") != "eGZ (extruded-G)" else "eGZ (extruded-G)" for m in motifs])
-                stats = basic_stats(st.session_state.seqs[i])
                 summary.append({
                     "Sequence": st.session_state.names[i],
                     "Length": stats['Length'],
@@ -358,6 +358,7 @@ elif page == "Upload & Analyze":
                     "G": stats['G'],
                     "C": stats['C'],
                     "Motif Count": len(motifs),
+                    "Motif Coverage %": stats["Motif Coverage %"],      # show coverage
                     "Motif Types": ", ".join(f"{k}({v})" for k, v in motif_types.items())
                 })
             st.session_state.summary_df = pd.DataFrame(summary)
