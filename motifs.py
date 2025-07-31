@@ -43,60 +43,38 @@ def overlapping_finditer(pattern, seq):
         yield m
         pos = m.start() + 1
 
-# ========== 1. CURVED DNA ==========
+# ========== 1. CURVED DNA (Strict PolyA/PolyT Only) ==========
 
-def find_AT_tracts_no_TA(seq: str, min_len: int) -> list:
-    tracts = []
+def find_polyA_polyT_tracts(seq: str, min_len: int = 7) -> list:
+    results = []
     i = 0
-    while i < len(seq):
-        if seq[i] in "AT":
+    n = len(seq)
+    while i < n:
+        if seq[i] == 'A':
             start = i
-            tract_seq = seq[i]
-            i += 1
-            ta_found = False
-            while i < len(seq) and seq[i] in "AT":
-                if seq[i-1:i+1] == 'TA':
-                    ta_found = True
-                tract_seq += seq[i]
+            while i < n and seq[i] == 'A':
                 i += 1
-            if len(tract_seq) >= min_len and not ta_found:
-                tracts.append((start, i-1, tract_seq))
+            if i - start >= min_len:
+                results.append((start, i-1, seq[start:i]))
+        elif seq[i] == 'T':
+            start = i
+            while i < n and seq[i] == 'T':
+                i += 1
+            if i - start >= min_len:
+                results.append((start, i-1, seq[start:i]))
         else:
             i += 1
-    return tracts
-
-def find_AT_tracts_relaxed(seq: str, min_len: int, max_TA: int = 0) -> list:
-    tracts = []
-    i = 0
-    while i < len(seq):
-        if seq[i] in "AT":
-            start = i
-            tract_seq = seq[i]
-            i += 1
-            ta_count = 0
-            while i < len(seq) and seq[i] in "AT":
-                if seq[i-1:i+1] == 'TA':
-                    ta_count += 1
-                tract_seq += seq[i]
-                i += 1
-            if len(tract_seq) >= min_len and ta_count <= max_TA:
-                tracts.append((start, i-1, tract_seq))
-        else:
-            i += 1
-    return tracts
+    return results
 
 def curvature_score(seq):
-    score = 0
-    for i in range(len(seq) - 1):
-        pair = seq[i:i+2]
-        if pair in ["AA", "TT", "AT"]:
-            score += 1
-    return score
+    # For strict polyA/polyT, score is just the tract length
+    return len(seq)
 
-def find_global_curved(seq: str, min_tract_len: int = 3, min_repeats: int = 3, min_spacing: int = 8, max_spacing: int = 12, min_score: int = 6) -> Tuple[list, list]:
-    tracts = find_AT_tracts_no_TA(seq, min_tract_len)
+def find_global_curved_polyA_polyT(seq: str, min_tract_len: int = 3, min_repeats: int = 3, min_spacing: int = 8, max_spacing: int = 12, min_score: int = 6) -> Tuple[list, list]:
+    tracts = find_polyA_polyT_tracts(seq, min_tract_len)
     results = []
     apr_regions = []
+    # Try to find groups of tracts with proper spacing
     for i in range(len(tracts) - min_repeats + 1):
         group = [tracts[i]]
         for j in range(1, min_repeats):
@@ -113,39 +91,39 @@ def find_global_curved(seq: str, min_tract_len: int = 3, min_repeats: int = 3, m
             if score >= min_score:
                 motif = {
                     "Class": "Curved_DNA",
-                    "Subtype": "Global_Curved_Strict",
+                    "Subtype": "Global_Curved_Strict_PolyA_or_PolyT",
                     "Start": group[0][0] + 1,
                     "End": group[-1][1] + 1,
                     "Length": group[-1][1] - group[0][0] + 1,
                     "Sequence": wrap(motif_seq),
-                    "ScoreMethod": "Strict: curvature step score",
+                    "ScoreMethod": "Strict: PolyA/PolyT curvature tract score",
                     "Score": score
                 }
                 results.append(motif)
                 apr_regions.append((motif["Start"], motif["End"]))
     return results, apr_regions
 
-def find_local_curved(seq: str, apr_regions: list, min_len: int = 7) -> list:
+def find_local_curved_polyA_polyT(seq: str, apr_regions: list, min_len: int = 7) -> list:
     results = []
-    tracts = find_AT_tracts_relaxed(seq, min_len, max_TA=0)
+    tracts = find_polyA_polyT_tracts(seq, min_len)
     for start, end, tract_seq in tracts:
         s, e = start + 1, end + 1
         if not any(r_start <= s <= r_end or r_start <= e <= r_end for r_start, r_end in apr_regions):
             results.append({
                 "Class": "Curved_DNA",
-                "Subtype": "Local_Curved_Relaxed",
+                "Subtype": "Local_Curved_Strict_PolyA_or_PolyT",
                 "Start": s,
                 "End": e,
                 "Length": len(tract_seq),
                 "Sequence": wrap(tract_seq),
-                "ScoreMethod": "Relaxed: tract length",
+                "ScoreMethod": "Strict: PolyA/PolyT tract length",
                 "Score": len(tract_seq)
             })
     return results
 
 def find_curved_DNA(seq: str) -> list:
-    global_results, apr_regions = find_global_curved(seq)
-    local_results = find_local_curved(seq, apr_regions)
+    global_results, apr_regions = find_global_curved_polyA_polyT(seq)
+    local_results = find_local_curved_polyA_polyT(seq, apr_regions)
     return global_results + local_results
 
 # ========== 2. Z-DNA ==========
@@ -267,6 +245,8 @@ def find_zdna(
             "Score": f"{score:.2f}",
         })
     return motifs
+
+
 
 # ========== 2a. eGZ-MOTIF ==========
 
