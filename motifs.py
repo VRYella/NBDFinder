@@ -268,6 +268,34 @@ def find_zdna(
         })
     return motifs
 
+# ========== 2a. eGZ-MOTIF ==========
+
+def find_egz_motif(seq):
+    """
+    Detects eGZ-motifs: extruded-G Z-DNA motifs, defined as long (CGG)n runs.
+    Binds to the Double-stranded / Z-DNA / eGZ (extruded-G) motif class.
+    """
+    pattern = re.compile(r'(CGG){4,}', re.IGNORECASE)  # n≥4 is minimal, n≥6 for strong stability
+    results = []
+    for m in pattern.finditer(seq):
+        motif_seq = m.group(0)
+        n_repeats = len(motif_seq) // 3
+        # Normalize the score: full score if n_repeats≥12, lower otherwise
+        score = min(1.0, n_repeats/12)
+        results.append({
+            "Family": "Double-stranded",
+            "Class": "Z-DNA",
+            "Subclass": "eGZ (extruded-G)",
+            "Start": m.start() + 1,           # 1-based coordinate
+            "End": m.end(),
+            "Length": len(motif_seq),
+            "Sequence": wrap(motif_seq),
+            "ScoreMethod": "Repeat_normalized",
+            "Score": f"{score:.2f}",
+            "CGG_Repeats": n_repeats
+        })
+    return results
+
 # ========== 3. SLIPPED DNA (DR, STR) ==========
 
 def find_slipped_dna(seq):
@@ -830,6 +858,7 @@ def all_motifs(seq, nonoverlap=False, report_hotspots=False):
         find_sticky_dna(seq) +
         find_curved_DNA(seq) +
         find_zdna(seq) +
+        find_egz_motif(seq) +  # Added eGZ motif detection after Z-DNA
         find_slipped_dna(seq) +
         find_rlfs(seq) +
         find_cruciform(seq) +
