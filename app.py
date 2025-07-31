@@ -109,26 +109,20 @@ PAGES = {
     "Documentation": "Scientific methods & references"
 }
 
-def sequence_stats_and_coverage(seq, motifs):
+def basic_stats(seq, motifs=None):
     """
     Returns basic stats and Non-B motif coverage for a DNA sequence.
 
     Parameters:
         seq (str): DNA sequence string.
-        motifs (list): List of motif dicts, each with 'Start' and 'End' (0-based, end exclusive).
+        motifs (list, optional): List of motif dicts, each with 'Start' and 'End' (0-based, end exclusive).
     Returns:
-        dict: Stats including length, GC%, AT%, nucleotide counts, and motif coverage %.
+        dict: Stats including length, GC%, AT%, nucleotide counts, and motif coverage % (if motifs provided).
     """
     seq = seq.upper()
     length = len(seq)
     gc = gc_content(seq)
     at = (seq.count('A') + seq.count('T')) / length * 100 if length else 0
-
-    # Coverage calculation
-    covered = set()
-    for m in motifs:
-        covered.update(range(m['Start'], m['End']))
-    coverage_pct = (len(covered) / length * 100) if length else 0
 
     stats = {
         "Length": length,
@@ -138,8 +132,15 @@ def sequence_stats_and_coverage(seq, motifs):
         "T": seq.count('T'),
         "G": seq.count('G'),
         "C": seq.count('C'),
-        "Motif Coverage %": round(coverage_pct, 2)
     }
+
+    if motifs is not None:
+        covered = set()
+        for m in motifs:
+            covered.update(range(m['Start'], m['End']))
+        coverage_pct = (len(covered) / length * 100) if length else 0
+        stats["Motif Coverage %"] = round(coverage_pct, 2)
+
     return stats
 # Improved Sidebar Navigation
 # Sidebar Navigation - Enhanced
