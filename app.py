@@ -393,7 +393,7 @@ elif page == "Results":
             ax.set_title(f"Motif tracks: {st.session_state.names[seq_idx]}")
             st.pyplot(fig)
 
-            # ---- Per-motif coverage summary (table) ----
+"""            # ---- Per-motif coverage summary (table) ----
             motif_coverage = []
             seq_length = len(st.session_state.seqs[seq_idx])
             for motif_class in MOTIF_ORDER:
@@ -412,6 +412,7 @@ elif page == "Results":
             # Motif Coverage % for all motifs
             stats = basic_stats(st.session_state.seqs[seq_idx], motifs)
             st.markdown(f"<b>Motif Coverage %:</b> <span style='color:#0A3D62'>{stats['Motif Coverage %']}%</span>", unsafe_allow_html=True)
+"""
 
 elif page == "Download":
     st.header("Download Results")
