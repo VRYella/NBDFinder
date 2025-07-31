@@ -14,7 +14,7 @@ from motifs import (
     all_motifs, 
     find_hotspots,
     parse_fasta, gc_content, reverse_complement,
-    select_best_nonoverlapping_motifs, wrap
+    select_best_nonoverlapping_motifs, wrap, basic_stats
 )
 
 # Motif order as found in motifs.py
@@ -110,15 +110,6 @@ PAGES = {
 }
 
 def basic_stats(seq, motifs=None):
-    """
-    Returns basic stats and Non-B motif coverage for a DNA sequence.
-
-    Parameters:
-        seq (str): DNA sequence string.
-        motifs (list, optional): List of motif dicts, each with 'Start' and 'End' (0-based, end exclusive).
-    Returns:
-        dict: Stats including length, GC%, AT%, nucleotide counts, and motif coverage % (if motifs provided).
-    """
     seq = seq.upper()
     length = len(seq)
     gc = gc_content(seq)
@@ -143,7 +134,6 @@ def basic_stats(seq, motifs=None):
 
     return stats
 
-# Improved Sidebar Navigation
 st.sidebar.markdown(
     """
     <div style='padding: 12px 0 18px 0; border-bottom: 1px solid #e0e0e0;'>
@@ -161,21 +151,15 @@ page = st.sidebar.radio(
     label_visibility='collapsed'
 )
 
-# --- Home page ---
 if page == "Home":
-    # 1. Tool Name
     st.markdown(
         "<h1 style='color: #222; font-family: Arial, Helvetica, sans-serif;'>Non-B DNA Motif Finder</h1>",
         unsafe_allow_html=True
     )
-
-    # 2. Image
     try:
         st.image("nbd3.png", use_container_width=True)
     except Exception:
         pass
-
-    # 3. Scientific Writeup
     st.markdown(
         """
         <div style='background: #f8f9fa; border-radius: 16px; padding: 22px 22px; box-shadow: 0px 4px 16px #e0e5ea; font-size: 18px; color: #222;'>
@@ -185,7 +169,6 @@ if page == "Home":
         unsafe_allow_html=True
     )
 
-# --- Upload & Analyze page ---
 elif page == "Upload & Analyze":
     st.markdown("<h2 style='color:#0A3D62;'>Sequence Input</h2>", unsafe_allow_html=True)
     st.markdown("Supports <b>multi-FASTA</b> (multiple sequences) and single FASTA. Paste, upload, select example, or fetch from NCBI.", unsafe_allow_html=True)
@@ -346,7 +329,7 @@ elif page == "Upload & Analyze":
             # Summary DataFrame
             summary = []
             for i, motifs in enumerate(motif_results):
-                stats = basic_stats(st.session_state.seqs[i], motifs)   # include motifs for coverage
+                stats = basic_stats(st.session_state.seqs[i], motifs)
                 motif_types = Counter([m['Class'] if m['Class'] != "Z-DNA" or m.get("Subclass") != "eGZ (extruded-G)" else "eGZ (extruded-G)" for m in motifs])
                 summary.append({
                     "Sequence": st.session_state.names[i],
@@ -358,7 +341,7 @@ elif page == "Upload & Analyze":
                     "G": stats['G'],
                     "C": stats['C'],
                     "Motif Count": len(motifs),
-                    "Motif Coverage %": stats["Motif Coverage %"],      # show coverage
+                    "Motif Coverage %": stats["Motif Coverage %"],
                     "Motif Types": ", ".join(f"{k}({v})" for k, v in motif_types.items())
                 })
             st.session_state.summary_df = pd.DataFrame(summary)
@@ -409,6 +392,26 @@ elif page == "Results":
             ax.set_xlim(0, len(st.session_state.seqs[seq_idx]))
             ax.set_title(f"Motif tracks: {st.session_state.names[seq_idx]}")
             st.pyplot(fig)
+
+            # ---- Per-motif coverage summary (table) ----
+            motif_coverage = []
+            seq_length = len(st.session_state.seqs[seq_idx])
+            for motif_class in MOTIF_ORDER:
+                # Find motifs of this class
+                motif_rows = [m for m in motifs if (m['Class'] == motif_class) or 
+                              (motif_class == "eGZ (extruded-G)" and m.get("Subclass", "") == "eGZ (extruded-G)")]
+                covered = set()
+                for m in motif_rows:
+                    covered.update(range(m['Start'], m['End']))
+                coverage_pct = round(len(covered) / seq_length * 100, 2) if seq_length else 0
+                motif_coverage.append({"Motif Type": motif_class, "Coverage %": coverage_pct})
+            df_cov = pd.DataFrame(motif_coverage)
+            st.markdown("### Per-Motif Coverage (%)")
+            st.dataframe(df_cov, use_container_width=True)
+
+            # Motif Coverage % for all motifs
+            stats = basic_stats(st.session_state.seqs[seq_idx], motifs)
+            st.markdown(f"<b>Motif Coverage %:</b> <span style='color:#0A3D62'>{stats['Motif Coverage %']}%</span>", unsafe_allow_html=True)
 
 elif page == "Download":
     st.header("Download Results")
