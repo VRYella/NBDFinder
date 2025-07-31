@@ -124,9 +124,22 @@ def basic_stats(seq):
         "C": seq.count('C'),
     }
     return stats
+# Improved Sidebar Navigation
+st.sidebar.markdown(
+    """
+    <div style='padding: 8px 0 12px 0; border-bottom: 1px solid #e0e0e0;'>
+        <h2 style='color: #222; font-family: Arial, Helvetica, sans-serif; margin-bottom: 0;'>Navigation</h2>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
-st.sidebar.title("Navigation")
-page = st.sidebar.radio("", list(PAGES.keys()))
+# Custom radio button styling for Streamlit (limited by Streamlit's API)
+page = st.sidebar.radio(
+    "",
+    list(PAGES.keys()),
+    label_visibility='collapsed'
+)
 
 # --- Home page ---
 if page == "Home":
@@ -152,11 +165,7 @@ if page == "Home":
         unsafe_allow_html=True
     )
 
-    # 4. Developed By
-    st.markdown(
-        "<p style='color: #222; font-size: 16px; font-family: Arial, Helvetica, sans-serif; margin-top: 18px;'>Developed by Dr. Venkata Rajesh Yella</p>",
-        unsafe_allow_html=True
-    )
+ 
 # --- Upload & Analyze page ---
 elif page == "Upload & Analyze":
     st.markdown("<h2 style='color:#0A3D62;'>Sequence Input</h2>", unsafe_allow_html=True)
