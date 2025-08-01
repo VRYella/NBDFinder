@@ -393,26 +393,7 @@ elif page == "Results":
             ax.set_title(f"Motif tracks: {st.session_state.names[seq_idx]}")
             st.pyplot(fig)
 
-"""            # ---- Per-motif coverage summary (table) ----
-            motif_coverage = []
-            seq_length = len(st.session_state.seqs[seq_idx])
-            for motif_class in MOTIF_ORDER:
-                # Find motifs of this class
-                motif_rows = [m for m in motifs if (m['Class'] == motif_class) or 
-                              (motif_class == "eGZ (extruded-G)" and m.get("Subclass", "") == "eGZ (extruded-G)")]
-                covered = set()
-                for m in motif_rows:
-                    covered.update(range(m['Start'], m['End']))
-                coverage_pct = round(len(covered) / seq_length * 100, 2) if seq_length else 0
-                motif_coverage.append({"Motif Type": motif_class, "Coverage %": coverage_pct})
-            df_cov = pd.DataFrame(motif_coverage)
-            st.markdown("### Per-Motif Coverage (%)")
-            st.dataframe(df_cov, use_container_width=True)
 
-            # Motif Coverage % for all motifs
-            stats = basic_stats(st.session_state.seqs[seq_idx], motifs)
-            st.markdown(f"<b>Motif Coverage %:</b> <span style='color:#0A3D62'>{stats['Motif Coverage %']}%</span>", unsafe_allow_html=True)
-"""
 
 elif page == "Download":
     st.header("Download Results")
