@@ -109,7 +109,8 @@ PAGES = {
     "Documentation": "Scientific methods & references"
 }
 
-def basic_stats(seq, motifs=None):
+# ---- New custom stats function ----
+def get_basic_stats(seq, motifs=None):
     seq = seq.upper()
     length = len(seq)
     gc = gc_content(seq)
@@ -133,6 +134,7 @@ def basic_stats(seq, motifs=None):
         stats["Motif Coverage %"] = round(coverage_pct, 2)
 
     return stats
+# -----------------------------------
 
 st.sidebar.markdown(
     """
@@ -204,7 +206,7 @@ elif page == "Upload & Analyze":
                 st.success(f"Loaded {len(seqs)} sequences.")
                 for i, seq in enumerate(seqs[:3]):
                     st.markdown(f"<b>{names[i]}</b>: <span style='color:#576574'>{len(seq):,} bp</span>", unsafe_allow_html=True)
-                    stats = basic_stats(seq)
+                    stats = get_basic_stats(seq)
                     st.markdown(f"GC%: {stats['GC%']} | AT%: {stats['AT%']} | A: {stats['A']} | T: {stats['T']} | G: {stats['G']} | C: {stats['C']}")
                 if len(seqs) > 3:
                     st.caption(f"...and {len(seqs)-3} more.")
@@ -231,7 +233,7 @@ elif page == "Upload & Analyze":
                 st.success(f"Pasted {len(seqs)} sequences.")
                 for i, seq in enumerate(seqs[:3]):
                     st.markdown(f"<b>{names[i]}</b>: <span style='color:#576574'>{len(seq):,} bp</span>", unsafe_allow_html=True)
-                    stats = basic_stats(seq)
+                    stats = get_basic_stats(seq)
                     st.markdown(f"GC%: {stats['GC%']} | AT%: {stats['AT%']} | A: {stats['A']} | T: {stats['T']} | G: {stats['G']} | C: {stats['C']}")
                 if len(seqs) > 3:
                     st.caption(f"...and {len(seqs)-3} more.")
@@ -244,7 +246,7 @@ elif page == "Upload & Analyze":
                 seqs = [parse_fasta(EXAMPLE_FASTA)]
                 names = ["Example_Sequence"]
                 st.success("Single example sequence loaded.")
-                stats = basic_stats(seqs[0])
+                stats = get_basic_stats(seqs[0])
                 st.code(EXAMPLE_FASTA, language="fasta")
                 st.markdown(f"GC%: {stats['GC%']} | AT%: {stats['AT%']} | A: {stats['A']} | T: {stats['T']} | G: {stats['G']} | C: {stats['C']}")
         else:
@@ -265,7 +267,7 @@ elif page == "Upload & Analyze":
                     names.append(cur_name if cur_name else f"Seq{len(seqs)}")
                 st.success(f"Multi-FASTA example loaded with {len(seqs)} sequences.")
                 for i, seq in enumerate(seqs[:3]):
-                    stats = basic_stats(seq)
+                    stats = get_basic_stats(seq)
                     st.markdown(f"<b>{names[i]}</b>: <span style='color:#576574'>{len(seq):,} bp</span>", unsafe_allow_html=True)
                     st.markdown(f"GC%: {stats['GC%']} | AT%: {stats['AT%']} | A: {stats['A']} | T: {stats['T']} | G: {stats['G']} | C: {stats['C']}")
                 st.code(EXAMPLE_MULTI_FASTA, language="fasta")
@@ -297,7 +299,7 @@ elif page == "Upload & Analyze":
                 if seqs:
                     st.success(f"Fetched {len(seqs)} sequences.")
                     for i, seq in enumerate(seqs[:3]):
-                        stats = basic_stats(seq)
+                        stats = get_basic_stats(seq)
                         st.markdown(f"<b>{names[i]}</b>: <span style='color:#576574'>{len(seq):,} bp</span>", unsafe_allow_html=True)
                         st.markdown(f"GC%: {stats['GC%']} | AT%: {stats['AT%']} | A: {stats['A']} | T: {stats['T']} | G: {stats['G']} | C: {stats['C']}")
             else:
@@ -311,7 +313,7 @@ elif page == "Upload & Analyze":
     if st.session_state.seqs:
         st.subheader("Sequence Preview")
         for i, seq in enumerate(st.session_state.seqs[:2]):
-            stats = basic_stats(seq)
+            stats = get_basic_stats(seq)
             st.markdown(f"<b>{st.session_state.names[i]}</b> ({len(seq):,} bp) | GC%: {stats['GC%']} | AT%: {stats['AT%']} | A: {stats['A']} | T: {stats['T']} | G: {stats['G']} | C: {stats['C']}", unsafe_allow_html=True)
             st.code(wrap(seq[:400]), language="fasta")
         if len(st.session_state.seqs) > 2:
@@ -329,7 +331,7 @@ elif page == "Upload & Analyze":
             # Summary DataFrame
             summary = []
             for i, motifs in enumerate(motif_results):
-                stats = basic_stats(st.session_state.seqs[i], motifs)
+                stats = get_basic_stats(st.session_state.seqs[i], motifs)
                 motif_types = Counter([m['Class'] if m['Class'] != "Z-DNA" or m.get("Subclass") != "eGZ (extruded-G)" else "eGZ (extruded-G)" for m in motifs])
                 summary.append({
                     "Sequence": st.session_state.names[i],
