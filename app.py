@@ -14,7 +14,7 @@ from motifs import (
     all_motifs, 
     find_hotspots,
     parse_fasta, gc_content, reverse_complement,
-    select_best_nonoverlapping_motifs, wrap, basic_stats
+    select_best_nonoverlapping_motifs, wrap
 )
 
 # Motif order as found in motifs.py
