@@ -436,28 +436,105 @@ elif page == "Download":
         st.download_button("Download Excel", data=excel_data, file_name="motif_results.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 # --- DOCUMENTATION PAGE ---
+
 elif page == "Documentation":
     st.header("Scientific Documentation & References")
     st.markdown("""
     <div style='background:#f4faff; border-radius:10px; padding:18px 18px 8px 18px; font-size:17px; font-family:Montserrat,Arial;'>
-    <b>Motif Classes Detected:</b><br>
-    <ul>
-        <li><b>Curved DNA</b>: Detects phasing of A/T tracts and global/local curvature. <i>Brukner et al., 1995</i>.</li>
-        <li><b>Z-DNA</b>: Alternating purine/pyrimidine patterns via Z-Seeker scoring. <i>Ho et al., 2010</i>.</li>
-        <li><b>eGZ-motif (Extruded-G Z-DNA)</b>: Long (CGG)<sub>n</sub> runs, a special Z-DNA variant. <i>Kim et al., 2018</i>.</li>
-        <li><b>Slipped DNA</b>: Direct repeats and short tandem repeats. <i>Bacolla et al., 2006</i>.</li>
-        <li><b>R-Loop</b>: RLFS models for G-rich skew and thermodynamic stability. <i>Sanz et al., 2016</i>.</li>
-        <li><b>Cruciform</b>: Inverted repeats with AT-rich arms. <i>Lilley, 1985</i>.</li>
-        <li><b>Triplex DNA / Mirror Repeat</b>: Purine/pyrimidine-rich mirror repeats and triplex-forming motifs. <i>Mirkin, 1994</i>.</li>
-        <li><b>Sticky DNA</b>: Extended GAA/TTC repeats. <i>Potaman et al., 2003</i>.</li>
-        <li><b>G-Triplex & G4</b>: Canonical, relaxed, bulged, bipartite, multimeric, and imperfect G-quadruplexes. <i>Bedrat et al., 2016</i>.</li>
-        <li><b>i-Motif</b>: C-rich, looped sequences. <i>Zeraati et al., 2018</i>.</li>
-        <li><b>AC-motif</b>: Consensus A-rich/C-rich motif. <i>New et al., 2020</i>.</li>
-        <li><b>Hybrids</b>: Overlapping regions of two or more motif classes.</li>
-        <li><b>Non-B DNA Clusters</b>: Hotspot regions with high motif density and diversity.</li>
+    <b>Motif Classes Detected:</b><br><br>
+    <ul style="font-size:16px;">
+        <li>
+            <b>Curved DNA</b>: 
+            Identifies phased poly(A) or poly(T) tracts using regular expressions and spacing rules, reflecting regions of intrinsic curvature. 
+            Scoring is based on tract length and grouping of spaced tracts, indicating potential for DNA bending.
+        </li>
+        <li>
+            <b>Z-DNA</b>: 
+            Detects alternating purine-pyrimidine patterns, especially GC-rich segments, using a windowed scoring algorithm (Z-Seeker). 
+            The regular expression strategy finds dinucleotide repeats; scoring reflects the weighted sum of favorable and unfavorable base steps.
+        </li>
+        <li>
+            <b>eGZ-motif (Extruded-G Z-DNA)</b>: 
+            Searches for long (CGG)<sub>n</sub> runs via regex, representing extruded guanine Z-DNA variants. 
+            Scoring is normalized to repeat count, indicating stability of the motif.
+        </li>
+        <li>
+            <b>Slipped DNA</b>: 
+            Recognizes direct repeats and short tandem repeats, using repeat-unit matching and regex for consecutive identical segments. 
+            Scoring is proportional to repeat length and unit copies, reflecting mutational susceptibility.
+        </li>
+        <li>
+            <b>R-Loop</b>: 
+            Locates G-rich regions capable of forming stable RNA-DNA hybrids, using RLFS models defined by regular expressions. 
+            Thermodynamic scoring combines GC content and G-run frequency to estimate hybrid stability.
+        </li>
+        <li>
+            <b>Cruciform</b>: 
+            Finds palindromic inverted repeats with short spacers using regex and reverse complement matching. 
+            Scoring factors in arm length and A/T content, indicating stem-loop formation propensity.
+        </li>
+        <li>
+            <b>Triplex DNA / Mirror Repeat</b>: 
+            Detects purine- or pyrimidine-rich mirror repeats and triplex-forming motifs. 
+            Regular expressions identify repeated units separated by short spacers; scoring considers base composition and repeat purity.
+        </li>
+        <li>
+            <b>Sticky DNA</b>: 
+            Searches for extended GAA or TTC repeats with regex. 
+            Scoring depends on repeat count, reflecting the likelihood of forming sticky junctions and associated instability.
+        </li>
+        <li>
+            <b>G-Triplex</b>: 
+            Identifies three consecutive guanine runs separated by short loops. 
+            Regular expression and loop-length analysis determine motif stability; scoring incorporates G-run sum and loop penalty.
+        </li>
+        <li>
+            <b>G4 (G-Quadruplex) and Variants</b>: 
+            Detects canonical, relaxed, bulged, bipartite, multimeric, and imperfect G4 motifs using specialized regex patterns for G-runs and loop sizes. 
+            The G4Hunter scoring system evaluates mean G/C content and structure favorability.
+        </li>
+        <li>
+            <b>i-Motif</b>: 
+            Finds C-rich sequences capable of folding into i-motif structures under acidic conditions. 
+            Regex detects cytosine runs and loop lengths, while scoring incorporates run count, C-content, and loop properties.
+        </li>
+        <li>
+            <b>AC-Motif</b>: 
+            Locates alternating A-rich and C-rich consensus regions using regex. 
+            Motif matches are scored by pattern presence, suggesting non-canonical secondary structure potential.
+        </li>
+        <li>
+            <b>Hybrid Motif</b>: 
+            Represents DNA regions where two or more distinct motif classes overlap. 
+            Identified by interval intersection algorithms after all motif modules run, with scoring based on overlap diversity and region size.
+        </li>
+        <li>
+            <b>Non-B DNA Clusters</b>: 
+            Represents hotspot regions where multiple non-B DNA motifs are found within a defined window using a sliding algorithm. 
+            The region is scored by motif count and type diversity, indicating local enrichment and possible functional significance.
+        </li>
     </ul>
-    <b>Scoring:</b><br>
-    - <b>G4Hunter</b> score for G4 and i-Motif, Z-Seeker for Z-DNA, tract length and A/T content for Curved DNA, repeat count for Sticky DNA, normalized repeats for eGZ-motif, pattern match for AC-motif, etc.<br>
+
+    <b>Scoring Systems:</b><br>
+    <ul style="font-size:15px;">
+        <li><b>G4Hunter</b>: Calculates average G/C content for G-quadruplex and i-motif motifs.</li>
+        <li><b>Z-Seeker</b>: Weights base steps to score Z-DNA formation potential.</li>
+        <li><b>Tract Length & A/T Content</b>: Used for Curved DNA scoring.</li>
+        <li><b>Repeat Count</b>: Quantifies stability for Sticky DNA and eGZ motifs.</li>
+        <li><b>Pattern Match</b>: Used for AC-motif and triplex detection.</li>
+        <li><b>Thermodynamic Stability</b>: Combines GC content and G-run frequency for R-loop scoring.</li>
+        <li><b>Hybrid & Cluster Scores</b>: Based on region diversity and density of motif overlaps.</li>
+    </ul>
+
+    <b>Regular Expression Strategies:</b><br>
+    <ul style="font-size:15px;">
+        <li>Phasing and tract detection for Curved DNA and sticky repeats.</li>
+        <li>G-rich run patterns for G4, G-triplex, and R-loop motifs.</li>
+        <li>Alternating (CGG) and dinucleotide repeats for eGZ and Z-DNA.</li>
+        <li>Palindromic sequences and spacers for cruciforms.</li>
+        <li>Consensus patterns for AC-motif and triplex DNA.</li>
+    </ul>
+
     <b>References:</b>
     <ul>
         <li>Bedrat et al., 2016 Nucleic Acids Research</li>
