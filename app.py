@@ -76,6 +76,7 @@ for k, v in {
     'summary_df': pd.DataFrame(),
     'hotspots': [],
     'analysis_status': "Ready",
+    'selected_motifs': MOTIF_ORDER,         # --- MODIFIED ---
 }.items():
     if k not in st.session_state:
         st.session_state[k] = v
@@ -175,6 +176,15 @@ elif page == "Upload & Analyze":
     st.markdown("<h2 style='color:#0A3D62;'>Sequence Input</h2>", unsafe_allow_html=True)
     st.markdown("Supports <b>multi-FASTA</b> (multiple sequences) and single FASTA. Paste, upload, select example, or fetch from NCBI.", unsafe_allow_html=True)
     st.caption("Supported formats: .fa, .fasta, .txt | Limit: 200MB/file.")
+
+    # --- MOTIF SELECTION WIDGET ---
+    selected_motifs = st.multiselect(
+        "Select motifs to analyze (default: all)", 
+        MOTIF_ORDER, 
+        default=MOTIF_ORDER
+    )
+    st.session_state.selected_motifs = selected_motifs if selected_motifs else MOTIF_ORDER
+    # ------------------------------
 
     input_method = st.radio("Input method:", [
         "Upload FASTA / multi-FASTA file",
@@ -319,11 +329,13 @@ elif page == "Upload & Analyze":
         if len(st.session_state.seqs) > 2:
             st.caption(f"...and {len(st.session_state.seqs)-2} more.")
 
+        # --- MODIFIED: INCLUDE SELECTED MOTIFS IN ANALYSIS ---
         if st.button("Run Motif Analysis", type="primary"):
             st.session_state.analysis_status = "Running"
             motif_results = []
             for seq in st.session_state.seqs:
-                motifs = all_motifs(seq)
+                # Only keep motifs in user selection
+                motifs = [m for m in all_motifs(seq) if m['Class'] in st.session_state.selected_motifs]
                 nonoverlapping = select_best_nonoverlapping_motifs(motifs)
                 motif_results.append(nonoverlapping)
             st.session_state.results = motif_results
@@ -349,6 +361,7 @@ elif page == "Upload & Analyze":
             st.session_state.summary_df = pd.DataFrame(summary)
             st.success("Analysis complete! See 'Results' tab for details.")
             st.session_state.analysis_status = "Complete"
+        # ------------------------------------------------------
 
 elif page == "Results":
     st.markdown("<h2 style='color:#0A3D62;'>Motif Summary & Visualization</h2>", unsafe_allow_html=True)
@@ -370,10 +383,12 @@ elif page == "Results":
             motif_class_order = MOTIF_ORDER
             st.markdown("#### Motif Type Distribution")
             fig, ax = plt.subplots(figsize=(8,6))
-            class_counts = df['Class'].value_counts().reindex(motif_class_order, fill_value=0)
+            # Only show selected motifs in distribution
+            class_counts = df['Class'].value_counts().reindex(st.session_state.selected_motifs, fill_value=0)
             if "Subclass" in df.columns:
                 egz_count = (df["Subclass"] == "eGZ (extruded-G)").sum()
-                class_counts["eGZ (extruded-G)"] = egz_count
+                if "eGZ (extruded-G)" in st.session_state.selected_motifs:
+                    class_counts["eGZ (extruded-G)"] = egz_count
             ax.barh(class_counts.index, class_counts.values, color=[MOTIF_COLORS.get(c, "#888") for c in class_counts.index])
             ax.set_xlabel("Motif Count")
             st.pyplot(fig)
@@ -394,8 +409,6 @@ elif page == "Results":
             ax.set_xlim(0, len(st.session_state.seqs[seq_idx]))
             ax.set_title(f"Motif tracks: {st.session_state.names[seq_idx]}")
             st.pyplot(fig)
-
-
 
 elif page == "Download":
     st.header("Download Results")
