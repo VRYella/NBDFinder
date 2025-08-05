@@ -807,7 +807,7 @@ def select_best_nonoverlapping_motifs(motifs: list, motif_priority: list = None)
         ]
     subtype_rank = {subtype: i for i, subtype in enumerate(motif_priority)}
     def motif_key(m):
-        rank = subtype_rank.get(m.get('Subtype'), len(subtype_rank))
+        rank = subtype_rank.get(m.get('Subtype', 'Other'), len(subtype_rank))
         try:
             score = float(m.get('Score', 0))
         except ValueError:
