@@ -797,6 +797,14 @@ def merge_hotspots(hotspots):
 # ========== NON-OVERLAPPING MOTIF SELECTION ==========
 
 def select_best_nonoverlapping_motifs(motifs):
+    """
+    Selects non-overlapping motifs from the input list.
+    Each motif is a dictionary with at least 'Start' and 'End' keys (inclusive).
+    Returns a list of selected motifs.
+
+    Motifs are selected in order. Overlaps are not allowed.
+    Motifs missing 'Start' or 'End' will be skipped.
+    """
     selected = []
     occupied = set()
     for m in motifs:
@@ -804,10 +812,25 @@ def select_best_nonoverlapping_motifs(motifs):
         if not all(k in m for k in ('Start', 'End')):
             print(f"Skipping motif missing 'Start'/'End': {m}")
             continue  # skip this motif
-        region = set(range(m['Start'], m['End']+1))
+        # Validate that Start and End are integers
+        try:
+            start = int(m['Start'])
+            end = int(m['End'])
+        except Exception as e:
+            print(f"Skipping motif with invalid 'Start'/'End': {m} ({e})")
+            continue
+        if start > end:
+            print(f"Skipping motif with 'Start' > 'End': {m}")
+            continue
+
+        region = set(range(start, end + 1))
+        print(f"Checking motif: {m}, Region: {region}, Occupied: {occupied}")
         if not region & occupied:
             selected.append(m)
             occupied |= region
+            print(f"Selected motif: {m}")
+        else:
+            print(f"Motif {m} overlaps with occupied region, not selected.")
     return selected
 
 def validate_motif(motif, seq_length):
