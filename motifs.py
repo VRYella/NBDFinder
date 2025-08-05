@@ -1,7 +1,7 @@
 import re
 import numpy as np
 from typing import List, Dict, Tuple
-from collections import defaultdict, Counter
+from collections import Counter
 import random
 
 # ========= UTILITY FUNCTIONS =========
@@ -40,6 +40,54 @@ def overlapping_finditer(pattern, seq):
             break
         yield m
         pos = m.start() + 1
+
+# ========= K-MER CONSERVATION FUNCTIONS =========
+
+def kmer_conservation(seq, k=6):
+    """Calculate log2(observed/expected) k-mer conservation"""
+    total_kmers = len(seq) - k + 1
+    expected_freq = (1 / 4**k)
+    observed_counts = Counter(seq[i:i+k] for i in range(total_kmers))
+    return {
+        kmer: np.log2((count + 1e-6) / (expected_freq * total_kmers + 1e-6))
+        for kmer, count in observed_counts.items()
+    }
+
+def classify_conservation(score):
+    if score > 3: return "Very High"
+    elif score > 2: return "High"
+    elif score > 1: return "Moderate"
+    elif score > 0: return "Low"
+    else: return "Neutral"
+
+def add_conservation_metrics(motif_list, seq, k=6):
+    """Annotate each motif with conservation level"""
+    conservation_scores = kmer_conservation(seq, k)
+    for motif in motif_list:
+        motif_seq = motif['Sequence'].replace('\n', '')
+        kmers = [motif_seq[i:i+k] for i in range(len(motif_seq) - k + 1)]
+        scores = [conservation_scores.get(kmer, 0) for kmer in kmers]
+        mean_score = np.mean(scores) if scores else 0
+        motif['Conservation'] = round(mean_score, 2)
+        motif['ConservationLevel'] = classify_conservation(mean_score)
+    return motif_list
+
+def shuffle_sequence(seq):
+    s = list(seq)
+    random.shuffle(s)
+    return ''.join(s)
+
+def validate_motif_counts(seq, detector_func, num_shuffles=1000):
+    """Compare observed vs shuffled motif count"""
+    observed = len(detector_func(seq))
+    shuffled_counts = [len(detector_func(shuffle_sequence(seq))) for _ in range(num_shuffles)]
+    pval = (sum(c >= observed for c in shuffled_counts) + 1) / (num_shuffles + 1)
+    return {
+        "Observed": observed,
+        "Mean_Shuffled": round(np.mean(shuffled_counts), 2),
+        "p_value": round(pval, 4),
+        "Significance": "***" if pval < 0.001 else "**" if pval < 0.01 else "*" if pval < 0.05 else "ns"
+    }
 
 # ========== 1. CURVED DNA (Strict PolyA/PolyT Only) ==========
 
@@ -259,8 +307,7 @@ def find_egz_motif(seq):
             "Length": len(motif_seq),
             "Sequence": wrap(motif_seq),
             "ScoreMethod": "Repeat normalized",
-            "Score": f"{score:.2f}",
-            "CGG Repeats": n_repeats
+            "Score": f"{score:.2f}"
         })
     return results
 
@@ -314,8 +361,6 @@ def find_slipped_dna(seq):
                     "Start": i+1,
                     "End": i + reps*unit + remainder,
                     "Length": reps*unit + remainder,
-                    "Unit": repeat_unit,
-                    "Copies": reps,
                     "Sequence": wrap(seq[i:i + reps*unit + remainder]),
                     "ScoreMethod": "nBST STR",
                     "Score": f"{min(1.0, reps/20):.2f}"
@@ -401,12 +446,6 @@ def find_cruciform(seq):
 
 # ========== 6. TRIPLEX DNA (H-DNA, MIRROR REPEAT) ==========
 
-def purine_fraction(seq):
-    return (seq.count('A') + seq.count('G')) / max(1, len(seq))
-
-def pyrimidine_fraction(seq):
-    return (seq.count('C') + seq.count('T')) / max(1, len(seq))
-
 def find_hdna(seq):
     results = []
     n = len(seq)
@@ -420,19 +459,15 @@ def find_hdna(seq):
                 if mirror_end > n:
                     continue
                 full_seq = seq[mirror_start:mirror_end]
-                pur_frac = purine_fraction(full_seq)
-                pyr_frac = pyrimidine_fraction(full_seq)
-                is_triplex = (pur_frac >= 0.9 or pyr_frac >= 0.9)
+                is_triplex = ((full_seq.count('A') + full_seq.count('G')) / max(1, len(full_seq)) >= 0.9 or
+                              (full_seq.count('C') + full_seq.count('T')) / max(1, len(full_seq)) >= 0.9)
                 results.append({
                     "Class": "Triplex DNA" if is_triplex else "Mirror Repeat",
                     "Subtype": "Triplex Motif" if is_triplex else "Mirror Repeat",
                     "Start": mirror_start + 1,
                     "End": mirror_end,
                     "Length": len(full_seq),
-                    "Spacer": spacer,
-                    "Sequence": wrap(full_seq),
-                    "Purine Fraction": round(pur_frac, 2),
-                    "Pyrimidine Fraction": round(pyr_frac, 2)
+                    "Sequence": wrap(full_seq)
                 })
     return results
 
@@ -450,7 +485,6 @@ def find_sticky_dna(seq):
             "Start": m.start() + 1,
             "End": m.end(),
             "Length": len(m.group()),
-            "Repeat Count": repeat_count,
             "Sequence": m.group(),
             "ScoreMethod": "Sakamoto 1999",
             "Score": f"{min(1.0, repeat_count/270):.2f}",
@@ -475,7 +509,8 @@ def find_multimeric_gquadruplex(seq):
     pattern = r"(G{3,}\w{1,12}){4,}"
     for m in overlapping_finditer(pattern, seq):
         motif_seq = m.group(0)
-        if g4hunter_score(motif_seq) >= 1.0:
+        score = g4hunter_score(motif_seq)
+        if score >= 1.0:
             results.append({
                 "Class": "Multimeric G4",
                 "Subtype": "Multimeric G4",
@@ -484,7 +519,7 @@ def find_multimeric_gquadruplex(seq):
                 "Length": len(motif_seq),
                 "Sequence": wrap(motif_seq),
                 "ScoreMethod": "G4Hunter Multimer",
-                "Score": f"{g4hunter_score(motif_seq)*1.2:.2f}"})
+                "Score": f"{score*1.2:.2f}"})
     return results
 
 def find_bipartite_gquadruplex(seq):
@@ -633,7 +668,7 @@ def find_imotif(seq):
     pattern = r"(?=(C{3,}\w{1,12}C{3,}\w{1,12}C{3,}\w{1,12}C{3,}))"
     for m in overlapping_finditer(pattern, seq):
         motif_seq = m.group(1)
-        score = imotif_score(motif_seq)
+        score = g4hunter_score(motif_seq)  # Use G4Hunter scoring here
         if score >= 0.7:
             c_run_spans = [match.span() for match in re.finditer(r"C{3,}", motif_seq)]
             loops = []
@@ -659,20 +694,6 @@ def find_imotif(seq):
             })
     return results
 
-def imotif_score(seq):
-    c_runs = [len(r) for r in re.findall(r"C{3,}", seq)]
-    c_fraction = seq.count('C') / len(seq) if seq else 0
-    if len(c_runs) < 4:
-        return 0
-    c_run_spans = [match.span() for match in re.finditer(r"C{3,}", seq)]
-    loops = []
-    for i in range(len(c_run_spans)-1):
-        loop_start = c_run_spans[i][1]
-        loop_end = c_run_spans[i+1][0]
-        loops.append(loop_end - loop_start)
-    loop_score = sum(1/(l+1) for l in loops) / max(1, len(loops)) if loops else 0.5
-    return min(1.0, sum(c_runs)/16 + c_fraction*0.5 + loop_score*0.3)
-
 # ========== 10. AC-MOTIF ==========
 
 def find_ac_motifs(seq):
@@ -684,6 +705,7 @@ def find_ac_motifs(seq):
     results = []
     for m in pattern.finditer(seq):
         motif_seq = m.group(0).upper()
+        score = g4hunter_score(motif_seq)  # Apply G4Hunter logic carefully
         results.append({
             "Class": "AC-Motif",
             "Subtype": "Consensus",
@@ -691,8 +713,8 @@ def find_ac_motifs(seq):
             "End": m.start() + len(motif_seq),
             "Length": len(motif_seq),
             "Sequence": wrap(motif_seq),
-            "ScoreMethod": "PatternMatch",
-            "Score": "1.0"
+            "ScoreMethod": "G4Hunter AC",
+            "Score": f"{score:.2f}"
         })
     return results
 
@@ -817,9 +839,9 @@ def validate_motif(motif, seq_length):
 
 # ========== MASTER MOTIF DISCOVERY ==========
 
-def all_motifs(seq, selected_classes=None, nonoverlap=False, report_hotspots=False):
+def all_motifs(seq, selected_classes=None, nonoverlap=False, report_hotspots=False, annotate_conservation=True):
     if not seq or not re.match("^[ATGC]+$", seq, re.IGNORECASE):
-        return []
+        return {"overlapping": [], "nonoverlapping": []}
     seq = seq.upper()
     # List of all motif finders with display names
     motif_finders = [
@@ -840,25 +862,24 @@ def all_motifs(seq, selected_classes=None, nonoverlap=False, report_hotspots=Fal
         ("i-Motif", find_imotif),
         ("AC-Motif", find_ac_motifs),
     ]
-    # Handle selection logic
     run_all = False
     if selected_classes:
-        # Hybrid or Hotspot selection means run all
         if "Hybrid" in selected_classes or "Non-B DNA Clusters" in selected_classes:
             run_all = True
-    # Run motif finders according to selection
     motif_list = []
     for name, func in motif_finders:
         if run_all or not selected_classes or name in selected_classes:
             motif_list += func(seq)
     motif_list = [m for m in motif_list if validate_motif(m, len(seq))]
-    # Hybrid and Hotspot cluster require all motifs
     if run_all or (selected_classes and "Hybrid" in selected_classes):
         motif_list += find_hybrids(motif_list, seq)
     if run_all or (selected_classes and "Non-B DNA Clusters" in selected_classes):
         motif_list += find_hotspots(motif_list, len(seq))
-    if nonoverlap:
-        motif_list = select_best_nonoverlapping_motifs(motif_list)
-    return motif_list
+    overlapping_motifs = motif_list.copy()
+    nonoverlapping_motifs = select_best_nonoverlapping_motifs(motif_list)
+    if annotate_conservation:
+        overlapping_motifs = add_conservation_metrics(overlapping_motifs, seq)
+        nonoverlapping_motifs = add_conservation_metrics(nonoverlapping_motifs, seq)
+    return {"overlapping": overlapping_motifs, "nonoverlapping": nonoverlapping_motifs}
 
 # ========== END OF FILE ==========
