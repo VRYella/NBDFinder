@@ -160,7 +160,7 @@ tab_pages = dict(zip(PAGES.keys(), tabs))
 
 # ---------- HOME ----------
 with tab_pages["Home"]:
-    st.markdown("<h1 style='font-size:3.2rem;font-family:Montserrat;font-weight:900;color:#1565c0;margin-bottom:2rem;'>Non-B DNA Motif Finder</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='font-size:3.2rem;font-family:Montserrat;font-weight:700;color:#1565c0;margin-bottom:2rem;'>Non-B DNA Motif Finder</h1>", unsafe_allow_html=True)
     left, right = st.columns([1,1])
     with left:
         st.image("nbdcircle.JPG", use_container_width=True)
