@@ -12,81 +12,79 @@ from motifs import (
     select_best_nonoverlapping_motifs, wrap
 )
 
-# ---------- ENHANCED PROFESSIONAL CSS ----------
+# ---------- PROFESSIONAL CSS FOR BALANCED DESIGN ----------
 st.markdown("""
     <style>
-    html, body, [data-testid="stAppViewContainer"], .main {
-        background: #f5f9ff !important;
+    body, [data-testid="stAppViewContainer"], .main {
+        background: #f7fafd !important;
         font-family: 'Montserrat', Arial, sans-serif !important;
     }
-    /* Giant, full-width tabs */
+    /* Tabs: medium-large, bold, clean */
     .stTabs [data-baseweb="tab-list"] {
         width: 100vw !important;
         justify-content: stretch !important;
-        border-bottom: 4px solid #1565c0;
-        background: linear-gradient(90deg,#eaf3fa 0%,#f6faff 100%) !important;
-        margin-bottom: 0;
+        border-bottom: 2px solid #1565c0;
+        background: linear-gradient(90deg,#eaf3fa 0%,#f7fafd 100%) !important;
         box-shadow: 0 2px 8px #dae5f2;
+        margin-bottom: 0;
     }
     .stTabs [data-baseweb="tab"] {
-        font-size: 2.7rem !important;
-        font-weight: 900 !important;
+        font-size: 1.45rem !important;
+        font-weight: 700 !important;
         flex: 1 1 0%;
         min-width: 0 !important;
-        padding: 34px 0 34px 0 !important;
+        padding: 15px 0 15px 0 !important;
         text-align: center;
-        letter-spacing: 0.03em;
-        color: #002147 !important;
+        color: #1565c0 !important;
         background: #eaf3fa !important;
-        border-right: 1px solid #dbe5ea !important;
-        transition: background 0.2s;
+        border-right: 1px solid #eee !important;
+        letter-spacing: 0.03em;
     }
     .stTabs [aria-selected="true"] {
-        color: #1565c0 !important;
-        border-bottom: 10px solid #1565c0 !important;
-        background: #f6faff !important;
-        box-shadow: 0 4px 18px #e0e5ea;
+        color: #002147 !important;
+        border-bottom: 5px solid #1565c0 !important;
+        background: #f7fafd !important;
+        box-shadow: 0 4px 8px #e0e5ea;
     }
     .stTabs [data-baseweb="tab"]:last-child {
         border-right: none !important;
     }
-    /* Hide scroll bar for tabs */
-    .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar {display:none;}
-    /* Headings and fonts */
+    /* Headings: harmonized medium size */
     h1, h2, h3, h4 {
         font-family: 'Montserrat', Arial, sans-serif !important;
         color: #1565c0 !important;
-        letter-spacing: 1px;
-        font-weight: 900 !important;
+        font-weight: 800 !important;
+        margin-top: 0.8em;
+        margin-bottom: 0.8em;
     }
-    .markdown-text-container {
-        font-size: 1.4rem !important;
+    h1 { font-size:2.05rem !important; }
+    h2 { font-size:1.55rem !important; }
+    h3 { font-size:1.19rem !important; }
+    h4 { font-size:1.09rem !important; }
+    /* Markdown/text: medium size, easy reading */
+    .stMarkdown, .markdown-text-container, .stText, p, span, label, input, .stTextInput>div>div>input, .stSelectbox>div>div>div, .stMultiSelect>div>div>div, .stRadio>div>div>label>div {
+        font-size: 1.08rem !important;
         font-family: 'Montserrat', Arial, sans-serif !important;
     }
-    /* Buttons bigger and colored */
+    /* Buttons: modern, medium */
     .stButton>button {
-        font-size: 1.3rem !important;
+        font-size: 1.08rem !important;
         font-family: 'Montserrat', Arial, sans-serif !important;
-        padding: 0.6em 2em !important;
+        padding: 0.45em 1.2em !important;
         background: linear-gradient(90deg,#1565c0 0%,#2e8bda 100%) !important;
         color: #fff !important;
-        border-radius: 8px !important;
+        border-radius: 7px !important;
         border: none !important;
-        font-weight: bold !important;
-        box-shadow: 0px 2px 10px #b5cbe6;
+        font-weight: 600 !important;
+        box-shadow: 0 2px 8px #b5cbe6;
         transition: background 0.2s;
     }
     .stButton>button:hover {
         background: linear-gradient(90deg,#2e8bda 0%,#1565c0 100%) !important;
     }
-    /* Dataframe font size */
+    /* DataFrame font */
     .stDataFrame, .stTable {
-        font-size: 1.18rem !important;
-        font-family: 'Montserrat', Arial, sans-serif !important;
-    }
-    /* Input font size */
-    label, .stTextInput>div>div>input, .stSelectbox>div>div>div, .stMultiSelect>div>div>div, .stRadio>div>div>label>div {
-        font-size: 1.15rem !important;
+        font-size: 1.05rem !important;
         font-family: 'Montserrat', Arial, sans-serif !important;
     }
     </style>
@@ -179,16 +177,15 @@ tab_pages = dict(zip(PAGES.keys(), tabs))
 
 # ---------- HOME ----------
 with tab_pages["Home"]:
-    st.markdown("<h1 style='font-size:3.3rem;font-family:Montserrat;font-weight:900;color:#1565c0;margin-bottom:2.2rem;'>Non-B DNA Motif Finder</h1>", unsafe_allow_html=True)
+    st.markdown("<h1>Non-B DNA Motif Finder</h1>", unsafe_allow_html=True)
     left, right = st.columns([1,1])
     with left:
         st.image("nbdcircle.JPG", use_column_width=True)
     with right:
         st.markdown("""
-        <div style='font-family:Montserrat, Arial; font-size:2rem; color:#222; line-height:1.8; padding:22px 26px; background:#f8f9fa; border-radius:16px; box-shadow:0 2px 24px #e0e5ea;'>
-        <b>Non-canonical DNA structures</b> play key roles in genome stability, regulation, and evolution.<br><br>
+        <div style='font-family:Montserrat, Arial; font-size:1.14rem; color:#222; line-height:1.7; padding:18px; background:#f8f9fa; border-radius:14px; box-shadow:0 2px 8px #eee;'>
+        <b>Non-canonical DNA structures</b> play key roles in genome stability, regulation, and evolution.<br>
         This application detects and analyzes <b>18 distinct Non-B DNA motifs</b> in any DNA sequence or multi-FASTA file.<br>
-        <br>
         <b>Motif Classes:</b><br>
         <span style='color:#1565c0;'>
             <b>G-quadruplex-related</b> (G4, Relaxed G4, Bulged G4, Bipartite G4, Multimeric G4, G-Triplex, i-Motif, Hybrid),<br>
@@ -196,15 +193,15 @@ with tab_pages["Home"]:
             <b>repeat/junction</b> (Slipped DNA, Cruciform, Sticky DNA, Triplex DNA),<br>
             <b>hybrid/cluster</b> (R-Loop, Non-B DNA Clusters).
         </span>
-        <br><br>
-        <b>Upload single or multi-FASTA files</b> and view interactive motif visualizations with downloadable results for further analysis.
+        <br>
+        <b>Upload single or multi-FASTA files...</b>
         </div>
         """, unsafe_allow_html=True)
 
 # ---------- UPLOAD & ANALYZE ----------
 with tab_pages["Upload & Analyze"]:
-    st.markdown("<h2 style='font-size:2.2rem;font-family:Montserrat;font-weight:900;color:#1565c0;margin-bottom:1.8rem;'>Sequence Upload and Motif Analysis</h2>", unsafe_allow_html=True)
-    st.markdown('<span style="font-family:Montserrat,Arial; font-size:1.45rem;">Supports multi-FASTA and single FASTA. Paste, upload, select example, or fetch from NCBI.</span>', unsafe_allow_html=True)
+    st.markdown("<h2>Sequence Upload and Motif Analysis</h2>", unsafe_allow_html=True)
+    st.markdown('<span style="font-family:Montserrat,Arial; font-size:1.12rem;">Supports multi-FASTA and single FASTA. Paste, upload, select example, or fetch from NCBI.</span>', unsafe_allow_html=True)
     st.caption("Supported formats: .fa, .fasta, .txt | Limit: 200MB/file.")
 
     selected_motifs = st.multiselect(
@@ -355,7 +352,6 @@ with tab_pages["Upload & Analyze"]:
         if len(st.session_state.seqs) > 2:
             st.caption(f"...and {len(st.session_state.seqs)-2} more.")
 
-        # --- MOTIF ANALYSIS LOGIC ---
         run_all = any(m in st.session_state.selected_motifs for m in ["Hybrid", "Non-B DNA Clusters"])
         if st.button("Run Motif Analysis", type="primary"):
             st.session_state.analysis_status = "Running"
@@ -369,7 +365,6 @@ with tab_pages["Upload & Analyze"]:
                 motif_results.append(nonoverlapping)
             st.session_state.results = motif_results
 
-            # --- SUMMARY TABLE ---
             summary = []
             for i, motifs in enumerate(motif_results):
                 stats = get_basic_stats(st.session_state.seqs[i], motifs)
@@ -393,7 +388,7 @@ with tab_pages["Upload & Analyze"]:
 
 # ---------- RESULTS ----------
 with tab_pages["Results"]:
-    st.markdown('<h2 style="font-size:2.2rem;font-family:Montserrat;font-weight:900;color:#1565c0;margin-bottom:1.7rem;">Analysis Results and Visualization</h2>', unsafe_allow_html=True)
+    st.markdown('<h2>Analysis Results and Visualization</h2>', unsafe_allow_html=True)
     if not st.session_state.results:
         st.info("No analysis results. Please run motif analysis first.")
     else:
@@ -406,10 +401,10 @@ with tab_pages["Results"]:
             st.warning("No motifs detected for this sequence.")
         else:
             df = pd.DataFrame(motifs)
-            st.markdown(f"<h3 style='font-family:Montserrat, Arial; font-weight:700; color:#0A3D62;font-size:1.7rem;'>Motif Table for <b>{st.session_state.names[seq_idx]}</b></h3>", unsafe_allow_html=True)
+            st.markdown(f"<h3>Motif Table for <b>{st.session_state.names[seq_idx]}</b></h3>", unsafe_allow_html=True)
             display_columns = [col for col in df.columns if col not in ['Sequence', 'SequenceName']]
             st.dataframe(df[display_columns], use_container_width=True, height=360)
-            st.markdown('<span style="font-family:Montserrat,Arial;font-size:1.25rem;"><b>Motif Type Distribution</b></span>', unsafe_allow_html=True)
+            st.markdown('<span style="font-family:Montserrat,Arial;font-size:1.11rem;"><b>Motif Type Distribution</b></span>', unsafe_allow_html=True)
             fig, ax = plt.subplots(figsize=(8,6))
             class_counts = df['Class'].value_counts().reindex(
                 st.session_state.selected_motifs if not any(m in st.session_state.selected_motifs for m in ['Hybrid', 'Non-B DNA Clusters']) else MOTIF_ORDER, fill_value=0)
@@ -420,7 +415,7 @@ with tab_pages["Results"]:
             ax.barh(class_counts.index, class_counts.values, color=[MOTIF_COLORS.get(c, "#888") for c in class_counts.index])
             ax.set_xlabel("Motif Count")
             st.pyplot(fig)
-            st.markdown('<span style="font-family:Montserrat,Arial;font-size:1.25rem;"><b>Motif Map</b></span>', unsafe_allow_html=True)
+            st.markdown('<span style="font-family:Montserrat,Arial;font-size:1.11rem;"><b>Motif Map</b></span>', unsafe_allow_html=True)
             fig, ax = plt.subplots(figsize=(12,3))
             y = 1
             for _, row in df.iterrows():
@@ -433,7 +428,7 @@ with tab_pages["Results"]:
             ax.set_yticks([])
             ax.set_xlabel("Sequence Position (bp)")
             ax.set_xlim(0, len(st.session_state.seqs[seq_idx]))
-            ax.set_title(f"Motif Tracks: {st.session_state.names[seq_idx]}", fontweight='bold', fontsize=18)
+            ax.set_title(f"Motif Tracks: {st.session_state.names[seq_idx]}", fontweight='bold', fontsize=14)
             st.pyplot(fig)
 
 # ---------- DOWNLOAD ----------
@@ -463,9 +458,9 @@ with tab_pages["Download"]:
 with tab_pages["Documentation"]:
     st.header("Scientific Documentation & References")
     st.markdown("""
-    <div style='background:#f4faff; border-radius:12px; padding:24px; font-size:1.18rem; font-family:Montserrat,Arial;'>
+    <div style='background:#f4faff; border-radius:12px; padding:18px; font-size:1.08rem; font-family:Montserrat,Arial;'>
     <b>Motif Classes Detected:</b><br><br>
-    <ul style="font-size:1.10rem;">
+    <ul>
         <li><b>Curved DNA</b>: Identifies phased poly(A) or poly(T) tracts using regex and spacing rules, reflecting intrinsic curvature. Scoring is based on tract length/grouping.</li>
         <li><b>Z-DNA</b>: Detects alternating purine-pyrimidine patterns, GC-rich segments. Uses windowed scoring; regex finds dinucleotide repeats.</li>
         <li><b>eGZ-motif (Extruded-G Z-DNA)</b>: Searches for long (CGG)<sub>n</sub> runs via regex. Scored by repeat count.</li>
@@ -496,7 +491,7 @@ with tab_pages["Documentation"]:
 
 st.markdown("""
 ---
-<div style='font-size: 1.14rem; color: #1e293b; margin-top: 36px; text-align: left; font-family:Montserrat,Arial;'>
+<div style='font-size: 1.05rem; color: #1e293b; margin-top: 30px; text-align: left; font-family:Montserrat,Arial;'>
 <b>Developed by</b><br>
 Dr. Venkata Rajesh Yella<br>
 <a href='mailto:yvrajesh_bt@kluniversity.in'>yvrajesh_bt@kluniversity.in</a> |
