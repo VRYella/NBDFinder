@@ -160,13 +160,13 @@ tab_pages = dict(zip(PAGES.keys(), tabs))
 
 # ---------- HOME ----------
 with tab_pages["Home"]:
-    st.markdown("<h1 style='font-size:3.2rem;font-family:Montserrat;font-weight:700;color:#1565c0;margin-bottom:2rem;'>Non-B DNA Motif Finder</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='font-size:3.2rem;font-family:Montserrat;font-weight:600;color:#1565c0;margin-bottom:2rem;'>Non-B DNA Motif Finder</h1>", unsafe_allow_html=True)
     left, right = st.columns([1,1])
     with left:
         st.image("nbdcircle.JPG", use_container_width=True)
     with right:
         st.markdown("""
-        <div style='font-family:Montserrat, Arial; font-size:1.7rem; color:#222; line-height:1.7; padding:18px; background:#f8f9fa; border-radius:14px; box-shadow:0 2px 8px #eee;'>
+        <div style='font-family:Montserrat, Arial; font-size:1.2rem; color:#222; line-height:1.2; padding:18px; background:#f8f9fa; border-radius:14px; box-shadow:0 2px 8px #eee;'>
         <b>Non-canonical DNA structures</b> play key roles in genome stability, regulation, and evolution.<br><br>
         This application detects and analyzes <b>18 distinct Non-B DNA motifs</b> in any DNA sequence or multi-FASTA file.<br>
         <br>
