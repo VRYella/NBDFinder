@@ -44,7 +44,6 @@ def overlapping_finditer(pattern, seq):
 # ========= K-MER CONSERVATION FUNCTIONS =========
 
 def kmer_conservation(seq, k=6):
-    """Calculate log2(observed/expected) k-mer conservation"""
     total_kmers = len(seq) - k + 1
     expected_freq = (1 / 4**k)
     observed_counts = Counter(seq[i:i+k] for i in range(total_kmers))
@@ -61,7 +60,6 @@ def classify_conservation(score):
     else: return "Neutral"
 
 def add_conservation_metrics(motif_list, seq, k=6):
-    """Annotate each motif with conservation level"""
     conservation_scores = kmer_conservation(seq, k)
     for motif in motif_list:
         motif_seq = motif['Sequence'].replace('\n', '')
@@ -78,7 +76,6 @@ def shuffle_sequence(seq):
     return ''.join(s)
 
 def validate_motif_counts(seq, detector_func, num_shuffles=1000):
-    """Compare observed vs shuffled motif count"""
     observed = len(detector_func(seq))
     shuffled_counts = [len(detector_func(shuffle_sequence(seq))) for _ in range(num_shuffles)]
     pval = (sum(c >= observed for c in shuffled_counts) + 1) / (num_shuffles + 1)
@@ -766,7 +763,7 @@ def find_hotspots(motif_hits, seq_len, window=100, min_count=3):
         count = sum(s <= region_end and e >= region_start for s,e in positions)
         if count >= min_count:
             motifs_in_region = [m for m in motif_hits if m['Start'] <= region_end and m['End'] >= region_start]
-            type_div = len({m['Subtype'] for m in motifs_in_region})
+            type_div = len({m.get('Subtype', 'Other') for m in motifs_in_region})
             seq_region = motif_hits[0]['Sequence'] if motif_hits else ""
             hotspots.append({
                 "Class": "Non-B DNA Clusters",
@@ -807,7 +804,10 @@ def select_best_nonoverlapping_motifs(motifs: list, motif_priority: list = None)
         ]
     subtype_rank = {subtype: i for i, subtype in enumerate(motif_priority)}
     def motif_key(m):
-        rank = subtype_rank.get(m.get('Subtype', 'Other'), len(subtype_rank))
+        subtype = m.get('Subtype', 'Other')
+        if subtype is None:
+            subtype = 'Other'
+        rank = subtype_rank.get(subtype, len(subtype_rank))
         try:
             score = float(m.get('Score', 0))
         except ValueError:
@@ -843,7 +843,6 @@ def all_motifs(seq, selected_classes=None, nonoverlap=False, report_hotspots=Fal
     if not seq or not re.match("^[ATGC]+$", seq, re.IGNORECASE):
         return {"overlapping": [], "nonoverlapping": []}
     seq = seq.upper()
-    # List of all motif finders with display names
     motif_finders = [
         ("Sticky DNA", find_sticky_dna),
         ("Curved DNA", find_curved_DNA),
