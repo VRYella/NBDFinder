@@ -19,18 +19,6 @@ def gc_content(seq: str) -> float:
 def reverse_complement(seq: str) -> str:
     return seq.translate(str.maketrans("ATGC", "TACG"))[::-1]
 
-def is_palindrome(seq: str) -> bool:
-    return seq == reverse_complement(seq)
-
-def percentileofscore(a, score, kind='rank'):
-    a = np.asarray(a)
-    if len(a) == 0: return 0.0
-    if kind == 'rank': return (sum(a <= score) / len(a) * 100)
-    elif kind == 'strict': return (sum(a < score) / len(a)) * 100
-    elif kind == 'weak': return (sum(a <= score) / len(a)) * 100
-    elif kind == 'mean': return (sum(a < score) + sum(a <= score)) / (2 * len(a)) * 100
-    else: raise ValueError("kind must be 'rank', 'strict', 'weak' or 'mean'")
-
 def overlapping_finditer(pattern, seq):
     regex = re.compile(pattern, re.IGNORECASE)
     pos = 0
@@ -40,51 +28,6 @@ def overlapping_finditer(pattern, seq):
             break
         yield m
         pos = m.start() + 1
-
-# ========= K-MER CONSERVATION FUNCTIONS =========
-
-def kmer_conservation(seq, k=6):
-    total_kmers = len(seq) - k + 1
-    expected_freq = (1 / 4**k)
-    observed_counts = Counter(seq[i:i+k] for i in range(total_kmers))
-    return {
-        kmer: np.log2((count + 1e-6) / (expected_freq * total_kmers + 1e-6))
-        for kmer, count in observed_counts.items()
-    }
-
-def classify_conservation(score):
-    if score > 3: return "Very High"
-    elif score > 2: return "High"
-    elif score > 1: return "Moderate"
-    elif score > 0: return "Low"
-    else: return "Neutral"
-
-def add_conservation_metrics(motif_list, seq, k=6):
-    conservation_scores = kmer_conservation(seq, k)
-    for motif in motif_list:
-        motif_seq = motif['Sequence'].replace('\n', '')
-        kmers = [motif_seq[i:i+k] for i in range(len(motif_seq) - k + 1)]
-        scores = [conservation_scores.get(kmer, 0) for kmer in kmers]
-        mean_score = np.mean(scores) if scores else 0
-        motif['Conservation'] = round(mean_score, 2)
-        motif['ConservationLevel'] = classify_conservation(mean_score)
-    return motif_list
-
-def shuffle_sequence(seq):
-    s = list(seq)
-    random.shuffle(s)
-    return ''.join(s)
-
-def validate_motif_counts(seq, detector_func, num_shuffles=1000):
-    observed = len(detector_func(seq))
-    shuffled_counts = [len(detector_func(shuffle_sequence(seq))) for _ in range(num_shuffles)]
-    pval = (sum(c >= observed for c in shuffled_counts) + 1) / (num_shuffles + 1)
-    return {
-        "Observed": observed,
-        "Mean_Shuffled": round(np.mean(shuffled_counts), 2),
-        "p_value": round(pval, 4),
-        "Significance": "***" if pval < 0.001 else "**" if pval < 0.01 else "*" if pval < 0.05 else "ns"
-    }
 
 # ========== 1. CURVED DNA (Strict PolyA/PolyT Only) ==========
 
@@ -798,41 +741,20 @@ def merge_hotspots(hotspots):
 
 # ========== NON-OVERLAPPING MOTIF SELECTION ==========
 
-def select_best_nonoverlapping_motifs(motifs):
-    """
-    Selects non-overlapping motifs from the input list.
-    Each motif is a dictionary with at least 'Start' and 'End' keys (inclusive).
-    Returns a list of selected motifs.
+# ========== NON-OVERLAPPING MOTIF SELECTION ==========
 
-    Motifs are selected in order. Overlaps are not allowed.
-    Motifs missing 'Start' or 'End' will be skipped.
-    """
+def select_best_nonoverlapping_motifs(motifs):
     selected = []
     occupied = set()
     for m in motifs:
-        # Check for required keys
         if not all(k in m for k in ('Start', 'End')):
-            print(f"Skipping motif missing 'Start'/'End': {m}")
-            continue  # skip this motif
-        # Validate that Start and End are integers
-        try:
-            start = int(m['Start'])
-            end = int(m['End'])
-        except Exception as e:
-            print(f"Skipping motif with invalid 'Start'/'End': {m} ({e})")
             continue
-        if start > end:
-            print(f"Skipping motif with 'Start' > 'End': {m}")
-            continue
-
+        start, end = int(m['Start']), int(m['End'])
+        if start > end: continue
         region = set(range(start, end + 1))
-        print(f"Checking motif: {m}, Region: {region}, Occupied: {occupied}")
         if not region & occupied:
             selected.append(m)
             occupied |= region
-            print(f"Selected motif: {m}")
-        else:
-            print(f"Motif {m} overlaps with occupied region, not selected.")
     return selected
 
 def validate_motif(motif, seq_length):
@@ -847,34 +769,34 @@ def validate_motif(motif, seq_length):
 
 # ========== MASTER MOTIF DISCOVERY ==========
 
-def all_motifs(seq, selected_classes=None, nonoverlap=False, report_hotspots=False, annotate_conservation=True):
+def all_motifs(seq, selected_classes=None, nonoverlap=False, report_hotspots=False, annotate_conservation=False):
     if not seq or not re.match("^[ATGC]+$", seq, re.IGNORECASE):
         return {"overlapping": [], "nonoverlapping": []}
     seq = seq.upper()
     motif_finders = [
-        # Add the tuple (name, function) for all motif types as in your original code
-        # Example:
         ("Curved DNA", find_curved_DNA),
         ("Z-DNA", find_zdna),
-        # ... etc ...
+        ("eGZ (Extruded-G)", find_egz_motif),
+        ("Slipped DNA", find_slipped_dna),
+        ("R-Loop", find_rlfs),
+        ("Cruciform", find_cruciform),
+        ("Triplex DNA", find_hdna),
+        ("Sticky DNA", find_sticky_dna),
+        ("G4", find_gquadruplex),
+        ("Relaxed G4", find_relaxed_gquadruplex),
+        ("Bulged G4", find_bulged_gquadruplex),
+        ("Bipartite G4", find_bipartite_gquadruplex),
+        ("Multimeric G4", find_multimeric_gquadruplex),
+        ("i-Motif", find_imotif),
+        ("AC-Motif", find_ac_motifs),
     ]
-    run_all = False
-    if selected_classes:
-        if "Hybrid" in selected_classes or "Non-B DNA Clusters" in selected_classes:
-            run_all = True
     motif_list = []
     for name, func in motif_finders:
-        if run_all or not selected_classes or name in selected_classes:
-            motifs_detected = func(seq)
-            print(f"{name} found {len(motifs_detected)} motifs")
-            motif_list += motifs_detected
+        motifs_detected = func(seq)
+        motif_list += motifs_detected
     motif_list = [m for m in motif_list if validate_motif(m, len(seq))]
-    # Optional: run hybrid/hotspot finding here if needed
     overlapping_motifs = motif_list.copy()
     nonoverlapping_motifs = select_best_nonoverlapping_motifs(motif_list)
-    if annotate_conservation:
-        overlapping_motifs = add_conservation_metrics(overlapping_motifs, seq)
-        nonoverlapping_motifs = add_conservation_metrics(nonoverlapping_motifs, seq)
     return {
         "overlapping": overlapping_motifs,
         "nonoverlapping": nonoverlapping_motifs
