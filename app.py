@@ -12,6 +12,13 @@ from motifs import (
     select_best_nonoverlapping_motifs, wrap
 )
 
+# ---------- PATCH: Ensure every motif has Subtype ----------
+def ensure_subtype(motif):
+    """Guarantee every motif has a string 'Subtype'"""
+    if 'Subtype' not in motif or motif['Subtype'] is None:
+        motif['Subtype'] = 'Other'
+    return motif
+
 # ---------- PROFESSIONAL CSS FOR BALANCED DESIGN ----------
 st.markdown("""
     <style>
@@ -361,6 +368,8 @@ with tab_pages["Upload & Analyze"]:
                     motifs = all_motifs(seq)
                 else:
                     motifs = [m for m in all_motifs(seq) if m['Class'] in st.session_state.selected_motifs]
+                # PATCH: Ensure every motif has a 'Subtype'
+                motifs = [ensure_subtype(m) for m in motifs]
                 nonoverlapping = select_best_nonoverlapping_motifs(motifs)
                 motif_results.append(nonoverlapping)
             st.session_state.results = motif_results
