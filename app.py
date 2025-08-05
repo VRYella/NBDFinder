@@ -161,7 +161,7 @@ if page == "Home":
         unsafe_allow_html=True
     )
     try:
-        st.image("nbd3.png", use_container_width=True)
+        st.image("nbdcircle.JPG", use_container_width=True)
     except Exception:
         pass
     st.markdown(
