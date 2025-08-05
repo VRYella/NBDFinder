@@ -1,11 +1,8 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
 import io
 from collections import Counter
-from datetime import datetime
 from PIL import Image
 from Bio import Entrez, SeqIO
 
@@ -17,38 +14,62 @@ from motifs import (
     select_best_nonoverlapping_motifs, wrap
 )
 
-# Motif display names (Title Case, spaces)
-MOTIF_ORDER = [
-    "Sticky DNA",
-    "Curved DNA",
-    "Z-DNA",
-    "eGZ (Extruded-G)",
-    "Slipped DNA",
-    "R-Loop",
-    "Cruciform",
-    "Triplex DNA",
-    "G-Triplex",
-    "G4",
-    "Relaxed G4",
-    "Bulged G4",
-    "Bipartite G4",
-    "Multimeric G4",
-    "i-Motif",
-    "AC-Motif",
-    "Hybrid",
-    "Non-B DNA Clusters"
-]
+# --- Custom CSS for Big Tabs and Full Width ---
+st.markdown("""
+    <style>
+    .stTabs [data-baseweb="tab"] {
+        font-size: 1.65rem !important;
+        font-weight: 700 !important;
+        width: 18vw !important;
+        min-width: 180px !important;
+        padding-top: 18px !important;
+        padding-bottom: 18px !important;
+        justify-content: center !important;
+    }
+    .stTabs [data-baseweb="tab-list"] {
+        justify-content: stretch !important;
+        width: 100vw !important;
+        margin-bottom: 8px !important;
+    }
+    /* Hide scroll bar for tabs */
+    .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar {display:none;}
+    </style>
+""", unsafe_allow_html=True)
 
-Entrez.email = "raazbiochem@gmail.com"
-Entrez.api_key = None
-
-# --- Professional page config ---
+# --- Page Config ---
 st.set_page_config(
     page_title="Non-B DNA Motif Finder",
     layout="wide",
     page_icon="",
     menu_items={'About': "Non-B DNA Motif Finder | Developed by Dr. Venkata Rajesh Yella"}
 )
+
+# --- Constants ---
+MOTIF_ORDER = [
+    "Sticky DNA","Curved DNA","Z-DNA","eGZ (Extruded-G)","Slipped DNA","R-Loop",
+    "Cruciform","Triplex DNA","G-Triplex","G4","Relaxed G4","Bulged G4","Bipartite G4",
+    "Multimeric G4","i-Motif","AC-Motif","Hybrid","Non-B DNA Clusters"
+]
+
+MOTIF_COLORS = {
+    "Curved DNA": "#FF9AA2","Z-DNA": "#FFB7B2","eGZ (Extruded-G)": "#6A4C93",
+    "Slipped DNA": "#FFDAC1","R-Loop": "#FFD3B6","Cruciform": "#E2F0CB",
+    "Triplex DNA": "#B5EAD7","Sticky DNA": "#DCB8CB","G-Triplex": "#C7CEEA",
+    "G4": "#A2D7D8","Relaxed G4": "#A2D7B8","Bulged G4": "#A2A7D8",
+    "Bipartite G4": "#A2D788","Multimeric G4": "#A2A7B8","i-Motif": "#B0C4DE",
+    "Hybrid": "#C1A192","Non-B DNA Clusters": "#A2C8CC","AC-Motif": "#F5B041"
+}
+
+PAGES = {
+    "Home": "Overview",
+    "Upload & Analyze": "Sequence Upload and Motif Analysis",
+    "Results": "Analysis Results and Visualization",
+    "Download": "Export Data",
+    "Documentation": "Scientific Documentation & References"
+}
+
+Entrez.email = "raazbiochem@gmail.com"
+Entrez.api_key = None
 
 EXAMPLE_FASTA = """>Example Sequence
 ATCGATCGATCGAAAATTTTATTTAAATTTAAATTTGGGTTAGGGTTAGGGTTAGGGCCCCCTCCCCCTCCCCCTCCCC
@@ -82,85 +103,46 @@ for k, v in {
     if k not in st.session_state:
         st.session_state[k] = v
 
-MOTIF_COLORS = {
-    "Curved DNA": "#FF9AA2", 
-    "Z-DNA": "#FFB7B2", 
-    "eGZ (Extruded-G)": "#6A4C93",
-    "Slipped DNA": "#FFDAC1", 
-    "R-Loop": "#FFD3B6",
-    "Cruciform": "#E2F0CB", 
-    "Triplex DNA": "#B5EAD7", 
-    "Sticky DNA": "#DCB8CB", 
-    "G-Triplex": "#C7CEEA",
-    "G4": "#A2D7D8", 
-    "Relaxed G4": "#A2D7B8",
-    "Bulged G4": "#A2A7D8",
-    "Bipartite G4": "#A2D788",
-    "Multimeric G4": "#A2A7B8",
-    "i-Motif": "#B0C4DE", 
-    "Hybrid": "#C1A192", 
-    "Non-B DNA Clusters": "#A2C8CC",
-    "AC-Motif": "#F5B041"
-}
-
-PAGES = {
-    "Home": "Overview",
-    "Upload & Analyze": "Sequence Upload and Motif Analysis",
-    "Results": "Analysis Results and Visualization",
-    "Download": "Export Data",
-    "Documentation": "Scientific Documentation & References"
-}
-
 def get_basic_stats(seq, motifs=None):
     seq = seq.upper()
     length = len(seq)
     gc = gc_content(seq)
     at = (seq.count('A') + seq.count('T')) / length * 100 if length else 0
-
     stats = {
-        "Length (bp)": length,
-        "GC %": round(gc, 2),
-        "AT %": round(at, 2),
-        "A Count": seq.count('A'),
-        "T Count": seq.count('T'),
-        "G Count": seq.count('G'),
-        "C Count": seq.count('C'),
+        "Length (bp)": length, "GC %": round(gc, 2), "AT %": round(at, 2),
+        "A Count": seq.count('A'), "T Count": seq.count('T'), "G Count": seq.count('G'), "C Count": seq.count('C'),
     }
-
     if motifs is not None:
         covered = set()
         for m in motifs:
             covered.update(range(m['Start'], m['End']))
         coverage_pct = (len(covered) / length * 100) if length else 0
         stats["Motif Coverage (%)"] = round(coverage_pct, 2)
-
     return stats
 
-# --- HORIZONTAL TABS NAVIGATION ---
+# --- Horizontal Tabs Navigation ---
 tabs = st.tabs(list(PAGES.keys()))
 tab_pages = dict(zip(PAGES.keys(), tabs))
 
 # --- HOME PAGE ---
 with tab_pages["Home"]:
-    st.markdown(
-        '<h1 style="font-family:Montserrat, Arial; font-weight:700; color:#002147; letter-spacing:2px; margin-bottom:24px;">Non-B DNA Motif Finder</h1>',
-        unsafe_allow_html=True
-    )
-    try:
-        st.image("nbdcircle.JPG", use_container_width=False)
-    except Exception:
-        pass
-    st.markdown(
-        """
-        <div style='background: #f8f9fa; border-radius: 16px; padding: 22px 22px; box-shadow: 0px 4px 16px #e0e5ea; font-size: 19px; color: #222; font-family:Montserrat,Arial;'>
-        <b>Non-canonical DNA structures</b> play key roles in genome stability, regulation, and evolution. This application detects and analyzes 18 distinct Non-B DNA motifs in any DNA sequence or multi-FASTA file. Motifs are classified as follows: <br>
-        <span style="color:#2c3e50;"><b>G-quadruplex-related</b> (G4, Relaxed G4, Bulged G4, Bipartite G4, Multimeric G4, G-Triplex, i-Motif, Hybrid), <b>helix/curvature</b> (Z-DNA, eGZ (Extruded-G), Curved DNA, AC-Motif), <b>repeat/junction</b> (Slipped DNA, Cruciform, Sticky DNA, Triplex DNA), <b>hybrid/cluster</b> (R-Loop, Non-B DNA Clusters).</span>
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        st.image("nbdcircle.JPG", width=200)
+    with col2:
+        st.markdown("""
+        <div style='font-family:Montserrat, Arial; font-size:21px; color:#222; line-height:1.7;'>
+        <b>Non-canonical DNA structures</b> play key roles in genome stability, regulation, and evolution. 
+        This application detects and analyzes <b>18 distinct Non-B DNA motifs</b> in any DNA sequence or multi-FASTA file.<br>
+        <br>
+        Motifs are classified as follows:<br>
+        <span style='color:#2c3e50;'><b>G-quadruplex-related</b> (G4, Relaxed G4, Bulged G4, Bipartite G4, Multimeric G4, G-Triplex, i-Motif, Hybrid), 
+        <b>helix/curvature</b> (Z-DNA, eGZ (Extruded-G), Curved DNA, AC-Motif), <b>repeat/junction</b> (Slipped DNA, Cruciform, Sticky DNA, Triplex DNA), 
+        <b>hybrid/cluster</b> (R-Loop, Non-B DNA Clusters).</span>
         <br><br>
         <b>Upload single or multi-FASTA files</b> and view interactive motif visualizations with downloadable results for further analysis.
         </div>
-        """,
-        unsafe_allow_html=True
-    )
+        """, unsafe_allow_html=True)
 
 # --- UPLOAD & ANALYZE PAGE ---
 with tab_pages["Upload & Analyze"]:
@@ -369,7 +351,7 @@ with tab_pages["Results"]:
         else:
             df = pd.DataFrame(motifs)
             st.markdown(f"<h3 style='font-family:Montserrat, Arial; font-weight:600; color:#0A3D62;'>Motif Table for <b>{st.session_state.names[seq_idx]}</b></h3>", unsafe_allow_html=True)
-            display_columns = [col for col in df.columns if col not in ['Sequence', 'SequenceName']]  # filter technical columns
+            display_columns = [col for col in df.columns if col not in ['Sequence', 'SequenceName']]
             st.dataframe(df[display_columns], use_container_width=True, height=360)
             st.markdown('<span style="font-family:Montserrat,Arial;font-size:17px;"><b>Motif Type Distribution</b></span>', unsafe_allow_html=True)
             fig, ax = plt.subplots(figsize=(8,6))
@@ -429,97 +411,48 @@ with tab_pages["Documentation"]:
     <b>Motif Classes Detected:</b><br><br>
     <ul style="font-size:16px;">
         <li>
-            <b>Curved DNA</b>: 
-            Identifies phased poly(A) or poly(T) tracts using regular expressions and spacing rules, reflecting regions of intrinsic curvature. 
-            Scoring is based on tract length and grouping of spaced tracts, indicating potential for DNA bending.
+            <b>Curved DNA</b>: Identifies phased poly(A) or poly(T) tracts using regular expressions and spacing rules, reflecting regions of intrinsic curvature. Scoring is based on tract length and grouping of spaced tracts, indicating potential for DNA bending.
         </li>
         <li>
-            <b>Z-DNA</b>: 
-            Detects alternating purine-pyrimidine patterns, especially GC-rich segments, using a windowed scoring algorithm (Z-Seeker). 
-            The regular expression strategy finds dinucleotide repeats; scoring reflects the weighted sum of favorable and unfavorable base steps.
+            <b>Z-DNA</b>: Detects alternating purine-pyrimidine patterns, especially GC-rich segments, using a windowed scoring algorithm (Z-Seeker). The regular expression strategy finds dinucleotide repeats; scoring reflects the weighted sum of favorable and unfavorable base steps.
         </li>
         <li>
-            <b>eGZ-motif (Extruded-G Z-DNA)</b>: 
-            Searches for long (CGG)<sub>n</sub> runs via regex, representing extruded guanine Z-DNA variants. 
-            Scoring is normalized to repeat count, indicating stability of the motif.
+            <b>eGZ-motif (Extruded-G Z-DNA)</b>: Searches for long (CGG)<sub>n</sub> runs via regex, representing extruded guanine Z-DNA variants. Scoring is normalized to repeat count, indicating stability of the motif.
         </li>
         <li>
-            <b>Slipped DNA</b>: 
-            Recognizes direct repeats and short tandem repeats, using repeat-unit matching and regex for consecutive identical segments. 
-            Scoring is proportional to repeat length and unit copies, reflecting mutational susceptibility.
+            <b>Slipped DNA</b>: Recognizes direct repeats and short tandem repeats, using repeat-unit matching and regex for consecutive identical segments. Scoring is proportional to repeat length and unit copies, reflecting mutational susceptibility.
         </li>
         <li>
-            <b>R-Loop</b>: 
-            Locates G-rich regions capable of forming stable RNA-DNA hybrids, using RLFS models defined by regular expressions. 
-            Thermodynamic scoring combines GC content and G-run frequency to estimate hybrid stability.
+            <b>R-Loop</b>: Locates G-rich regions capable of forming stable RNA-DNA hybrids, using RLFS models defined by regular expressions. Thermodynamic scoring combines GC content and G-run frequency to estimate hybrid stability.
         </li>
         <li>
-            <b>Cruciform</b>: 
-            Finds palindromic inverted repeats with short spacers using regex and reverse complement matching. 
-            Scoring factors in arm length and A/T content, indicating stem-loop formation propensity.
+            <b>Cruciform</b>: Finds palindromic inverted repeats with short spacers using regex and reverse complement matching. Scoring factors in arm length and A/T content, indicating stem-loop formation propensity.
         </li>
         <li>
-            <b>Triplex DNA / Mirror Repeat</b>: 
-            Detects purine- or pyrimidine-rich mirror repeats and triplex-forming motifs. 
-            Regular expressions identify repeated units separated by short spacers; scoring considers base composition and repeat purity.
+            <b>Triplex DNA / Mirror Repeat</b>: Detects purine- or pyrimidine-rich mirror repeats and triplex-forming motifs. Regular expressions identify repeated units separated by short spacers; scoring considers base composition and repeat purity.
         </li>
         <li>
-            <b>Sticky DNA</b>: 
-            Searches for extended GAA or TTC repeats with regex. 
-            Scoring depends on repeat count, reflecting the likelihood of forming sticky junctions and associated instability.
+            <b>Sticky DNA</b>: Searches for extended GAA or TTC repeats with regex. Scoring depends on repeat count, reflecting the likelihood of forming sticky junctions and associated instability.
         </li>
         <li>
-            <b>G-Triplex</b>: 
-            Identifies three consecutive guanine runs separated by short loops. 
-            Regular expression and loop-length analysis determine motif stability; scoring incorporates G-run sum and loop penalty.
+            <b>G-Triplex</b>: Identifies three consecutive guanine runs separated by short loops. Regular expression and loop-length analysis determine motif stability; scoring incorporates G-run sum and loop penalty.
         </li>
         <li>
-            <b>G4 (G-Quadruplex) and Variants</b>: 
-            Detects canonical, relaxed, bulged, bipartite, multimeric, and imperfect G4 motifs using specialized regex patterns for G-runs and loop sizes. 
-            The G4Hunter scoring system evaluates mean G/C content and structure favorability.
+            <b>G4 (G-Quadruplex) and Variants</b>: Detects canonical, relaxed, bulged, bipartite, multimeric, and imperfect G4 motifs using specialized regex patterns for G-runs and loop sizes. The G4Hunter scoring system evaluates mean G/C content and structure favorability.
         </li>
         <li>
-            <b>i-Motif</b>: 
-            Finds C-rich sequences capable of folding into i-motif structures under acidic conditions. 
-            Regex detects cytosine runs and loop lengths, while scoring incorporates run count, C-content, and loop properties.
+            <b>i-Motif</b>: Finds C-rich sequences capable of folding into i-motif structures under acidic conditions. Regex detects cytosine runs and loop lengths, while scoring incorporates run count, C-content, and loop properties.
         </li>
         <li>
-            <b>AC-Motif</b>: 
-            Locates alternating A-rich and C-rich consensus regions using regex. 
-            Motif matches are scored by pattern presence, suggesting non-canonical secondary structure potential.
+            <b>AC-Motif</b>: Locates alternating A-rich and C-rich consensus regions using regex. Motif matches are scored by pattern presence, suggesting non-canonical secondary structure potential.
         </li>
         <li>
-            <b>Hybrid Motif</b>: 
-            Represents DNA regions where two or more distinct motif classes overlap. 
-            Identified by interval intersection algorithms after all motif modules run, with scoring based on overlap diversity and region size.
+            <b>Hybrid Motif</b>: Represents DNA regions where two or more distinct motif classes overlap. Identified by interval intersection algorithms after all motif modules run, with scoring based on overlap diversity and region size.
         </li>
         <li>
-            <b>Non-B DNA Clusters</b>: 
-            Represents hotspot regions where multiple non-B DNA motifs are found within a defined window using a sliding algorithm. 
-            The region is scored by motif count and type diversity, indicating local enrichment and possible functional significance.
+            <b>Non-B DNA Clusters</b>: Represents hotspot regions where multiple non-B DNA motifs are found within a defined window using a sliding algorithm. The region is scored by motif count and type diversity, indicating local enrichment and possible functional significance.
         </li>
     </ul>
-
-    <b>Scoring Systems:</b><br>
-    <ul style="font-size:15px;">
-        <li><b>G4Hunter</b>: Calculates average G/C content for G-quadruplex and i-motif motifs.</li>
-        <li><b>Z-Seeker</b>: Weights base steps to score Z-DNA formation potential.</li>
-        <li><b>Tract Length & A/T Content</b>: Used for Curved DNA scoring.</li>
-        <li><b>Repeat Count</b>: Quantifies stability for Sticky DNA and eGZ motifs.</li>
-        <li><b>Pattern Match</b>: Used for AC-motif and triplex detection.</li>
-        <li><b>Thermodynamic Stability</b>: Combines GC content and G-run frequency for R-loop scoring.</li>
-        <li><b>Hybrid & Cluster Scores</b>: Based on region diversity and density of motif overlaps.</li>
-    </ul>
-
-    <b>Regular Expression Strategies:</b><br>
-    <ul style="font-size:15px;">
-        <li>Phasing and tract detection for Curved DNA and sticky repeats.</li>
-        <li>G-rich run patterns for G4, G-triplex, and R-loop motifs.</li>
-        <li>Alternating (CGG) and dinucleotide repeats for eGZ and Z-DNA.</li>
-        <li>Palindromic sequences and spacers for cruciforms.</li>
-        <li>Consensus patterns for AC-motif and triplex DNA.</li>
-    </ul>
-
     <b>References:</b>
     <ul>
         <li>Bedrat et al., 2016 Nucleic Acids Research</li>
