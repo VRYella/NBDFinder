@@ -136,26 +136,12 @@ def get_basic_stats(seq, motifs=None):
 
     return stats
 
-# --- SIDEBAR ---
-st.sidebar.markdown(
-    """
-    <div style='padding: 12px 0 18px 0; border-bottom: 1px solid #e0e0e0;'>
-        <span style='font-family: Montserrat, Arial, Helvetica, sans-serif; font-weight: bold; font-size: 28px; color: #222; letter-spacing:1px;'>
-            Navigation
-        </span>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-page = st.sidebar.radio(
-    "",
-    list(PAGES.keys()),
-    label_visibility='collapsed'
-)
+# --- HORIZONTAL TABS NAVIGATION ---
+tabs = st.tabs(list(PAGES.keys()))
+tab_pages = dict(zip(PAGES.keys(), tabs))
 
 # --- HOME PAGE ---
-if page == "Home":
+with tab_pages["Home"]:
     st.markdown(
         '<h1 style="font-family:Montserrat, Arial; font-weight:700; color:#002147; letter-spacing:2px; margin-bottom:24px;">Non-B DNA Motif Finder</h1>',
         unsafe_allow_html=True
@@ -177,7 +163,7 @@ if page == "Home":
     )
 
 # --- UPLOAD & ANALYZE PAGE ---
-elif page == "Upload & Analyze":
+with tab_pages["Upload & Analyze"]:
     st.markdown('<h2 style="font-family:Montserrat, Arial; font-weight:700; color:#002147; letter-spacing:1px; margin-bottom:18px;">Sequence Upload and Motif Analysis</h2>', unsafe_allow_html=True)
     st.markdown('<span style="font-family:Montserrat,Arial; font-size:16px;">Supports <b>multi-FASTA</b> and single FASTA. Paste, upload, select example, or fetch from NCBI.</span>', unsafe_allow_html=True)
     st.caption("Supported formats: .fa, .fasta, .txt | Limit: 200MB/file.")
@@ -368,7 +354,7 @@ elif page == "Upload & Analyze":
             st.session_state.analysis_status = "Complete"
 
 # --- RESULTS PAGE ---
-elif page == "Results":
+with tab_pages["Results"]:
     st.markdown('<h2 style="font-family:Montserrat, Arial; font-weight:700; color:#002147; letter-spacing:1px; margin-bottom:18px;">Analysis Results and Visualization</h2>', unsafe_allow_html=True)
     if not st.session_state.results:
         st.info("No analysis results. Please run motif analysis first.")
@@ -413,7 +399,7 @@ elif page == "Results":
             st.pyplot(fig)
 
 # --- DOWNLOAD PAGE ---
-elif page == "Download":
+with tab_pages["Download"]:
     st.header("Export Data")
     if not st.session_state.results:
         st.info("No results available to download.")
@@ -436,8 +422,7 @@ elif page == "Download":
         st.download_button("Download Excel", data=excel_data, file_name="motif_results.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 # --- DOCUMENTATION PAGE ---
-
-elif page == "Documentation":
+with tab_pages["Documentation"]:
     st.header("Scientific Documentation & References")
     st.markdown("""
     <div style='background:#f4faff; border-radius:10px; padding:18px 18px 8px 18px; font-size:17px; font-family:Montserrat,Arial;'>
