@@ -796,35 +796,18 @@ def merge_hotspots(hotspots):
 
 # ========== NON-OVERLAPPING MOTIF SELECTION ==========
 
-def select_best_nonoverlapping_motifs(motifs: list, motif_priority: list = None) -> list:
-    if motif_priority is None:
-        motif_priority = [
-            'Multimeric G4', 'Bipartite G4', 'Dimeric G4', 'Canonical G4',
-            'Relaxed G4', 'Non-canonical G4', 'Bulged G4', 'Three G-Runs'
-        ]
-    subtype_rank = {subtype: i for i, subtype in enumerate(motif_priority)}
-    def motif_key(m):
-        subtype = m.get('Subtype', 'Other')
-        if subtype is None:
-            subtype = 'Other'
-        rank = subtype_rank.get(subtype, len(subtype_rank))
-        try:
-            score = float(m.get('Score', 0))
-        except ValueError:
-            score = 0.0
-        length = m.get('Length', 0)
-        return (m.get('Class', ''), rank, -score, -length)
-    sorted_motifs = sorted(motifs, key=motif_key)
+def select_best_nonoverlapping_motifs(motifs):
     selected = []
-    occupied_per_class = dict()
-    for m in sorted_motifs:
-        motif_class = m.get('Class', 'Other')
+    occupied = set()
+    for m in motifs:
+        # Check for required keys
+        if not all(k in m for k in ('Start', 'End')):
+            print(f"Skipping motif missing 'Start'/'End': {m}")
+            continue  # skip this motif
         region = set(range(m['Start'], m['End']+1))
-        if motif_class not in occupied_per_class:
-            occupied_per_class[motif_class] = set()
-        if occupied_per_class[motif_class].isdisjoint(region):
+        if not region & occupied:
             selected.append(m)
-            occupied_per_class[motif_class].update(region)
+            occupied |= region
     return selected
 
 def validate_motif(motif, seq_length):
