@@ -5,7 +5,6 @@ import io
 from collections import Counter
 from Bio import Entrez, SeqIO
 
-# Motif functions from motifs.py
 from motifs import (
     all_motifs, 
     find_hotspots,
@@ -13,38 +12,40 @@ from motifs import (
     select_best_nonoverlapping_motifs, wrap
 )
 
-# ---------- PROFESSIONAL CSS ----------
+# ---------- ENHANCED PROFESSIONAL CSS ----------
 st.markdown("""
     <style>
     html, body, [data-testid="stAppViewContainer"], .main {
-        background: #f6fafe !important;
+        background: #f5f9ff !important;
         font-family: 'Montserrat', Arial, sans-serif !important;
     }
     /* Giant, full-width tabs */
     .stTabs [data-baseweb="tab-list"] {
         width: 100vw !important;
-        justify-content: space-between !important;
-        gap: 0 !important;
-        border-bottom: 3px solid #e0e0e0;
+        justify-content: stretch !important;
+        border-bottom: 4px solid #1565c0;
+        background: linear-gradient(90deg,#eaf3fa 0%,#f6faff 100%) !important;
         margin-bottom: 0;
-        background: #eaf3fa !important;
+        box-shadow: 0 2px 8px #dae5f2;
     }
     .stTabs [data-baseweb="tab"] {
-        font-size: 2.8rem !important;
+        font-size: 2.7rem !important;
         font-weight: 900 !important;
         flex: 1 1 0%;
         min-width: 0 !important;
-        padding: 30px 0 30px 0 !important;
+        padding: 34px 0 34px 0 !important;
         text-align: center;
+        letter-spacing: 0.03em;
         color: #002147 !important;
         background: #eaf3fa !important;
-        border-right: 1px solid #eee !important;
+        border-right: 1px solid #dbe5ea !important;
         transition: background 0.2s;
     }
     .stTabs [aria-selected="true"] {
         color: #1565c0 !important;
-        border-bottom: 8px solid #1565c0 !important;
-        background: #f8faff !important;
+        border-bottom: 10px solid #1565c0 !important;
+        background: #f6faff !important;
+        box-shadow: 0 4px 18px #e0e5ea;
     }
     .stTabs [data-baseweb="tab"]:last-child {
         border-right: none !important;
@@ -54,21 +55,39 @@ st.markdown("""
     /* Headings and fonts */
     h1, h2, h3, h4 {
         font-family: 'Montserrat', Arial, sans-serif !important;
-        color: #002147 !important;
+        color: #1565c0 !important;
         letter-spacing: 1px;
+        font-weight: 900 !important;
     }
     .markdown-text-container {
-        font-size: 1.3rem !important;
+        font-size: 1.4rem !important;
         font-family: 'Montserrat', Arial, sans-serif !important;
     }
-    /* Make buttons bigger */
+    /* Buttons bigger and colored */
     .stButton>button {
-        font-size: 1.2rem !important;
+        font-size: 1.3rem !important;
         font-family: 'Montserrat', Arial, sans-serif !important;
-        padding: 0.5em 1.5em;
-        background: #1565c0 !important;
+        padding: 0.6em 2em !important;
+        background: linear-gradient(90deg,#1565c0 0%,#2e8bda 100%) !important;
         color: #fff !important;
         border-radius: 8px !important;
+        border: none !important;
+        font-weight: bold !important;
+        box-shadow: 0px 2px 10px #b5cbe6;
+        transition: background 0.2s;
+    }
+    .stButton>button:hover {
+        background: linear-gradient(90deg,#2e8bda 0%,#1565c0 100%) !important;
+    }
+    /* Dataframe font size */
+    .stDataFrame, .stTable {
+        font-size: 1.18rem !important;
+        font-family: 'Montserrat', Arial, sans-serif !important;
+    }
+    /* Input font size */
+    label, .stTextInput>div>div>input, .stSelectbox>div>div>div, .stMultiSelect>div>div>div, .stRadio>div>div>label>div {
+        font-size: 1.15rem !important;
+        font-family: 'Montserrat', Arial, sans-serif !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -77,7 +96,7 @@ st.markdown("""
 st.set_page_config(
     page_title="Non-B DNA Motif Finder",
     layout="wide",
-    page_icon="",
+    page_icon="🧬",
     menu_items={'About': "Non-B DNA Motif Finder | Developed by Dr. Venkata Rajesh Yella"}
 )
 
@@ -160,18 +179,18 @@ tab_pages = dict(zip(PAGES.keys(), tabs))
 
 # ---------- HOME ----------
 with tab_pages["Home"]:
-    st.markdown("<h1 style='font-size:3.2rem;font-family:Montserrat;font-weight:600;color:#1565c0;margin-bottom:2rem;'>Non-B DNA Motif Finder</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='font-size:3.3rem;font-family:Montserrat;font-weight:900;color:#1565c0;margin-bottom:2.2rem;'>Non-B DNA Motif Finder</h1>", unsafe_allow_html=True)
     left, right = st.columns([1,1])
     with left:
-        st.image("nbdcircle.JPG", use_container_width=True)
+        st.image("nbdcircle.JPG", use_column_width=True)
     with right:
         st.markdown("""
-        <div style='font-family:Montserrat, Arial; font-size:1.2rem; color:#222; line-height:1.2; padding:18px; background:#f8f9fa; border-radius:14px; box-shadow:0 2px 8px #eee;'>
+        <div style='font-family:Montserrat, Arial; font-size:2rem; color:#222; line-height:1.8; padding:22px 26px; background:#f8f9fa; border-radius:16px; box-shadow:0 2px 24px #e0e5ea;'>
         <b>Non-canonical DNA structures</b> play key roles in genome stability, regulation, and evolution.<br><br>
         This application detects and analyzes <b>18 distinct Non-B DNA motifs</b> in any DNA sequence or multi-FASTA file.<br>
         <br>
         <b>Motif Classes:</b><br>
-        <span style='color:#2c3e50;'>
+        <span style='color:#1565c0;'>
             <b>G-quadruplex-related</b> (G4, Relaxed G4, Bulged G4, Bipartite G4, Multimeric G4, G-Triplex, i-Motif, Hybrid),<br>
             <b>helix/curvature</b> (Z-DNA, eGZ (Extruded-G), Curved DNA, AC-Motif),<br>
             <b>repeat/junction</b> (Slipped DNA, Cruciform, Sticky DNA, Triplex DNA),<br>
@@ -184,8 +203,8 @@ with tab_pages["Home"]:
 
 # ---------- UPLOAD & ANALYZE ----------
 with tab_pages["Upload & Analyze"]:
-    st.markdown("<h2 style='font-size:2.2rem;font-family:Montserrat;font-weight:900;color:#1565c0;margin-bottom:1.5rem;'>Sequence Upload and Motif Analysis</h2>", unsafe_allow_html=True)
-    st.markdown('<span style="font-family:Montserrat,Arial; font-size:1.3rem;">Supports <b>multi-FASTA</b> and single FASTA. Paste, upload, select example, or fetch from NCBI.</span>', unsafe_allow_html=True)
+    st.markdown("<h2 style='font-size:2.2rem;font-family:Montserrat;font-weight:900;color:#1565c0;margin-bottom:1.8rem;'>Sequence Upload and Motif Analysis</h2>", unsafe_allow_html=True)
+    st.markdown('<span style="font-family:Montserrat,Arial; font-size:1.45rem;">Supports multi-FASTA and single FASTA. Paste, upload, select example, or fetch from NCBI.</span>', unsafe_allow_html=True)
     st.caption("Supported formats: .fa, .fasta, .txt | Limit: 200MB/file.")
 
     selected_motifs = st.multiselect(
@@ -374,7 +393,7 @@ with tab_pages["Upload & Analyze"]:
 
 # ---------- RESULTS ----------
 with tab_pages["Results"]:
-    st.markdown('<h2 style="font-size:2.2rem;font-family:Montserrat;font-weight:900;color:#1565c0;margin-bottom:1.5rem;">Analysis Results and Visualization</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 style="font-size:2.2rem;font-family:Montserrat;font-weight:900;color:#1565c0;margin-bottom:1.7rem;">Analysis Results and Visualization</h2>', unsafe_allow_html=True)
     if not st.session_state.results:
         st.info("No analysis results. Please run motif analysis first.")
     else:
@@ -387,10 +406,10 @@ with tab_pages["Results"]:
             st.warning("No motifs detected for this sequence.")
         else:
             df = pd.DataFrame(motifs)
-            st.markdown(f"<h3 style='font-family:Montserrat, Arial; font-weight:600; color:#0A3D62;'>Motif Table for <b>{st.session_state.names[seq_idx]}</b></h3>", unsafe_allow_html=True)
+            st.markdown(f"<h3 style='font-family:Montserrat, Arial; font-weight:700; color:#0A3D62;font-size:1.7rem;'>Motif Table for <b>{st.session_state.names[seq_idx]}</b></h3>", unsafe_allow_html=True)
             display_columns = [col for col in df.columns if col not in ['Sequence', 'SequenceName']]
             st.dataframe(df[display_columns], use_container_width=True, height=360)
-            st.markdown('<span style="font-family:Montserrat,Arial;font-size:1.2rem;"><b>Motif Type Distribution</b></span>', unsafe_allow_html=True)
+            st.markdown('<span style="font-family:Montserrat,Arial;font-size:1.25rem;"><b>Motif Type Distribution</b></span>', unsafe_allow_html=True)
             fig, ax = plt.subplots(figsize=(8,6))
             class_counts = df['Class'].value_counts().reindex(
                 st.session_state.selected_motifs if not any(m in st.session_state.selected_motifs for m in ['Hybrid', 'Non-B DNA Clusters']) else MOTIF_ORDER, fill_value=0)
@@ -401,7 +420,7 @@ with tab_pages["Results"]:
             ax.barh(class_counts.index, class_counts.values, color=[MOTIF_COLORS.get(c, "#888") for c in class_counts.index])
             ax.set_xlabel("Motif Count")
             st.pyplot(fig)
-            st.markdown('<span style="font-family:Montserrat,Arial;font-size:1.2rem;"><b>Motif Map</b></span>', unsafe_allow_html=True)
+            st.markdown('<span style="font-family:Montserrat,Arial;font-size:1.25rem;"><b>Motif Map</b></span>', unsafe_allow_html=True)
             fig, ax = plt.subplots(figsize=(12,3))
             y = 1
             for _, row in df.iterrows():
@@ -414,7 +433,7 @@ with tab_pages["Results"]:
             ax.set_yticks([])
             ax.set_xlabel("Sequence Position (bp)")
             ax.set_xlim(0, len(st.session_state.seqs[seq_idx]))
-            ax.set_title(f"Motif Tracks: {st.session_state.names[seq_idx]}", fontweight='bold', fontsize=16)
+            ax.set_title(f"Motif Tracks: {st.session_state.names[seq_idx]}", fontweight='bold', fontsize=18)
             st.pyplot(fig)
 
 # ---------- DOWNLOAD ----------
@@ -444,51 +463,23 @@ with tab_pages["Download"]:
 with tab_pages["Documentation"]:
     st.header("Scientific Documentation & References")
     st.markdown("""
-    <div style='background:#f4faff; border-radius:10px; padding:18px 18px 8px 18px; font-size:1.1rem; font-family:Montserrat,Arial;'>
+    <div style='background:#f4faff; border-radius:12px; padding:24px; font-size:1.18rem; font-family:Montserrat,Arial;'>
     <b>Motif Classes Detected:</b><br><br>
-    <ul style="font-size:1.08rem;">
-        <li>
-            <b>Curved DNA</b>: Identifies phased poly(A) or poly(T) tracts using regular expressions and spacing rules, reflecting regions of intrinsic curvature. Scoring is based on tract length and grouping of spaced tracts, indicating potential for DNA bending.
-        </li>
-        <li>
-            <b>Z-DNA</b>: Detects alternating purine-pyrimidine patterns, especially GC-rich segments, using a windowed scoring algorithm (Z-Seeker). The regular expression strategy finds dinucleotide repeats; scoring reflects the weighted sum of favorable and unfavorable base steps.
-        </li>
-        <li>
-            <b>eGZ-motif (Extruded-G Z-DNA)</b>: Searches for long (CGG)<sub>n</sub> runs via regex, representing extruded guanine Z-DNA variants. Scoring is normalized to repeat count, indicating stability of the motif.
-        </li>
-        <li>
-            <b>Slipped DNA</b>: Recognizes direct repeats and short tandem repeats, using repeat-unit matching and regex for consecutive identical segments. Scoring is proportional to repeat length and unit copies, reflecting mutational susceptibility.
-        </li>
-        <li>
-            <b>R-Loop</b>: Locates G-rich regions capable of forming stable RNA-DNA hybrids, using RLFS models defined by regular expressions. Thermodynamic scoring combines GC content and G-run frequency to estimate hybrid stability.
-        </li>
-        <li>
-            <b>Cruciform</b>: Finds palindromic inverted repeats with short spacers using regex and reverse complement matching. Scoring factors in arm length and A/T content, indicating stem-loop formation propensity.
-        </li>
-        <li>
-            <b>Triplex DNA / Mirror Repeat</b>: Detects purine- or pyrimidine-rich mirror repeats and triplex-forming motifs. Regular expressions identify repeated units separated by short spacers; scoring considers base composition and repeat purity.
-        </li>
-        <li>
-            <b>Sticky DNA</b>: Searches for extended GAA or TTC repeats with regex. Scoring depends on repeat count, reflecting the likelihood of forming sticky junctions and associated instability.
-        </li>
-        <li>
-            <b>G-Triplex</b>: Identifies three consecutive guanine runs separated by short loops. Regular expression and loop-length analysis determine motif stability; scoring incorporates G-run sum and loop penalty.
-        </li>
-        <li>
-            <b>G4 (G-Quadruplex) and Variants</b>: Detects canonical, relaxed, bulged, bipartite, multimeric, and imperfect G4 motifs using specialized regex patterns for G-runs and loop sizes. The G4Hunter scoring system evaluates mean G/C content and structure favorability.
-        </li>
-        <li>
-            <b>i-Motif</b>: Finds C-rich sequences capable of folding into i-motif structures under acidic conditions. Regex detects cytosine runs and loop lengths, while scoring incorporates run count, C-content, and loop properties.
-        </li>
-        <li>
-            <b>AC-Motif</b>: Locates alternating A-rich and C-rich consensus regions using regex. Motif matches are scored by pattern presence, suggesting non-canonical secondary structure potential.
-        </li>
-        <li>
-            <b>Hybrid Motif</b>: Represents DNA regions where two or more distinct motif classes overlap. Identified by interval intersection algorithms after all motif modules run, with scoring based on overlap diversity and region size.
-        </li>
-        <li>
-            <b>Non-B DNA Clusters</b>: Represents hotspot regions where multiple non-B DNA motifs are found within a defined window using a sliding algorithm. The region is scored by motif count and type diversity, indicating local enrichment and possible functional significance.
-        </li>
+    <ul style="font-size:1.10rem;">
+        <li><b>Curved DNA</b>: Identifies phased poly(A) or poly(T) tracts using regex and spacing rules, reflecting intrinsic curvature. Scoring is based on tract length/grouping.</li>
+        <li><b>Z-DNA</b>: Detects alternating purine-pyrimidine patterns, GC-rich segments. Uses windowed scoring; regex finds dinucleotide repeats.</li>
+        <li><b>eGZ-motif (Extruded-G Z-DNA)</b>: Searches for long (CGG)<sub>n</sub> runs via regex. Scored by repeat count.</li>
+        <li><b>Slipped DNA</b>: Recognizes direct/tandem repeats by repeat-unit matching and regex. Scoring by length and unit copies.</li>
+        <li><b>R-Loop</b>: Finds G-rich regions for stable RNA-DNA hybrids; RLFS model and regex. Thermodynamic scoring for hybrid stability.</li>
+        <li><b>Cruciform</b>: Finds palindromic inverted repeats with spacers, regex and reverse complement. Scoring by arm length and A/T content.</li>
+        <li><b>Triplex DNA / Mirror Repeat</b>: Detects purine/pyrimidine mirror repeats/triplex motifs. Regex identifies units; scoring by composition/purity.</li>
+        <li><b>Sticky DNA</b>: Searches extended GAA/TTC repeats. Scoring by repeat count.</li>
+        <li><b>G-Triplex</b>: Finds three consecutive guanine runs by regex and loop length. Scoring by G-run sum and loop penalty.</li>
+        <li><b>G4 (G-Quadruplex) and Variants</b>: Detects canonical/variant G4 motifs by G-run/loop regex. G4Hunter scoring for content/structure.</li>
+        <li><b>i-Motif</b>: C-rich sequences for i-motif under acid. Regex for C runs/loops; scoring by run count and content.</li>
+        <li><b>AC-Motif</b>: Alternating A-rich/C-rich consensus regions by regex. Scoring by pattern presence.</li>
+        <li><b>Hybrid Motif</b>: Regions where motif classes overlap; found by interval intersection, scored on diversity/size.</li>
+        <li><b>Non-B DNA Clusters</b>: Hotspots with multiple motifs in a window; sliding algorithm, scored by motif count/diversity.</li>
     </ul>
     <b>References:</b>
     <ul>
@@ -505,7 +496,7 @@ with tab_pages["Documentation"]:
 
 st.markdown("""
 ---
-<div style='font-size: 1.1rem; color: #1e293b; margin-top: 40px; text-align: left; font-family:Montserrat,Arial;'>
+<div style='font-size: 1.14rem; color: #1e293b; margin-top: 36px; text-align: left; font-family:Montserrat,Arial;'>
 <b>Developed by</b><br>
 Dr. Venkata Rajesh Yella<br>
 <a href='mailto:yvrajesh_bt@kluniversity.in'>yvrajesh_bt@kluniversity.in</a> |
