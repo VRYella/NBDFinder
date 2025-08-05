@@ -128,7 +128,7 @@ tab_pages = dict(zip(PAGES.keys(), tabs))
 with tab_pages["Home"]:
     col1, col2 = st.columns([1, 2])
     with col1:
-        st.image("nbdcircle.JPG", width=400)
+        st.image("nbdcircle.JPG", width=900)
     with col2:
         st.markdown("""
         <div style='font-family:Montserrat, Arial; font-size:21px; color:#222; line-height:1.7;'>
