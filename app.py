@@ -6,7 +6,7 @@ from collections import Counter
 from Bio import Entrez, SeqIO
 
 from motifs import (
-    all_motifs, 
+    all_motifs, discover_all_motifs,
     find_hotspots,
     parse_fasta, gc_content, reverse_complement,
     select_best_nonoverlapping_motifs, wrap
@@ -357,12 +357,20 @@ with tab_pages["Upload & Analyze"]:
             st.session_state.analysis_status = "Running"
             motif_results = []
             for seq in st.session_state.seqs:
+                # Use new motif discovery function that returns both overlapping and non-overlapping
+                motif_data = discover_all_motifs(seq)
+                
                 if run_all:
-                    motifs = all_motifs(seq)
+                    # For comprehensive analysis, use non-overlapping for summary but store both
+                    selected_motifs = motif_data["non_overlapping"]
                 else:
-                    motifs = [m for m in all_motifs(seq) if m['Class'] in st.session_state.selected_motifs]
-                nonoverlapping = select_best_nonoverlapping_motifs(motifs)
-                motif_results.append(nonoverlapping)
+                    # Filter selected classes from overlapping results
+                    overlapping = motif_data["overlapping"]
+                    selected_motifs = [m for m in overlapping if m['Class'] in st.session_state.selected_motifs]
+                    # Create non-overlapping version for this subset
+                    selected_motifs = select_best_nonoverlapping_motifs(selected_motifs)
+                
+                motif_results.append(selected_motifs)
             st.session_state.results = motif_results
 
             summary = []
