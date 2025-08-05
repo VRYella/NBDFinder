@@ -783,6 +783,9 @@ def all_motifs(seq, nonoverlap=False, report_hotspots=False):
 # (You may want to include select_best_nonoverlapping_motifs, get_basic_stats, etc. from your repo for completeness.)
 
 def select_best_nonoverlapping_motifs(motifs: list, motif_priority: list = None) -> list:
+    """
+    Select best non-overlapping motifs per class, prioritizing by class/subtype, score, and length.
+    """
     if motif_priority is None:
         motif_priority = [
             'Multimeric_G4', 'Bipartite_G4', 'Dimeric_G4', 'Canonical_G4',
@@ -810,17 +813,10 @@ def select_best_nonoverlapping_motifs(motifs: list, motif_priority: list = None)
             occupied_per_class[motif_class].update(region)
     return selected
 
-def validate_motif(motif, seq_length):
-    required_keys = ["Class", "Subtype", "Start", "End", "Length", "Sequence"]
-    if not all(key in motif for key in required_keys):
-        return False
-    if not (1 <= motif["Start"] <= motif["End"] <= seq_length):
-        return False
-    if len(motif["Sequence"].replace('\n', '')) == 0:
-        return False
-    return True
-
 def get_basic_stats(seq, motifs=None):
+    """
+    Return basic sequence statistics and, optionally, motif coverage stats.
+    """
     seq = seq.upper()
     length = len(seq)
     gc = gc_content(seq)
@@ -841,33 +837,5 @@ def get_basic_stats(seq, motifs=None):
         coverage_pct = (len(covered) / length * 100) if length else 0
         stats["Motif Coverage %"] = round(coverage_pct, 2)
     return stats
-
-def all_motifs(seq, nonoverlap=False, report_hotspots=False):
-    if not seq or not re.match("^[ATGC]+$", seq, re.IGNORECASE):
-        return []
-    seq = seq.upper()
-    motif_list = (
-        find_sticky_dna(seq) +
-        find_curved_DNA(seq) +
-        find_zdna(seq) +
-        find_egz_motif(seq) +
-        find_slipped_dna(seq) +
-        find_rlfs(seq) +
-        find_cruciform(seq) +
-        find_hdna(seq) +
-        find_gtriplex(seq) +
-        find_gquadruplex(seq) +
-        find_relaxed_gquadruplex(seq) +
-        find_bulged_gquadruplex(seq) +
-        find_bipartite_gquadruplex(seq) +
-        find_multimeric_gquadruplex(seq) +
-        find_imotif(seq) +
-        find_ac_motifs(seq)
-    )
-    motif_list = [m for m in motif_list if validate_motif(m, len(seq))]
-    motif_list += find_hybrids(motif_list, seq)
-    if nonoverlap:
-        motif_list = select_best_nonoverlapping_motifs(motif_list)
-    if report_hotspots:
         motif_list += find_hotspots(motif_list, len(seq))
     return motif_list
