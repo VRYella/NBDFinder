@@ -163,7 +163,7 @@ with tab_pages["Home"]:
     st.markdown("<h1 style='font-size:3.2rem;font-family:Montserrat;font-weight:900;color:#1565c0;margin-bottom:2rem;'>Non-B DNA Motif Finder</h1>", unsafe_allow_html=True)
     left, right = st.columns([1,1])
     with left:
-        st.image("nbdcircle.JPG", use_column_width=True)
+        st.image("nbdcircle.JPG", use_container_width=True)
     with right:
         st.markdown("""
         <div style='font-family:Montserrat, Arial; font-size:1.7rem; color:#222; line-height:1.7; padding:18px; background:#f8f9fa; border-radius:14px; box-shadow:0 2px 8px #eee;'>
