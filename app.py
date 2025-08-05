@@ -15,9 +15,14 @@ from motifs import (
 # ---------- PATCH: Ensure every motif has Subtype ----------
 def ensure_subtype(motif):
     """Guarantee every motif has a string 'Subtype'"""
-    if 'Subtype' not in motif or motif['Subtype'] is None:
-        motif['Subtype'] = 'Other'
-    return motif
+    if isinstance(motif, dict):
+        if 'Subtype' not in motif or motif['Subtype'] is None:
+            motif['Subtype'] = 'Other'
+        return motif
+    else:
+        # Handle non-dict motifs gracefully (could log/warn here)
+        return {'Subtype': 'Other', 'Motif': motif}
+
 
 # ---------- PROFESSIONAL CSS FOR BALANCED DESIGN ----------
 st.markdown("""
