@@ -147,7 +147,7 @@ with tab_pages["Home"]:
         unsafe_allow_html=True
     )
     try:
-        st.image("nbdcircle.JPG", use_container_width=True)
+        st.image("nbdcircle.JPG", use_container_width=False)
     except Exception:
         pass
     st.markdown(
