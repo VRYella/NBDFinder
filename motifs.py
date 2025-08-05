@@ -791,4 +791,4 @@ def all_motifs(seq, nonoverlap=False, report_hotspots=False):
         motif_list = select_best_nonoverlapping_motifs(motif_list)
     if report_hotspots:
         motif_list += find_hotspots(motif_list, len(seq))
-    return motif_lis
+    return motif_list
