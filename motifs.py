@@ -385,17 +385,19 @@ def find_hdna(seq):
                 pur_frac = purine_fraction(full_seq)
                 pyr_frac = pyrimidine_fraction(full_seq)
                 is_triplex = (pur_frac >= 0.9 or pyr_frac >= 0.9)
-                results.append({
-                    "Class": "Triplex_DNA" if is_triplex else "Mirror_Repeat",
-                    "Subtype": "Triplex_Motif" if is_triplex else "Mirror_Repeat",
-                    "Start": mirror_start + 1,
-                    "End": mirror_end,
-                    "Length": len(full_seq),
-                    "Spacer": spacer,
-                    "Sequence": wrap(full_seq),
-                    "PurineFrac": round(pur_frac, 2),
-                    "PyrimidineFrac": round(pyr_frac, 2)
-                })
+                # Only report triplex-forming mirror repeats
+                if is_triplex:
+                    results.append({
+                        "Class": "Triplex_DNA",
+                        "Subtype": "Triplex_Motif",
+                        "Start": mirror_start + 1,
+                        "End": mirror_end,
+                        "Length": len(full_seq),
+                        "Spacer": spacer,
+                        "Sequence": wrap(full_seq),
+                        "PurineFrac": round(pur_frac, 2),
+                        "PyrimidineFrac": round(pyr_frac, 2)
+                    })
     return results
 
 def find_sticky_dna(seq):
@@ -775,7 +777,7 @@ def all_motifs(seq, nonoverlap=False, report_hotspots=False):
         find_slipped_dna(seq) +
         find_rlfs(seq) +
         find_cruciform(seq) +
-        find_hdna(seq) +
+        find_hdna(seq) +  # Only triplex-forming mirror repeats
         find_gtriplex(seq) +
         find_gquadruplex(seq) +
         find_relaxed_gquadruplex(seq) +
