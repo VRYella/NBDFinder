@@ -1,42 +1,40 @@
-# --- Import libraries, motif detection functions ---
+# --- Imports: Libraries and Motif Functions ---
 import streamlit as st; import pandas as pd; import matplotlib.pyplot as plt; import io
 from collections import Counter; from Bio import Entrez, SeqIO
-
-# --- Import all motif detection routines ---
 from motifs import (
     all_motifs, find_hotspots, parse_fasta, gc_content, reverse_complement,
     select_best_nonoverlapping_motifs, wrap
 )
 
-# --- Ensure every motif dict has a 'Subtype' (patch for robustness) ---
+# --- Motif Patch: Ensure Subtype Present ---
 def ensure_subtype(motif):
     # Guarantee every motif has a string 'Subtype'
     return motif if isinstance(motif, dict) and motif.get('Subtype') else {**motif, 'Subtype': 'Other'} if isinstance(motif, dict) else {'Subtype': 'Other', 'Motif': motif}
 
-# --- Professional CSS for clean UI ---
+# --- CSS: Professional UI Styling ---
 st.markdown("""
-    <style>
-    body, [data-testid="stAppViewContainer"], .main {background: #f7fafd !important; font-family: 'Montserrat', Arial, sans-serif !important;}
-    .stTabs [data-baseweb="tab-list"] {width: 100vw !important; justify-content: stretch !important; border-bottom: 2px solid #1565c0; background: linear-gradient(90deg,#eaf3fa 0%,#f7fafd 100%) !important; box-shadow: 0 2px 8px #dae5f2; margin-bottom: 0;}
-    .stTabs [data-baseweb="tab"] {font-size: 1.45rem !important; font-weight: 700 !important; flex: 1 1 0%; min-width: 0 !important; padding: 15px 0 15px 0 !important; text-align: center; color: #1565c0 !important; background: #eaf3fa !important; border-right: 1px solid #eee !important; letter-spacing: 0.03em;}
-    .stTabs [aria-selected="true"] {color: #002147 !important; border-bottom: 5px solid #1565c0 !important; background: #f7fafd !important; box-shadow: 0 4px 8px #e0e5ea;}
-    .stTabs [data-baseweb="tab"]:last-child {border-right: none !important;}
-    h1, h2, h3, h4 {font-family: 'Montserrat', Arial, sans-serif !important; color: #1565c0 !important; font-weight: 800 !important; margin-top: 0.8em; margin-bottom: 0.8em;}
-    h1 { font-size:2.05rem !important; } h2 { font-size:1.55rem !important; } h3 { font-size:1.19rem !important; } h4 { font-size:1.09rem !important; }
-    .stMarkdown, .markdown-text-container, .stText, p, span, label, input, .stTextInput>div>div>input, .stSelectbox>div>div>div, .stMultiSelect>div>div>div, .stRadio>div>div>label>div {font-size: 1.08rem !important; font-family: 'Montserrat', Arial, sans-serif !important;}
-    .stButton>button {font-size: 1.08rem !important; font-family: 'Montserrat', Arial, sans-serif !important; padding: 0.45em 1.2em !important; background: linear-gradient(90deg,#1565c0 0%,#2e8bda 100%) !important; color: #fff !important; border-radius: 7px !important; border: none !important; font-weight: 600 !important; box-shadow: 0 2px 8px #b5cbe6; transition: background 0.2s;}
-    .stButton>button:hover {background: linear-gradient(90deg,#2e8bda 0%,#1565c0 100%) !important;}
-    .stDataFrame, .stTable {font-size: 1.05rem !important; font-family: 'Montserrat', Arial, sans-serif !important;}
-    </style>
+<style>
+body, [data-testid="stAppViewContainer"], .main {background: #f7fafd !important; font-family: 'Montserrat', Arial, sans-serif !important;}
+.stTabs [data-baseweb="tab-list"] {width: 100vw !important; justify-content: stretch !important; border-bottom: 2px solid #1565c0; background: linear-gradient(90deg,#eaf3fa 0%,#f7fafd 100%) !important; box-shadow: 0 2px 8px #dae5f2; margin-bottom: 0;}
+.stTabs [data-baseweb="tab"] {font-size: 1.45rem !important; font-weight: 700 !important; flex: 1 1 0%; min-width: 0 !important; padding: 15px 0 15px 0 !important; text-align: center; color: #1565c0 !important; background: #eaf3fa !important; border-right: 1px solid #eee !important; letter-spacing: 0.03em;}
+.stTabs [aria-selected="true"] {color: #002147 !important; border-bottom: 5px solid #1565c0 !important; background: #f7fafd !important; box-shadow: 0 4px 8px #e0e5ea;}
+.stTabs [data-baseweb="tab"]:last-child {border-right: none !important;}
+h1, h2, h3, h4 {font-family: 'Montserrat', Arial, sans-serif !important; color: #1565c0 !important; font-weight: 800 !important; margin-top: 0.8em; margin-bottom: 0.8em;}
+h1 { font-size:2.05rem !important; } h2 { font-size:1.55rem !important; } h3 { font-size:1.19rem !important; } h4 { font-size:1.09rem !important; }
+.stMarkdown, .markdown-text-container, .stText, p, span, label, input, .stTextInput>div>div>input, .stSelectbox>div>div>div, .stMultiSelect>div>div>div, .stRadio>div>div>label>div {font-size: 1.08rem !important; font-family: 'Montserrat', Arial, sans-serif !important;}
+.stButton>button {font-size: 1.08rem !important; font-family: 'Montserrat', Arial, sans-serif !important; padding: 0.45em 1.2em !important; background: linear-gradient(90deg,#1565c0 0%,#2e8bda 100%) !important; color: #fff !important; border-radius: 7px !important; border: none !important; font-weight: 600 !important; box-shadow: 0 2px 8px #b5cbe6; transition: background 0.2s;}
+.stButton>button:hover {background: linear-gradient(90deg,#2e8bda 0%,#1565c0 100%) !important;}
+.stDataFrame, .stTable {font-size: 1.05rem !important; font-family: 'Montserrat', Arial, sans-serif !important;}
+</style>
 """, unsafe_allow_html=True)
 
-# --- App-wide config: title, layout, menu ---
+# --- App Config: Title, Layout, Menu ---
 st.set_page_config(
     page_title="Non-B DNA Motif Finder", layout="wide", page_icon="🧬",
     menu_items={'About': "Non-B DNA Motif Finder | Developed by Dr. Venkata Rajesh Yella"}
 )
 
-# --- Constants for motif types, colors, pages ---
+# --- Constants: Motif Types, Colors, Pages ---
 MOTIF_ORDER = [
     "Sticky DNA","Curved DNA","Z-DNA","eGZ (Extruded-G)","Slipped DNA","R-Loop",
     "Cruciform","Triplex DNA","G-Triplex","G4","Relaxed G4","Bulged G4","Bipartite G4",
@@ -46,7 +44,7 @@ MOTIF_COLORS = {"Curved DNA":"#FF9AA2","Z-DNA":"#FFB7B2","eGZ (Extruded-G)":"#6A
 PAGES = {"Home": "Overview","Upload & Analyze": "Sequence Upload and Motif Analysis","Results": "Analysis Results and Visualization","Download": "Export Data","Documentation": "Scientific Documentation & References"}
 Entrez.email = "raazbiochem@gmail.com"; Entrez.api_key = None
 
-# --- Example sequences for demo/testing ---
+# --- Example Sequences ---
 EXAMPLE_FASTA = """>Example Sequence
 ATCGATCGATCGAAAATTTTATTTAAATTTAAATTTGGGTTAGGGTTAGGGTTAGGGCCCCCTCCCCCTCCCCCTCCCC
 ATCGATCGCGCGCGCGATCGCACACACACAGCTGCTGCTGCTTGGGAAAGGGGAAGGGTTAGGGAAAGGGGTTT
@@ -67,11 +65,11 @@ CGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGC
 GAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAA
 """
 
-# --- Session state initialization ---
+# --- Session State Initialization ---
 for k, v in {'seqs': [],'names': [],'results': [],'summary_df': pd.DataFrame(),'hotspots': [],'analysis_status': "Ready",'selected_motifs': MOTIF_ORDER,}.items():
     if k not in st.session_state: st.session_state[k] = v
 
-# --- Utility: Get basic sequence statistics (GC/AT content, length, base counts, motif coverage) ---
+# --- Sequence Stats: GC/AT/Length/Coverage ---
 def get_basic_stats(seq, motifs=None):
     seq = seq.upper(); length = len(seq); gc = gc_content(seq)
     at = (seq.count('A') + seq.count('T')) / length * 100 if length else 0
@@ -81,10 +79,10 @@ def get_basic_stats(seq, motifs=None):
         stats["Motif Coverage (%)"] = round((len(covered) / length * 100) if length else 0,2)
     return stats
 
-# --- Main UI tabs ---
+# --- Tabs Setup ---
 tabs = st.tabs(list(PAGES.keys())); tab_pages = dict(zip(PAGES.keys(), tabs))
 
-# === HOME TAB: App overview and motif classes ===
+# === HOME TAB: App Overview ===
 with tab_pages["Home"]:
     st.markdown("<h1>Non-B DNA Motif Finder</h1>", unsafe_allow_html=True)
     left, right = st.columns([1,1])
@@ -106,7 +104,7 @@ with tab_pages["Home"]:
         </div>
         """, unsafe_allow_html=True)
 
-# === UPLOAD & ANALYZE TAB: Sequence input, motif selection, preview ===
+# === UPLOAD & ANALYZE TAB: Sequence Input ===
 with tab_pages["Upload & Analyze"]:
     st.markdown("<h2>Sequence Upload and Motif Analysis</h2>", unsafe_allow_html=True)
     st.markdown('<span style="font-family:Montserrat,Arial; font-size:1.12rem;">Supports multi-FASTA and single FASTA. Paste, upload, select example, or fetch from NCBI.</span>', unsafe_allow_html=True)
@@ -250,7 +248,7 @@ with tab_pages["Upload & Analyze"]:
             st.success("Analysis complete! See 'Analysis Results and Visualization' tab for details.")
             st.session_state.analysis_status = "Complete"
 
-# === RESULTS TAB: Data, distribution, motif map ===
+# === RESULTS TAB: Data, Distribution, Motif Map ===
 with tab_pages["Results"]:
     st.markdown('<h2>Analysis Results and Visualization</h2>', unsafe_allow_html=True)
     if not st.session_state.results:
@@ -289,7 +287,7 @@ with tab_pages["Results"]:
             ax.set_title(f"Motif Tracks: {st.session_state.names[seq_idx]}", fontweight='bold', fontsize=14)
             st.pyplot(fig)
 
-# === DOWNLOAD TAB: Export results ===
+# === DOWNLOAD TAB: Export Results ===
 with tab_pages["Download"]:
     st.header("Export Data")
     if not st.session_state.results:
@@ -312,7 +310,7 @@ with tab_pages["Download"]:
         excel_data.seek(0)
         st.download_button("Download Excel", data=excel_data, file_name="motif_results.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
-# === DOCUMENTATION TAB: Motif class details, references ===
+# === DOCUMENTATION TAB: Motif Details, References ===
 with tab_pages["Documentation"]:
     st.header("Scientific Documentation & References")
     st.markdown("""
