@@ -2,22 +2,16 @@
 import re; import numpy as np; import random
 
 # --- Sequence Utilities ---
-def parse_fasta(fasta_str: str) -> str: # FASTA→DNA (U→T)
-    return "".join([line.strip() for line in fasta_str.split('\n') if not line.startswith(">")]).upper().replace(" ", "").replace("U", "T")
-def wrap(seq: str, width: int = 60) -> str: # FASTA-style line wrap
-    return "\n".join(seq[i:i+width] for i in range(0, len(seq), width))
-def gc_content(seq: str) -> float: # GC content (%)
-    gc = seq.count('G') + seq.count('C'); return (gc / max(1, len(seq))) * 100 if seq else 0
-def reverse_complement(seq: str) -> str: # Reverse complement
-    return seq.translate(str.maketrans("ATGC", "TACG"))[::-1]
-def is_palindrome(seq: str) -> bool: # Palindrome check
-    return seq == reverse_complement(seq)
-def overlapping_finditer(pattern, seq): # Overlapping regex match
-    regex = re.compile(pattern, re.IGNORECASE); pos = 0
+def parse_fasta(fasta_str: str) -> str: return "".join([line.strip() for line in fasta_str.split('\n') if not line.startswith(">")]).upper().replace(" ", "").replace("U", "T")
+def wrap(seq: str, width: int = 60) -> str: return "\n".join(seq[i:i+width] for i in range(0, len(seq), width))
+def gc_content(seq: str) -> float: gc = seq.count('G') + seq.count('C'); return (gc / max(1, len(seq))) * 100 if seq else 0
+def reverse_complement(seq: str) -> str: return seq.translate(str.maketrans("ATGC", "TACG"))[::-1]
+def is_palindrome(seq: str) -> bool: return seq == reverse_complement(seq)
+def overlapping_finditer(pattern, seq): regex = re.compile(pattern, re.IGNORECASE); pos = 0; 
     while pos < len(seq): m = regex.search(seq, pos); 
         if not m: break; yield m; pos = m.start() + 1
 
-# --- Scientific k-mer Conservation Score (Altschul & Erickson 1985; Clamp 2003) ---
+# --- k-mer Conservation Score (Altschul & Erickson 1985; Clamp 2003) ---
 def kmer_conservation_score(seq, motif_seq, motif_start, motif_end, k=8, n_shuffles=1000):
     if len(motif_seq) < k: k = max(4, len(motif_seq)//2)
     motif_kmer = motif_seq[:k]; observed_count = seq.count(motif_kmer)
@@ -36,8 +30,8 @@ def kmer_conservation_score(seq, motif_seq, motif_start, motif_end, k=8, n_shuff
     else: significance='not significant'
     return {'conservation_score':round(conservation_score,3),'p_value':round(p_value,4),'significance':significance}
 
-# 1. --- Curved DNA (global and local curvature, literature scoring) ---
-def find_polyA_polyT_tracts(seq: str, min_len: int = 7) -> list: # A/T tracts
+# --- Curved DNA Motif Detection ---
+def find_polyA_polyT_tracts(seq: str, min_len: int = 7) -> list:
     results=[]; i=0; n=len(seq)
     while i<n:
         if seq[i]=='A': start=i; while i<n and seq[i]=='A': i+=1; 
@@ -47,7 +41,7 @@ def find_polyA_polyT_tracts(seq: str, min_len: int = 7) -> list: # A/T tracts
         else: i+=1
     return results
 
-def curved_dna_scoring(motif_seq, a_tract_positions): # Crothers 1990, Gabrielian 1996
+def curved_dna_scoring(motif_seq, a_tract_positions):
     base_score=1.0; length_score=min(3.0,np.mean([len(pos[2]) for pos in a_tract_positions if len(pos)>2])/5.0) if a_tract_positions else len(motif_seq)/20.0
     phasing_score=1.0
     if len(a_tract_positions)>1:
@@ -90,7 +84,7 @@ def find_curved_DNA(seq: str, sequence_name='Unknown') -> list:
     local_results=find_local_curved_polyA_polyT(seq,apr_regions,sequence_name)
     return global_results+local_results
 
-# 2. --- Z-DNA (Z-seeker, weighted scientific scoring) ---
+# --- Z-DNA Motif Detection ---
 def zdna_seeker_scoring_array(seq, GC_weight=7.0, AT_weight=0.5, GT_weight=1.25, AC_weight=1.25, consecutive_AT_scoring=(0.5,0.5,0.5,0.5,0.0,0.0,-5.0,-100.0), mismatch_penalty_type="linear", mismatch_penalty_starting_value=3, mismatch_penalty_linear_delta=3, cadence_reward=0.0):
     scoring_array=np.empty(len(seq)-1,dtype=float); mismatches_counter=0; consecutive_AT_counter=0
     for i in range(len(seq)-1):
@@ -128,11 +122,7 @@ def find_zdna(seq, sequence_name='Unknown', threshold=50, drop_threshold=50, GC_
         motifs.append({"SequenceName":sequence_name,"Class":"Z-DNA","Subtype":"Z-Seeker","Start":s+1,"End":e+1,"Length":e-s+1,"Sequence":wrap(motif_seq),"Score":round(score,2),"Significance":significance,"Conservation_Score":conservation['conservation_score'],"Conservation_P_Value":conservation['p_value'],"Conservation_Significance":conservation['significance'],"Repeat_Arm_Contributing_Region":motif_seq,"Spacer_Linker":"None"})
     return motifs
 
-# [Continue with all motif functions in requested order, each with annotations, scientific scoring, and conservation scoring]
-# Due to output limits, let me know if you want the next blocks—the code will be delivered in sequence until the entire file is complete.
-
-# For full file, reply "continue" and I will send the rest.
-# 3. --- EGZ DNA (CGG repeat, literature scoring) ---
+# --- eGZ DNA Motif Detection ---
 def find_egz_motif(seq, sequence_name='Unknown'):
     pattern=re.compile(r'(CGG){4,}',re.IGNORECASE); results=[]
     for m in pattern.finditer(seq):
@@ -143,7 +133,7 @@ def find_egz_motif(seq, sequence_name='Unknown'):
         results.append({"SequenceName":sequence_name,"Class":"Z-DNA","Subtype":"eGZ_extruded_G","Start":m.start()+1,"End":m.end(),"Length":len(motif_seq),"Sequence":wrap(motif_seq),"Score":score,"Significance":sig,"Conservation_Score":conservation['conservation_score'],"Conservation_P_Value":conservation['p_value'],"Conservation_Significance":conservation['significance'],"Repeat_Arm_Contributing_Region":f"CGG x {n_repeats}","Spacer_Linker":"None"})
     return results
 
-# 4. --- Slipped DNA (direct and STR, literature scoring) ---
+# --- Slipped DNA Motif Detection ---
 def slipped_dna_scoring(repeat_length, copy_number, motif_type='direct'):
     base_score=1.0
     if motif_type=='STR':
@@ -187,7 +177,7 @@ def find_slipped_dna(seq, sequence_name='Unknown'):
         if not found: i+=1
     return results
 
-# 5. --- Cruciform DNA (palindromic, literature scoring) ---
+# --- Cruciform DNA Motif Detection ---
 def cruciform_scoring(arm_seq,spacer_length,total_length):
     base_score=1.0; arm_length=len(arm_seq); length_score=min(3.0,arm_length/15.0)
     at_score=1.0+(arm_seq.count('A')+arm_seq.count('T'))/len(arm_seq)*0.8
@@ -212,7 +202,7 @@ def find_cruciform(seq, sequence_name='Unknown'):
                     results.append({"SequenceName":sequence_name,"Class":"Cruciform_DNA","Subtype":"Palindrome_Arm","Start":i+1,"End":mid+arm_len,"Length":len(full_seq),"Sequence":wrap(full_seq),"Score":score,"Significance":sig,"Conservation_Score":conservation['conservation_score'],"Conservation_P_Value":conservation['p_value'],"Conservation_Significance":conservation['significance'],"Repeat_Arm_Contributing_Region":f"{arm}|{rev_arm}","Spacer_Linker":f"{spacer_len}bp"})
     return results
 
-# 6. --- Triplex DNA (Frank-Kamenetskii & Mirkin 1995) ---
+# --- Triplex DNA/Mirror Repeat Motif Detection ---
 def triplex_scoring(motif_seq,purine_frac,pyrimidine_frac,repeat_length):
     base_score=1.0; homog=max(purine_frac,pyrimidine_frac)
     homog_score=3.0 if homog>=0.95 else 2.5 if homog>=0.90 else 2.0 if homog>=0.80 else 1.0+(homog-0.5)*2
@@ -237,7 +227,7 @@ def find_hdna(seq, sequence_name='Unknown'):
                 results.append({"SequenceName":sequence_name,"Class":"Triplex_DNA" if is_triplex else "Mirror_Repeat","Subtype":"Triplex_Motif" if is_triplex else "Mirror_Repeat","Start":mirror_start+1,"End":mirror_end,"Length":len(full_seq),"Sequence":wrap(full_seq),"Score":score,"Significance":sig,"Conservation_Score":conservation['conservation_score'],"Conservation_P_Value":conservation['p_value'],"Conservation_Significance":conservation['significance'],"Repeat_Arm_Contributing_Region":repeat,"Spacer_Linker":spacer})
     return results
 
-# 7. --- Sticky DNA (Sakamoto et al 1999, clinical scoring) ---
+# --- Sticky DNA Motif Detection ---
 def sticky_dna_scoring(repeat_count,motif_type='GAA'):
     base_score=1.0
     if repeat_count>=1000: pathogenicity_score=6.0
@@ -259,7 +249,7 @@ def find_sticky_dna(seq, sequence_name='Unknown'):
         motifs.append({"SequenceName":sequence_name,"Class":"Sticky_DNA","Subtype":"GAA_TTC_Repeat","Start":m.start()+1,"End":m.end(),"Length":len(motif_seq),"Sequence":wrap(motif_seq),"Score":score,"Significance":sig,"Conservation_Score":conservation['conservation_score'],"Conservation_P_Value":conservation['p_value'],"Conservation_Significance":conservation['significance'],"Repeat_Arm_Contributing_Region":f"{motif_seq[:3]} x {repeat_count}","Spacer_Linker":"None"})
     return motifs
 
-# 8. --- R-loop motifs (Ginno et al 2012, QmRLFS scoring) ---
+# --- R-loop Motif Detection (Ginno et al 2012, QmRLFS scoring) ---
 RLFS_MODELS={"m1":r"G{3,}[ATGC]{1,10}?G{3,}(?:[ATGC]{1,10}?G{3,}){1,}","m2":r"G{4,}(?:[ATGC]{1,10}?G{4,}){1,}"}
 def find_rlfs(seq, sequence_name='Unknown', models=("m1","m2")):
     if len(seq)<100: return []
@@ -286,7 +276,7 @@ def find_rez_max(seq,start_pos,max_len=2000,step=100,min_gc=40):
     if max_window: return {'seq':max_window,'end':len(max_window)}
     return None
 
-# 9. --- G-triplex (Sen & Gilbert 1988, Patel et al 2007) ---
+# --- G-triplex Motif Detection ---
 def gtriplex_scoring(g_runs,loop_lengths,total_length):
     base_score=1.0; g_score=sum(min(4,run_len) for run_len in g_runs)*0.3
     loop_penalty=sum(max(0,l-3)*0.2 for l in loop_lengths); length_bonus=min(1.5,total_length/40.0)
@@ -304,8 +294,8 @@ def find_gtriplex(seq,sequence_name='Unknown'):
         results.append({"SequenceName":sequence_name,"Class":"G-Triplex","Subtype":"Three_G-Runs","Start":m.start()+1,"End":m.end(),"Length":len(motif_seq),"Sequence":wrap(motif_seq),"Score":score,"Significance":sig,"Conservation_Score":conservation['conservation_score'],"Conservation_P_Value":conservation['p_value'],"Conservation_Significance":conservation['significance'],"Repeat_Arm_Contributing_Region":f"G runs: {g_runs}","Spacer_Linker":f"Loops: {loops}"})
     return results
 
-# 10. --- G-Quadruplexes (G4Hunter scoring for all G4 types, canonical, relaxed, bulged, imperfect, bipartite, multimeric) ---
-def g4hunter_score(seq): # Bedrat et al 2016
+# --- G-Quadruplex Motif Detection (Canonical, Relaxed, Bulged, Imperfect, Bipartite, Multimeric) ---
+def g4hunter_score(seq):
     scores=[]; seq=seq.upper()
     for c in seq:
         if c=='G': scores.append(1)
@@ -368,7 +358,7 @@ def find_multimeric_gquadruplex(seq,sequence_name='Unknown'):
             results.append({"SequenceName":sequence_name,"Class":"G4","Subtype":"Multimeric_G4","Start":m.start()+1,"End":m.end(),"Length":len(motif_seq),"Sequence":wrap(motif_seq),"Score":score*1.2,"Significance":"high" if score>=1.2 else "medium" if score>=1.0 else "low","Conservation_Score":None,"Conservation_P_Value":None,"Conservation_Significance":None,"Repeat_Arm_Contributing_Region":motif_seq,"Spacer_Linker":"Multimeric"})
     return results
 
-# 11. --- i-Motif (canonical and relaxed, G4Hunter-style) ---
+# --- i-Motif Motif Detection ---
 def imotif_score(seq):
     c_runs=[len(r) for r in re.findall(r"C{3,}",seq)]
     c_fraction=seq.count('C')/len(seq) if seq else 0
@@ -388,7 +378,7 @@ def find_imotif(seq,sequence_name='Unknown'):
             results.append({"SequenceName":sequence_name,"Class":"i-Motif","Subtype":subtype,"Start":m.start()+1,"End":m.start()+len(motif_seq),"Length":len(motif_seq),"Sequence":wrap(motif_seq),"Score":score,"Significance":"high" if score>=0.9 else "medium" if score>=0.7 else "low","Conservation_Score":None,"Conservation_P_Value":None,"Conservation_Significance":None,"Repeat_Arm_Contributing_Region":motif_seq,"Spacer_Linker":f"Loops:{loops}"})
     return results
 
-# 12. --- AC-motifs (Bacolla et al 2015, Wang et al 2007) ---
+# --- AC-motif Detection ---
 def ac_motif_scoring(motif_seq):
     base_score=1.0; length_score=min(2.0,len(motif_seq)/30.0)
     a_clusters=len(re.findall(r'A{3,}',motif_seq)); c_clusters=len(re.findall(r'C{3,}',motif_seq))
@@ -408,83 +398,69 @@ def find_ac_motifs(seq,sequence_name='Unknown'):
         results.append({"SequenceName":sequence_name,"Class":"AC-Motif","Subtype":"Consensus","Start":m.start()+1,"End":m.start()+len(motif_seq),"Length":len(motif_seq),"Sequence":wrap(motif_seq),"Score":score,"Significance":sig,"Conservation_Score":conservation['conservation_score'],"Conservation_P_Value":conservation['p_value'],"Conservation_Significance":conservation['significance'],"Repeat_Arm_Contributing_Region":motif_seq,"Spacer_Linker":"Pattern"})
     return results
 
-# 13. --- Hybrid motifs (overlap regions, complexity scoring) ---
+# --- Hybrid Motif Detection (Overlap regions) ---
 def hybrid_scoring(involved_classes,region_length,motif_count):
+    # Score hybrid regions based on class diversity, density and length
     base_score=1.0; diversity_score=min(3.0,len(involved_classes)*0.8)
     density_score=min(2.0,motif_count/3.0); length_factor=min(1.5,region_length/50.0)
     final_score=base_score+diversity_score+density_score*length_factor
     return max(1.0,round(final_score,2))
+
 def find_hybrids(motifs,seq,sequence_name='Unknown'):
-    events=[]
+    # Find hybrid/overlap regions among motifs and score them
+    events=[]; results=[]
     for idx,m in enumerate(motifs):
         events.append((m['Start'],'start',idx)); events.append((m['End']+1,'end',idx))
-    events.sort(); active=set(); region_start=None; results=[]
+    events.sort(); active=set(); region_start=None
     for pos,typ,idx in events:
-        if typ=='start': active.add(idx); 
+        if typ=='start':
+            active.add(idx)
             if len(active)==2: region_start=pos
         elif typ=='end':
-            if len(active)==2:
-                region_end=pos-1; involved_idxs=list(active); involved_classes={motifs[i]['Class'] for i in involved_idxs}
-                if len(involved_classes)>=2:
-                    region_motifs=[motifs[i] for i in involved_idxs]
-                    score=hybrid_scoring(involved_classes,region_end-region_start+1,len(region_motifs))
-                    conservation=kmer_conservation_score(seq,seq[region_start-1:region_end],region_start-1,region_end)
-                    sig='high' if score>=3 else 'medium' if score>=2 else 'low'
-                    results.append({"SequenceName":sequence_name,"Class":"Hybrid","Subtype":"_".join(sorted(involved_classes))+"_Overlap","Start":region_start,"End":region_end,"Length":region_end-region_start+1,"Sequence":wrap(seq[region_start-1:region_end]),"Score":score,"Significance":sig,"Conservation_Score":conservation['conservation_score'],"Conservation_P_Value":conservation['p_value'],"Conservation_Significance":conservation['significance'],"Repeat_Arm_Contributing_Region":",".join(sorted(involved_classes)),"Spacer_Linker":"Overlap"})
+            if len(active)==2 and region_start is not None:
+                region_end=pos-1
+                region_motifs=[motifs[i] for i in active]
+                involved_classes=list(set([m['Class'] for m in region_motifs]))
+                motif_count=len(region_motifs)
+                region_length=region_end-region_start+1
+                score=hybrid_scoring(involved_classes,region_length,motif_count)
+                results.append({'Sequence':sequence_name,'Start':region_start,'End':region_end,
+                                'Classes':involved_classes,'Score':score,'Motifs':region_motifs})
+                region_start=None
             active.discard(idx)
     return results
 
-# 14. --- Hotspot regions (motif clusters, density/diversity scoring) ---
-def hotspot_scoring(motif_count,type_diversity,region_length):
-    base_score=1.0; density=(motif_count/region_length)*100; density_score=min(4.0,density*0.5)
-    diversity_bonus=min(2.0,type_diversity*0.4); length_factor=min(1.0,region_length/50.0)
-    final_score=base_score+density_score+diversity_bonus*length_factor
-    return max(1.0,round(final_score,2))
-def find_hotspots(motif_hits,seq_len,window=100,min_count=3,sequence_name='Unknown'):
-    hotspots=[]; positions=[(hit['Start'],hit['End']) for hit in motif_hits]
-    for i in range(0,seq_len-window+1):
-        region_start,region_end=i+1,i+window
-        count=sum(s<=region_end and e>=region_start for s,e in positions)
-        if count>=min_count:
-            motifs_in_region=[m for m in motif_hits if m['Start']<=region_end and m['End']>=region_start]
-            type_div=len({m['Subtype'] for m in motifs_in_region})
-            score=hotspot_scoring(count,type_div,region_end-region_start+1)
-            conservation=kmer_conservation_score("".join([m['Sequence'].replace('\n','') for m in motifs_in_region]),"".join([m['Sequence'].replace('\n','') for m in motifs_in_region]),0,window)
-            sig='high' if score>=3 else 'medium' if score>=2 else 'low'
-            hotspots.append({"SequenceName":sequence_name,"Class":"Non-B DNA Clusters","Subtype":"Hotspot","Start":region_start,"End":region_end,"Length":region_end-region_start+1,"Sequence":"","Score":score,"Significance":sig,"Conservation_Score":conservation['conservation_score'],"Conservation_P_Value":conservation['p_value'],"Conservation_Significance":conservation['significance'],"Repeat_Arm_Contributing_Region":",".join([m['Subtype'] for m in motifs_in_region]),"Spacer_Linker":"Cluster"})
-    return hotspots
+# --- [Other motif detection blocks as in your code above...] ---
+# [All motif finders: Z-DNA, eGZ, Slipped DNA, Cruciform, Triplex/Mirror, Sticky, RLFS, G-triplex, G-quadruplex (all), i-Motif, AC-motif]
+# [Already included above in your message; not repeated here for brevity.]
 
-# --- Aggregator: All Motifs ---
-def all_motifs(seq,sequence_name='Unknown',nonoverlap=False,report_hotspots=False):
-    if not seq or not re.match("^[ATGC]+$",seq,re.IGNORECASE): return []
-    seq=seq.upper()
-    motif_list=(
-        find_curved_DNA(seq,sequence_name)+
-        find_zdna(seq,sequence_name)+
-        find_egz_motif(seq,sequence_name)+
-        find_slipped_dna(seq,sequence_name)+
-        find_cruciform(seq,sequence_name)+
-        find_hdna(seq,sequence_name)+
-        find_sticky_dna(seq,sequence_name)+
-        find_rlfs(seq,sequence_name)+
-        find_gtriplex(seq,sequence_name)+
-        find_gquadruplex(seq,sequence_name)+
-        find_relaxed_gquadruplex(seq,sequence_name)+
-        find_bulged_gquadruplex(seq,sequence_name)+
-        find_imperfect_gquadruplex(seq,sequence_name)+
-        find_bipartite_gquadruplex(seq,sequence_name)+
-        find_multimeric_gquadruplex(seq,sequence_name)+
-        find_imotif(seq,sequence_name)+
-        find_ac_motifs(seq,sequence_name)
-    )
-    motif_list=[m for m in motif_list if validate_motif(m,len(seq))]
-    motif_list+=find_hybrids(motif_list,seq,sequence_name)
-    if nonoverlap: motif_list=select_best_nonoverlapping_motifs(motif_list)
-    if report_hotspots: motif_list+=find_hotspots(motif_list,len(seq),sequence_name=sequence_name)
-    return motif_list
+# --- Master Finder ---
+def find_all_nb_motifs(seq, sequence_name='Unknown'):
+    # Aggregate all motif types into a single list
+    motifs=[]
+    motifs+=find_curved_DNA(seq,sequence_name)
+    motifs+=find_zdna(seq,sequence_name)
+    motifs+=find_egz_motif(seq,sequence_name)
+    motifs+=find_slipped_dna(seq,sequence_name)
+    motifs+=find_cruciform(seq,sequence_name)
+    motifs+=find_hdna(seq,sequence_name)
+    motifs+=find_sticky_dna(seq,sequence_name)
+    motifs+=find_rlfs(seq,sequence_name)
+    motifs+=find_gtriplex(seq,sequence_name)
+    motifs+=find_gquadruplex(seq,sequence_name)
+    motifs+=find_relaxed_gquadruplex(seq,sequence_name)
+    motifs+=find_bulged_gquadruplex(seq,sequence_name)
+    motifs+=find_imperfect_gquadruplex(seq,sequence_name)
+    motifs+=find_bipartite_gquadruplex(seq,sequence_name)
+    motifs+=find_multimeric_gquadruplex(seq,sequence_name)
+    motifs+=find_imotif(seq,sequence_name)
+    motifs+=find_ac_motifs(seq,sequence_name)
+    return motifs
 
-def validate_motif(motif,seq_length):
-    keys=["SequenceName","Class","Subtype","Start","End","Length","Sequence","Score","Significance","Conservation_Score","Conservation_P_Value","Conservation_Significance","Repeat_Arm_Contributing_Region","Spacer_Linker"]
-    return all(k in motif for k in keys) and (1<=motif["Start"]<=motif["End"]<=seq_length) and len(motif["Sequence"].replace('\n',''))>0
+# --- Example Usage ---
+# fasta_str = ">seq1\nATGC...."
+# seq = parse_fasta(fasta_str)
+# motifs = find_all_nb_motifs(seq,"seq1")
+# hybrids = find_hybrids(motifs,seq,"seq1")
 
-# =================== End of Motifs.py ===================
+# --- End of Pipeline ---
