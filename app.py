@@ -1,21 +1,13 @@
 # --- Imports: Libraries and Motif API ---
-import streamlit as st
-import pandas as pd
-import matplotlib.pyplot as plt
-import io
-from collections import Counter
-from Bio import Entrez, SeqIO
-
+import streamlit as st; import pandas as pd; import matplotlib.pyplot as plt; import io
+from collections import Counter; from Bio import Entrez, SeqIO
 from motifs import (
-    all_motifs, 
-    find_hotspots,
-    parse_fasta, gc_content, reverse_complement,
+    all_motifs, find_hotspots, parse_fasta, gc_content, reverse_complement,
     select_best_nonoverlapping_motifs, wrap
 )
 
-# --- Motif Patch: Ensure Subtype Present ---
+# --- Patch: Ensure every motif dict has a 'Subtype' ---
 def ensure_subtype(motif):
-    # Guarantee every motif has a string 'Subtype'
     return motif if isinstance(motif, dict) and motif.get('Subtype') else {**motif, 'Subtype': 'Other'} if isinstance(motif, dict) else {'Subtype': 'Other', 'Motif': motif}
 
 # --- CSS: Professional UI Styling ---
