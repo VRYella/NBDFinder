@@ -1,4 +1,4 @@
-# --- Imports: Libraries and Motif Functions ---
+# --- Imports: Libraries and Motif API ---
 import streamlit as st; import pandas as pd; import matplotlib.pyplot as plt; import io
 from collections import Counter; from Bio import Entrez, SeqIO
 from motifs import (
