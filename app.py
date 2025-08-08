@@ -1,8 +1,15 @@
 # --- Imports: Libraries and Motif API ---
-import streamlit as st; import pandas as pd; import matplotlib.pyplot as plt; import io
-from collections import Counter; from Bio import Entrez, SeqIO
+import streamlit as st
+import pandas as pd
+import matplotlib.pyplot as plt
+import io
+from collections import Counter
+from Bio import Entrez, SeqIO
+
 from motifs import (
-    all_motifs, find_hotspots, parse_fasta, gc_content, reverse_complement,
+    all_motifs, 
+    find_hotspots,
+    parse_fasta, gc_content, reverse_complement,
     select_best_nonoverlapping_motifs, wrap
 )
 
