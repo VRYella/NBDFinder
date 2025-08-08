@@ -1,144 +1,57 @@
-import streamlit as st
-import pandas as pd
-import matplotlib.pyplot as plt
-import io
-from collections import Counter
-from Bio import Entrez, SeqIO
+# --- Import libraries, motif detection functions ---
+import streamlit as st; import pandas as pd; import matplotlib.pyplot as plt; import io
+from collections import Counter; from Bio import Entrez, SeqIO
 
+# --- Import all motif detection routines ---
 from motifs import (
-    all_motifs, 
-    find_hotspots,
-    parse_fasta, gc_content, reverse_complement,
+    all_motifs, find_hotspots, parse_fasta, gc_content, reverse_complement,
     select_best_nonoverlapping_motifs, wrap
 )
 
-# ---------- PATCH: Ensure every motif has Subtype ----------
+# --- Ensure every motif dict has a 'Subtype' (patch for robustness) ---
 def ensure_subtype(motif):
-    """Guarantee every motif has a string 'Subtype'"""
-    if isinstance(motif, dict):
-        if 'Subtype' not in motif or motif['Subtype'] is None:
-            motif['Subtype'] = 'Other'
-        return motif
-    else:
-        # Handle non-dict motifs gracefully (could log/warn here)
-        return {'Subtype': 'Other', 'Motif': motif}
+    # Guarantee every motif has a string 'Subtype'
+    return motif if isinstance(motif, dict) and motif.get('Subtype') else {**motif, 'Subtype': 'Other'} if isinstance(motif, dict) else {'Subtype': 'Other', 'Motif': motif}
 
-
-# ---------- PROFESSIONAL CSS FOR BALANCED DESIGN ----------
+# --- Professional CSS for clean UI ---
 st.markdown("""
     <style>
-    body, [data-testid="stAppViewContainer"], .main {
-        background: #f7fafd !important;
-        font-family: 'Montserrat', Arial, sans-serif !important;
-    }
-    /* Tabs: medium-large, bold, clean */
-    .stTabs [data-baseweb="tab-list"] {
-        width: 100vw !important;
-        justify-content: stretch !important;
-        border-bottom: 2px solid #1565c0;
-        background: linear-gradient(90deg,#eaf3fa 0%,#f7fafd 100%) !important;
-        box-shadow: 0 2px 8px #dae5f2;
-        margin-bottom: 0;
-    }
-    .stTabs [data-baseweb="tab"] {
-        font-size: 1.45rem !important;
-        font-weight: 700 !important;
-        flex: 1 1 0%;
-        min-width: 0 !important;
-        padding: 15px 0 15px 0 !important;
-        text-align: center;
-        color: #1565c0 !important;
-        background: #eaf3fa !important;
-        border-right: 1px solid #eee !important;
-        letter-spacing: 0.03em;
-    }
-    .stTabs [aria-selected="true"] {
-        color: #002147 !important;
-        border-bottom: 5px solid #1565c0 !important;
-        background: #f7fafd !important;
-        box-shadow: 0 4px 8px #e0e5ea;
-    }
-    .stTabs [data-baseweb="tab"]:last-child {
-        border-right: none !important;
-    }
-    /* Headings: harmonized medium size */
-    h1, h2, h3, h4 {
-        font-family: 'Montserrat', Arial, sans-serif !important;
-        color: #1565c0 !important;
-        font-weight: 800 !important;
-        margin-top: 0.8em;
-        margin-bottom: 0.8em;
-    }
-    h1 { font-size:2.05rem !important; }
-    h2 { font-size:1.55rem !important; }
-    h3 { font-size:1.19rem !important; }
-    h4 { font-size:1.09rem !important; }
-    /* Markdown/text: medium size, easy reading */
-    .stMarkdown, .markdown-text-container, .stText, p, span, label, input, .stTextInput>div>div>input, .stSelectbox>div>div>div, .stMultiSelect>div>div>div, .stRadio>div>div>label>div {
-        font-size: 1.08rem !important;
-        font-family: 'Montserrat', Arial, sans-serif !important;
-    }
-    /* Buttons: modern, medium */
-    .stButton>button {
-        font-size: 1.08rem !important;
-        font-family: 'Montserrat', Arial, sans-serif !important;
-        padding: 0.45em 1.2em !important;
-        background: linear-gradient(90deg,#1565c0 0%,#2e8bda 100%) !important;
-        color: #fff !important;
-        border-radius: 7px !important;
-        border: none !important;
-        font-weight: 600 !important;
-        box-shadow: 0 2px 8px #b5cbe6;
-        transition: background 0.2s;
-    }
-    .stButton>button:hover {
-        background: linear-gradient(90deg,#2e8bda 0%,#1565c0 100%) !important;
-    }
-    /* DataFrame font */
-    .stDataFrame, .stTable {
-        font-size: 1.05rem !important;
-        font-family: 'Montserrat', Arial, sans-serif !important;
-    }
+    body, [data-testid="stAppViewContainer"], .main {background: #f7fafd !important; font-family: 'Montserrat', Arial, sans-serif !important;}
+    .stTabs [data-baseweb="tab-list"] {width: 100vw !important; justify-content: stretch !important; border-bottom: 2px solid #1565c0; background: linear-gradient(90deg,#eaf3fa 0%,#f7fafd 100%) !important; box-shadow: 0 2px 8px #dae5f2; margin-bottom: 0;}
+    .stTabs [data-baseweb="tab"] {font-size: 1.45rem !important; font-weight: 700 !important; flex: 1 1 0%; min-width: 0 !important; padding: 15px 0 15px 0 !important; text-align: center; color: #1565c0 !important; background: #eaf3fa !important; border-right: 1px solid #eee !important; letter-spacing: 0.03em;}
+    .stTabs [aria-selected="true"] {color: #002147 !important; border-bottom: 5px solid #1565c0 !important; background: #f7fafd !important; box-shadow: 0 4px 8px #e0e5ea;}
+    .stTabs [data-baseweb="tab"]:last-child {border-right: none !important;}
+    h1, h2, h3, h4 {font-family: 'Montserrat', Arial, sans-serif !important; color: #1565c0 !important; font-weight: 800 !important; margin-top: 0.8em; margin-bottom: 0.8em;}
+    h1 { font-size:2.05rem !important; } h2 { font-size:1.55rem !important; } h3 { font-size:1.19rem !important; } h4 { font-size:1.09rem !important; }
+    .stMarkdown, .markdown-text-container, .stText, p, span, label, input, .stTextInput>div>div>input, .stSelectbox>div>div>div, .stMultiSelect>div>div>div, .stRadio>div>div>label>div {font-size: 1.08rem !important; font-family: 'Montserrat', Arial, sans-serif !important;}
+    .stButton>button {font-size: 1.08rem !important; font-family: 'Montserrat', Arial, sans-serif !important; padding: 0.45em 1.2em !important; background: linear-gradient(90deg,#1565c0 0%,#2e8bda 100%) !important; color: #fff !important; border-radius: 7px !important; border: none !important; font-weight: 600 !important; box-shadow: 0 2px 8px #b5cbe6; transition: background 0.2s;}
+    .stButton>button:hover {background: linear-gradient(90deg,#2e8bda 0%,#1565c0 100%) !important;}
+    .stDataFrame, .stTable {font-size: 1.05rem !important; font-family: 'Montserrat', Arial, sans-serif !important;}
     </style>
 """, unsafe_allow_html=True)
 
-# ---------- PAGE CONFIG ----------
+# --- App-wide config: title, layout, menu ---
 st.set_page_config(
-    page_title="Non-B DNA Motif Finder",
-    layout="wide",
-    page_icon="🧬",
+    page_title="Non-B DNA Motif Finder", layout="wide", page_icon="🧬",
     menu_items={'About': "Non-B DNA Motif Finder | Developed by Dr. Venkata Rajesh Yella"}
 )
 
-# ---------- CONSTANTS ----------
+# --- Constants for motif types, colors, pages ---
 MOTIF_ORDER = [
     "Sticky DNA","Curved DNA","Z-DNA","eGZ (Extruded-G)","Slipped DNA","R-Loop",
     "Cruciform","Triplex DNA","G-Triplex","G4","Relaxed G4","Bulged G4","Bipartite G4",
     "Multimeric G4","i-Motif","AC-Motif","Hybrid","Non-B DNA Clusters"
 ]
-MOTIF_COLORS = {
-    "Curved DNA": "#FF9AA2","Z-DNA": "#FFB7B2","eGZ (Extruded-G)": "#6A4C93",
-    "Slipped DNA": "#FFDAC1","R-Loop": "#FFD3B6","Cruciform": "#E2F0CB",
-    "Triplex DNA": "#B5EAD7","Sticky DNA": "#DCB8CB","G-Triplex": "#C7CEEA",
-    "G4": "#A2D7D8","Relaxed G4": "#A2D7B8","Bulged G4": "#A2A7D8",
-    "Bipartite G4": "#A2D788","Multimeric G4": "#A2A7B8","i-Motif": "#B0C4DE",
-    "Hybrid": "#C1A192","Non-B DNA Clusters": "#A2C8CC","AC-Motif": "#F5B041"
-}
-PAGES = {
-    "Home": "Overview",
-    "Upload & Analyze": "Sequence Upload and Motif Analysis",
-    "Results": "Analysis Results and Visualization",
-    "Download": "Export Data",
-    "Documentation": "Scientific Documentation & References"
-}
-Entrez.email = "raazbiochem@gmail.com"
-Entrez.api_key = None
+MOTIF_COLORS = {"Curved DNA":"#FF9AA2","Z-DNA":"#FFB7B2","eGZ (Extruded-G)":"#6A4C93","Slipped DNA":"#FFDAC1","R-Loop":"#FFD3B6","Cruciform":"#E2F0CB","Triplex DNA":"#B5EAD7","Sticky DNA":"#DCB8CB","G-Triplex":"#C7CEEA","G4":"#A2D7D8","Relaxed G4":"#A2D7B8","Bulged G4":"#A2A7D8","Bipartite G4":"#A2D788","Multimeric G4":"#A2A7B8","i-Motif":"#B0C4DE","Hybrid":"#C1A192","Non-B DNA Clusters":"#A2C8CC","AC-Motif":"#F5B041"}
+PAGES = {"Home": "Overview","Upload & Analyze": "Sequence Upload and Motif Analysis","Results": "Analysis Results and Visualization","Download": "Export Data","Documentation": "Scientific Documentation & References"}
+Entrez.email = "raazbiochem@gmail.com"; Entrez.api_key = None
 
+# --- Example sequences for demo/testing ---
 EXAMPLE_FASTA = """>Example Sequence
 ATCGATCGATCGAAAATTTTATTTAAATTTAAATTTGGGTTAGGGTTAGGGTTAGGGCCCCCTCCCCCTCCCCCTCCCC
 ATCGATCGCGCGCGCGATCGCACACACACAGCTGCTGCTGCTTGGGAAAGGGGAAGGGTTAGGGAAAGGGGTTT
 GGGTTTAGGGGGGAGGGGCTGCTGCTGCATGCGGGAAGGGAGGGTAGAGGGTCCGGTAGGAACCCCTAACCCCTAA
-GAAAGAAGAAGAAGAAGAAGAAAGGAAGGAAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGG
+GAAAGAAGAAGAAGAAGAAGAAAGGAAGGAAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGG
 CGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGC
 GAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAA
 CTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCT
@@ -154,45 +67,28 @@ CGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGC
 GAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAA
 """
 
-for k, v in {
-    'seqs': [],
-    'names': [],
-    'results': [],
-    'summary_df': pd.DataFrame(),
-    'hotspots': [],
-    'analysis_status': "Ready",
-    'selected_motifs': MOTIF_ORDER,
-}.items():
-    if k not in st.session_state:
-        st.session_state[k] = v
+# --- Session state initialization ---
+for k, v in {'seqs': [],'names': [],'results': [],'summary_df': pd.DataFrame(),'hotspots': [],'analysis_status': "Ready",'selected_motifs': MOTIF_ORDER,}.items():
+    if k not in st.session_state: st.session_state[k] = v
 
+# --- Utility: Get basic sequence statistics (GC/AT content, length, base counts, motif coverage) ---
 def get_basic_stats(seq, motifs=None):
-    seq = seq.upper()
-    length = len(seq)
-    gc = gc_content(seq)
+    seq = seq.upper(); length = len(seq); gc = gc_content(seq)
     at = (seq.count('A') + seq.count('T')) / length * 100 if length else 0
-    stats = {
-        "Length (bp)": length, "GC %": round(gc, 2), "AT %": round(at, 2),
-        "A Count": seq.count('A'), "T Count": seq.count('T'), "G Count": seq.count('G'), "C Count": seq.count('C'),
-    }
-    if motifs is not None:
-        covered = set()
-        for m in motifs:
-            covered.update(range(m['Start'], m['End']))
-        coverage_pct = (len(covered) / length * 100) if length else 0
-        stats["Motif Coverage (%)"] = round(coverage_pct, 2)
+    stats = {"Length (bp)": length,"GC %": round(gc,2),"AT %": round(at,2),"A Count": seq.count('A'),"T Count": seq.count('T'),"G Count": seq.count('G'),"C Count": seq.count('C')}
+    if motifs:
+        covered = set(); [covered.update(range(m['Start'], m['End'])) for m in motifs]
+        stats["Motif Coverage (%)"] = round((len(covered) / length * 100) if length else 0,2)
     return stats
 
-# ---- TABS ----
-tabs = st.tabs(list(PAGES.keys()))
-tab_pages = dict(zip(PAGES.keys(), tabs))
+# --- Main UI tabs ---
+tabs = st.tabs(list(PAGES.keys())); tab_pages = dict(zip(PAGES.keys(), tabs))
 
-# ---------- HOME ----------
+# === HOME TAB: App overview and motif classes ===
 with tab_pages["Home"]:
     st.markdown("<h1>Non-B DNA Motif Finder</h1>", unsafe_allow_html=True)
     left, right = st.columns([1,1])
-    with left:
-        st.image("nbdcircle.JPG", use_container_width=True)
+    with left: st.image("nbdcircle.JPG", use_container_width=True)
     with right:
         st.markdown("""
         <div style='font-family:Montserrat, Arial; font-size:1.14rem; color:#222; line-height:1.7; padding:18px; background:#f8f9fa; border-radius:14px; box-shadow:0 2px 8px #eee;'>
@@ -210,107 +106,73 @@ with tab_pages["Home"]:
         </div>
         """, unsafe_allow_html=True)
 
-# ---------- UPLOAD & ANALYZE ----------
+# === UPLOAD & ANALYZE TAB: Sequence input, motif selection, preview ===
 with tab_pages["Upload & Analyze"]:
     st.markdown("<h2>Sequence Upload and Motif Analysis</h2>", unsafe_allow_html=True)
     st.markdown('<span style="font-family:Montserrat,Arial; font-size:1.12rem;">Supports multi-FASTA and single FASTA. Paste, upload, select example, or fetch from NCBI.</span>', unsafe_allow_html=True)
     st.caption("Supported formats: .fa, .fasta, .txt | Limit: 200MB/file.")
 
-    selected_motifs = st.multiselect(
-        "Select Motif Classes for Analysis",
-        MOTIF_ORDER,
-        default=MOTIF_ORDER,
-        help="Choose motif classes to analyze. Selecting 'Hybrid' or 'Non-B DNA Clusters' will run all motif modules."
-    )
+    selected_motifs = st.multiselect("Select Motif Classes for Analysis",MOTIF_ORDER,default=MOTIF_ORDER,help="Choose motif classes to analyze. Selecting 'Hybrid' or 'Non-B DNA Clusters' will run all motif modules.")
     st.session_state.selected_motifs = selected_motifs if selected_motifs else MOTIF_ORDER
 
-    input_method = st.radio("Input Method:",
-        ["Upload FASTA / Multi-FASTA File", "Paste Sequence(s)", "Example Sequence", "NCBI Fetch"],
-        horizontal=True
-    )
-    
+    input_method = st.radio("Input Method:",["Upload FASTA / Multi-FASTA File","Paste Sequence(s)","Example Sequence","NCBI Fetch"],horizontal=True)
     seqs, names = [], []
     if input_method == "Upload FASTA / Multi-FASTA File":
-        fasta_file = st.file_uploader("Drag and drop FASTA/multi-FASTA file here", type=["fa", "fasta", "txt"])
+        fasta_file = st.file_uploader("Drag and drop FASTA/multi-FASTA file here", type=["fa","fasta","txt"])
         if fasta_file:
-            content = fasta_file.read().decode("utf-8")
-            seqs, names = [], []
+            content = fasta_file.read().decode("utf-8"); seqs, names = [], []
             cur_seq, cur_name = "", ""
             for line in content.splitlines():
                 if line.startswith(">"):
-                    if cur_seq:
-                        seqs.append(parse_fasta(cur_seq))
-                        names.append(cur_name if cur_name else f"Seq{len(seqs)}")
-                    cur_name = line.strip().lstrip(">")
-                    cur_seq = ""
-                else:
-                    cur_seq += line.strip()
-            if cur_seq:
-                seqs.append(parse_fasta(cur_seq))
-                names.append(cur_name if cur_name else f"Seq{len(seqs)}")
+                    if cur_seq: seqs.append(parse_fasta(cur_seq)); names.append(cur_name if cur_name else f"Seq{len(seqs)}")
+                    cur_name = line.strip().lstrip(">"); cur_seq = ""
+                else: cur_seq += line.strip()
+            if cur_seq: seqs.append(parse_fasta(cur_seq)); names.append(cur_name if cur_name else f"Seq{len(seqs)}")
             if seqs:
                 st.success(f"Loaded {len(seqs)} sequences.")
                 for i, seq in enumerate(seqs[:3]):
                     stats = get_basic_stats(seq)
                     st.markdown(f"<b>{names[i]}</b>: <span style='color:#576574'>{len(seq):,} bp</span>", unsafe_allow_html=True)
                     st.markdown(f"GC %: {stats['GC %']} | AT %: {stats['AT %']} | A: {stats['A Count']} | T: {stats['T Count']} | G: {stats['G Count']} | C: {stats['C Count']}")
-                if len(seqs) > 3:
-                    st.caption(f"...and {len(seqs)-3} more.")
-            else:
-                st.warning("No sequences found.")
+                if len(seqs) > 3: st.caption(f"...and {len(seqs)-3} more.")
+            else: st.warning("No sequences found.")
+
     elif input_method == "Paste Sequence(s)":
         seq_input = st.text_area("Paste single or multi-FASTA here:", height=150)
         if seq_input:
-            seqs, names = [], []
-            cur_seq, cur_name = "", ""
+            seqs, names = [], []; cur_seq, cur_name = "", ""
             for line in seq_input.splitlines():
                 if line.startswith(">"):
-                    if cur_seq:
-                        seqs.append(parse_fasta(cur_seq))
-                        names.append(cur_name if cur_name else f"Seq{len(seqs)}")
-                    cur_name = line.strip().lstrip(">")
-                    cur_seq = ""
-                else:
-                    cur_seq += line.strip()
-            if cur_seq:
-                seqs.append(parse_fasta(cur_seq))
-                names.append(cur_name if cur_name else f"Seq{len(seqs)}")
+                    if cur_seq: seqs.append(parse_fasta(cur_seq)); names.append(cur_name if cur_name else f"Seq{len(seqs)}")
+                    cur_name = line.strip().lstrip(">"); cur_seq = ""
+                else: cur_seq += line.strip()
+            if cur_seq: seqs.append(parse_fasta(cur_seq)); names.append(cur_name if cur_name else f"Seq{len(seqs)}")
             if seqs:
                 st.success(f"Pasted {len(seqs)} sequences.")
                 for i, seq in enumerate(seqs[:3]):
                     st.markdown(f"<b>{names[i]}</b>: <span style='color:#576574'>{len(seq):,} bp</span>", unsafe_allow_html=True)
                     stats = get_basic_stats(seq)
                     st.markdown(f"GC %: {stats['GC %']} | AT %: {stats['AT %']} | A: {stats['A Count']} | T: {stats['T Count']} | G: {stats['G Count']} | C: {stats['C Count']}")
-                if len(seqs) > 3:
-                    st.caption(f"...and {len(seqs)-3} more.")
-            else:
-                st.warning("No sequences found.")
+                if len(seqs) > 3: st.caption(f"...and {len(seqs)-3} more.")
+            else: st.warning("No sequences found.")
+
     elif input_method == "Example Sequence":
         ex_type = st.radio("Example Type:", ["Single Example", "Multi-FASTA Example"], horizontal=True)
         if ex_type == "Single Example":
             if st.button("Load Single Example"):
-                seqs = [parse_fasta(EXAMPLE_FASTA)]
-                names = ["Example Sequence"]
-                st.success("Single example sequence loaded.")
-                stats = get_basic_stats(seqs[0])
+                seqs = [parse_fasta(EXAMPLE_FASTA)]; names = ["Example Sequence"]
+                st.success("Single example sequence loaded."); stats = get_basic_stats(seqs[0])
                 st.code(EXAMPLE_FASTA, language="fasta")
                 st.markdown(f"GC %: {stats['GC %']} | AT %: {stats['AT %']} | A: {stats['A Count']} | T: {stats['T Count']} | G: {stats['G Count']} | C: {stats['C Count']}")
         else:
             if st.button("Load Multi-FASTA Example"):
-                seqs, names = [], []
-                cur_seq, cur_name = "", ""
+                seqs, names = [], []; cur_seq, cur_name = "", ""
                 for line in EXAMPLE_MULTI_FASTA.splitlines():
                     if line.startswith(">"):
-                        if cur_seq:
-                            seqs.append(parse_fasta(cur_seq))
-                            names.append(cur_name if cur_name else f"Seq{len(seqs)}")
-                        cur_name = line.strip().lstrip(">")
-                        cur_seq = ""
-                    else:
-                        cur_seq += line.strip()
-                if cur_seq:
-                    seqs.append(parse_fasta(cur_seq))
-                    names.append(cur_name if cur_name else f"Seq{len(seqs)}")
+                        if cur_seq: seqs.append(parse_fasta(cur_seq)); names.append(cur_name if cur_name else f"Seq{len(seqs)}")
+                        cur_name = line.strip().lstrip(">"); cur_seq = ""
+                    else: cur_seq += line.strip()
+                if cur_seq: seqs.append(parse_fasta(cur_seq)); names.append(cur_name if cur_name else f"Seq{len(seqs)}")
                 st.success(f"Multi-FASTA example loaded with {len(seqs)} sequences.")
                 for i, seq in enumerate(seqs[:3]):
                     stats = get_basic_stats(seq)
@@ -328,8 +190,7 @@ with tab_pages["Upload & Analyze"]:
             "AC-motif": "A-rich/C-rich consensus region"
         }
         with st.expander("Motif Example Queries"):
-            for motif, example in motif_examples.items():
-                st.write(f"**{motif}**: `{example}`")
+            for motif, example in motif_examples.items(): st.write(f"**{motif}**: `{example}`")
         query = st.text_input("Enter query (accession, gene, etc.):")
         rettype = st.selectbox("Return Format", ["fasta", "gb"])
         retmax = st.number_input("Max Records", min_value=1, max_value=20, value=3)
@@ -337,23 +198,17 @@ with tab_pages["Upload & Analyze"]:
             if query:
                 with st.spinner("Contacting NCBI..."):
                     handle = Entrez.efetch(db=db, id=query, rettype=rettype, retmode="text")
-                    records = list(SeqIO.parse(handle, rettype))
-                    handle.close()
-                    seqs = [str(rec.seq).upper().replace("U", "T") for rec in records]
-                    names = [rec.id for rec in records]
+                    records = list(SeqIO.parse(handle, rettype)); handle.close()
+                    seqs = [str(rec.seq).upper().replace("U", "T") for rec in records]; names = [rec.id for rec in records]
                 if seqs:
                     st.success(f"Fetched {len(seqs)} sequences.")
                     for i, seq in enumerate(seqs[:3]):
                         stats = get_basic_stats(seq)
                         st.markdown(f"<b>{names[i]}</b>: <span style='color:#576574'>{len(seq):,} bp</span>", unsafe_allow_html=True)
                         st.markdown(f"GC %: {stats['GC %']} | AT %: {stats['AT %']} | A: {stats['A Count']} | T: {stats['T Count']} | G: {stats['G Count']} | C: {stats['C Count']}")
-            else:
-                st.warning("Enter a query before fetching.")
+            else: st.warning("Enter a query before fetching.")
 
-    if seqs:
-        st.session_state.seqs = seqs
-        st.session_state.names = names
-        st.session_state.results = []
+    if seqs: st.session_state.seqs = seqs; st.session_state.names = names; st.session_state.results = []
 
     if st.session_state.seqs:
         st.subheader("Sequence Preview")
@@ -361,19 +216,14 @@ with tab_pages["Upload & Analyze"]:
             stats = get_basic_stats(seq)
             st.markdown(f"<b>{st.session_state.names[i]}</b> ({len(seq):,} bp) | GC %: {stats['GC %']} | AT %: {stats['AT %']} | A: {stats['A Count']} | T: {stats['T Count']} | G: {stats['G Count']} | C: {stats['C Count']}", unsafe_allow_html=True)
             st.code(wrap(seq[:400]), language="fasta")
-        if len(st.session_state.seqs) > 2:
-            st.caption(f"...and {len(st.session_state.seqs)-2} more.")
+        if len(st.session_state.seqs) > 2: st.caption(f"...and {len(st.session_state.seqs)-2} more.")
 
         run_all = any(m in st.session_state.selected_motifs for m in ["Hybrid", "Non-B DNA Clusters"])
         if st.button("Run Motif Analysis", type="primary"):
             st.session_state.analysis_status = "Running"
             motif_results = []
             for seq in st.session_state.seqs:
-                if run_all:
-                    motifs = all_motifs(seq)
-                else:
-                    motifs = [m for m in all_motifs(seq) if m['Class'] in st.session_state.selected_motifs]
-                # PATCH: Ensure every motif has a 'Subtype'
+                motifs = all_motifs(seq) if run_all else [m for m in all_motifs(seq) if m['Class'] in st.session_state.selected_motifs]
                 motifs = [ensure_subtype(m) for m in motifs]
                 nonoverlapping = select_best_nonoverlapping_motifs(motifs)
                 motif_results.append(nonoverlapping)
@@ -393,14 +243,14 @@ with tab_pages["Upload & Analyze"]:
                     "G Count": stats['G Count'],
                     "C Count": stats['C Count'],
                     "Motif Count": len(motifs),
-                    "Motif Coverage (%)": stats["Motif Coverage (%)"],
+                    "Motif Coverage (%)": stats.get("Motif Coverage (%)",0),
                     "Motif Classes": ", ".join(f"{k} ({v})" for k, v in motif_types.items())
                 })
             st.session_state.summary_df = pd.DataFrame(summary)
             st.success("Analysis complete! See 'Analysis Results and Visualization' tab for details.")
             st.session_state.analysis_status = "Complete"
 
-# ---------- RESULTS ----------
+# === RESULTS TAB: Data, distribution, motif map ===
 with tab_pages["Results"]:
     st.markdown('<h2>Analysis Results and Visualization</h2>', unsafe_allow_html=True)
     if not st.session_state.results:
@@ -411,8 +261,7 @@ with tab_pages["Results"]:
         if len(st.session_state.seqs) > 1:
             seq_idx = st.selectbox("Choose Sequence for Details:", range(len(st.session_state.seqs)), format_func=lambda i: st.session_state.names[i])
         motifs = st.session_state.results[seq_idx]
-        if not motifs:
-            st.warning("No motifs detected for this sequence.")
+        if not motifs: st.warning("No motifs detected for this sequence.")
         else:
             df = pd.DataFrame(motifs)
             st.markdown(f"<h3>Motif Table for <b>{st.session_state.names[seq_idx]}</b></h3>", unsafe_allow_html=True)
@@ -420,32 +269,27 @@ with tab_pages["Results"]:
             st.dataframe(df[display_columns], use_container_width=True, height=360)
             st.markdown('<span style="font-family:Montserrat,Arial;font-size:1.11rem;"><b>Motif Type Distribution</b></span>', unsafe_allow_html=True)
             fig, ax = plt.subplots(figsize=(8,6))
-            class_counts = df['Class'].value_counts().reindex(
-                st.session_state.selected_motifs if not any(m in st.session_state.selected_motifs for m in ['Hybrid', 'Non-B DNA Clusters']) else MOTIF_ORDER, fill_value=0)
+            class_counts = df['Class'].value_counts().reindex(st.session_state.selected_motifs if not any(m in st.session_state.selected_motifs for m in ['Hybrid', 'Non-B DNA Clusters']) else MOTIF_ORDER, fill_value=0)
             if "Subclass" in df.columns:
                 egz_count = (df["Subclass"] == "eGZ (Extruded-G)").sum()
                 if "eGZ (Extruded-G)" in class_counts.index:
                     class_counts["eGZ (Extruded-G)"] = egz_count
             ax.barh(class_counts.index, class_counts.values, color=[MOTIF_COLORS.get(c, "#888") for c in class_counts.index])
-            ax.set_xlabel("Motif Count")
-            st.pyplot(fig)
+            ax.set_xlabel("Motif Count"); st.pyplot(fig)
             st.markdown('<span style="font-family:Montserrat,Arial;font-size:1.11rem;"><b>Motif Map</b></span>', unsafe_allow_html=True)
-            fig, ax = plt.subplots(figsize=(12,3))
-            y = 1
+            fig, ax = plt.subplots(figsize=(12,3)); y = 1
             for _, row in df.iterrows():
                 motif_class = row['Class']
-                if motif_class == "Z-DNA" and row.get("Subclass", "") == "eGZ (Extruded-G)":
+                if motif_class == "Z-DNA" and row.get("Subclass","") == "eGZ (Extruded-G)":
                     motif_class = "eGZ (Extruded-G)"
                 color = MOTIF_COLORS.get(motif_class, "#888")
-                ax.plot([row['Start'], row['End']], [y, y], lw=8, color=color, alpha=0.8)
-                y += 0.12
-            ax.set_yticks([])
-            ax.set_xlabel("Sequence Position (bp)")
+                ax.plot([row['Start'], row['End']], [y, y], lw=8, color=color, alpha=0.8); y += 0.12
+            ax.set_yticks([]); ax.set_xlabel("Sequence Position (bp)")
             ax.set_xlim(0, len(st.session_state.seqs[seq_idx]))
             ax.set_title(f"Motif Tracks: {st.session_state.names[seq_idx]}", fontweight='bold', fontsize=14)
             st.pyplot(fig)
 
-# ---------- DOWNLOAD ----------
+# === DOWNLOAD TAB: Export results ===
 with tab_pages["Download"]:
     st.header("Export Data")
     if not st.session_state.results:
@@ -468,7 +312,7 @@ with tab_pages["Download"]:
         excel_data.seek(0)
         st.download_button("Download Excel", data=excel_data, file_name="motif_results.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
-# ---------- DOCUMENTATION ----------
+# === DOCUMENTATION TAB: Motif class details, references ===
 with tab_pages["Documentation"]:
     st.header("Scientific Documentation & References")
     st.markdown("""
