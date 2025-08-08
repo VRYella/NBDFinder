@@ -200,9 +200,9 @@ with tab_pages["Home"]:
         This application detects and analyzes <b>18 distinct Non-B DNA motifs</b> in any DNA sequence or multi-FASTA file.<br>
         <b>Motif Classes:</b><br>
         <span style='color:#1565c0;'>
-            <b>G-quadruplex-related</b> (G4, Relaxed G4, Bulged G4, Bipartite G4, Multimeric G4, G-Triplex, i-Motif, Hybrid),<br>
-            <b>helix/curvature</b> (Z-DNA, eGZ (Extruded-G), Curved DNA, AC-Motif),<br>
-            <b>repeat/junction</b> (Slipped DNA, Cruciform, Sticky DNA, Triplex DNA),<br>
+            <b>G-quadruplex-related</b> (G4, Relaxed G4, Bulged G4, Bipartite G4, Multimeric G4, G-Triplex, i-Motif, Hybrid),
+            <b>helix/curvature</b> (Z-DNA, eGZ (Extruded-G), Curved DNA, AC-Motif),
+            <b>repeat/junction</b> (Slipped DNA, Cruciform, Sticky DNA, Triplex DNA),
             <b>hybrid/cluster</b> (R-Loop, Non-B DNA Clusters).
         </span>
         <br>
