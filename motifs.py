@@ -652,11 +652,9 @@ def find_hybrids(motifs, seq):
                     results.append({
                         "Class": "Hybrid",
                         "Subtype": "_".join(sorted(involved_classes)) + "_Overlap",
-                        "Start": region_start,
-                        "End": region_end,
+                        "Start": region_start, "End": region_end,
                         "Length": region_end - region_start + 1,
                         "MotifClasses": sorted(involved_classes),
-                        "ContributingMotifs": region_motifs,
                         "ScoreMethod": "HybridOverlap",
                         "Score": f"{min(1.0, len(involved_classes)/5 + len(region_motifs)/10):.2f}",
                         "Sequence": seq[region_start-1:region_end]
