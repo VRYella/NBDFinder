@@ -112,8 +112,8 @@ st.set_page_config(
 
 # ---------- CONSTANTS ----------
 MOTIF_ORDER = [
-    "Sticky DNA","Curved DNA","Z-DNA","eGZ (Extruded-G)","Slipped DNA","R-Loop",
-    "Cruciform","Triplex DNA","G-Triplex","G4","Relaxed G4","Bulged G4","Bipartite G4",
+    "Curved DNA","Z-DNA","eGZ (Extruded-G)","Slipped DNA","R-Loop",
+    "Cruciform","Triplex DNA","Sticky DNA","G-Triplex","G4","Relaxed G4","Bulged G4","Bipartite G4",
     "Multimeric G4","i-Motif","AC-Motif","Hybrid","Non-B DNA Clusters"
 ]
 MOTIF_COLORS = {
