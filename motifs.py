@@ -14,7 +14,7 @@ def wrap(seq, width=60): return "\n".join(seq[i:i+width] for i in range(0, len(s
 def gc_content(seq): return (seq.count('G') + seq.count('C')) / max(1, len(seq)) * 100 if seq else 0
 
 # [4] Reverse complement
-def reverse_complement(seq): return seq.translate(str.maketrans("ATGC","TACG"))[::-1
+def reverse_complement(seq): return seq.translate(str.maketrans("ATGC","TACG"))[::-1]
 
 # [5] Overlapping regex iterator
 def overlapping_finditer(pattern, seq):
