@@ -276,7 +276,6 @@ def all_motifs(seq, nonoverlap=False, report_hotspots=False, seq_name="Sequence1
         })
     return out
 
-
 # [22] Non-overlapping motif selection (priority order)
 def select_best_nonoverlapping_motifs(motifs, motif_priority=None):
     if motif_priority is None:
@@ -290,6 +289,7 @@ def select_best_nonoverlapping_motifs(motifs, motif_priority=None):
         if occ.isdisjoint(reg): selected.append(m); occ.update(reg)
     return selected
 
+# [23] Duplicate: get_basic_stats (should be removed)
 def get_basic_stats(seq, motifs=None):
     seq = seq.upper()
     length = len(seq)
@@ -312,6 +312,7 @@ def get_basic_stats(seq, motifs=None):
         stats["Motif Coverage %"] = round(coverage_pct, 2)
     return stats
 
+# [24] Duplicate: all_motifs (should be removed)
 def all_motifs(seq, nonoverlap=False, report_hotspots=False):
     if not seq or not re.match("^[ATGC]+$", seq, re.IGNORECASE):
         return []
@@ -340,4 +341,6 @@ def all_motifs(seq, nonoverlap=False, report_hotspots=False):
         motif_list = select_best_nonoverlapping_motifs(motif_list)
     if report_hotspots:
         motif_list += find_hotspots(motif_list, len(seq))
-    return motif_list""
+    return motif_list"" # <--- THIS IS THE ERROR LINE, remove the trailing double quote
+
+# Remove the trailing double quote for correct syntax.
