@@ -1,4 +1,6 @@
-# === Succinct Non-B DNA Motif Analysis with Scientific Scoring and Export ===
+# === Non-B DNA Motif Analysis with Scientific Scoring and Export ===
+# === All code blocks annotated ===
+
 import re; import numpy as np
 
 # [1] FASTA parsing and normalization
@@ -12,7 +14,7 @@ def wrap(seq, width=60): return "\n".join(seq[i:i+width] for i in range(0, len(s
 def gc_content(seq): return (seq.count('G') + seq.count('C')) / max(1, len(seq)) * 100 if seq else 0
 
 # [4] Reverse complement
-def reverse_complement(seq): return seq.translate(str.maketrans("ATGC","TACG"))[::-1]
+def reverse_complement(seq): return seq.translate(str.maketrans("ATGC","TACG"))[::-1
 
 # [5] Overlapping regex iterator
 def overlapping_finditer(pattern, seq):
@@ -131,7 +133,7 @@ def find_hdna(seq):
                 if me > n: continue
                 full_seq = seq[ms:me]; pur = purine_fraction(full_seq); pyr = pyrimidine_fraction(full_seq)
                 is_triplex = pur >= 0.9 or pyr >= 0.9
-                score = 1.0 if is_triplex else 1.0
+                score = 1.0
                 results.append({"Class":"Triplex_DNA" if is_triplex else "Mirror_Repeat",
                     "Subtype":"Triplex_Motif" if is_triplex else "Mirror_Repeat",
                     "Start":ms+1,"End":me,"Length":len(full_seq),"Sequence":wrap(full_seq),
@@ -154,7 +156,7 @@ def find_imotif(seq):
         motif_seq = m.group(1)
         c_runs = [len(r) for r in re.findall(r"C{3,}", motif_seq)]
         c_frac = motif_seq.count('C') / len(motif_seq) if motif_seq else 0
-        score = 1.0 if len(c_runs) >= 4 and c_frac > 0.6 else 1.0
+        score = 1.0
         c_run_spans = [match.span() for match in re.finditer(r"C{3,}", motif_seq)]
         loops = [c_run_spans[i+1][0] - c_run_spans[i][1] for i in range(len(c_run_spans)-1)]
         subtype = "Canonical_iMotif" if loops and all(1<=l<=7 for l in loops) else "Other_iMotif"
@@ -256,19 +258,24 @@ def all_motifs(seq, nonoverlap=False, report_hotspots=False, seq_name="Sequence1
     # --- Output for download/export ---
     out = []
     for m in motif_list:
+        # PATCH: Use .format instead of f-string to avoid SyntaxError with braces
+        arm_unit = m.get("Arm", m.get("Unit", ""))
+        if 'Copies' in m:
+            arm_unit = "{}{{{}}}".format(arm_unit, m.get('Copies',''))
         out.append({
             "Sequence Name": seq_name,
             "Class": m.get("Class",""),
             "Subtype": m.get("Subtype",""),
-            "Start:End": f"{m.get('Start','')}:{m.get('End','')}",
+            "Start:End": "{}:{}".format(m.get('Start',''), m.get('End','')),
             "Motif Length": m.get("Length",""),
             "Sequence": m.get("Sequence",""),
             "Score": m.get("Score",1.0),
             "Motif Classes": m.get("MotifClasses",m.get("Class","")),
-            "Arm/Stem/Contributing region/Unit{Copies}": m.get("Arm",m.get("Unit",""))+(f"{{{m.get('Copies','')}}" if 'Copies' in m else ""),
+            "Arm/Stem/Contributing region/Unit{Copies}": arm_unit,
             "Spacer": m.get("Spacer","")
         })
     return out
+
 
 # [22] Non-overlapping motif selection (priority order)
 def select_best_nonoverlapping_motifs(motifs, motif_priority=None):
