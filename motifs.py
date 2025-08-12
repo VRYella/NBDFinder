@@ -1008,16 +1008,3 @@ def format_motif_rows(motifs):
     return ordered
 
 # =========================
-# Example main
-# =========================
-
-if __name__ == "__main__":
-    test_seq = "AAAAATTTTTAAAAGGGGTTTGGGGTTTGGGGTTTGGGGAGCTAGCTAGCTAGCT" \
-               "CGGCGGCGGCGGCGGGAA"*10 + "C"*20 + "TTT"*60 + "G"*12 + "C"*12 + "GAA"*60
-    motifs = all_motifs(test_seq, nonoverlap=False, report_hotspots=True, sequence_name="TestDNA")
-    rows = format_motif_rows(motifs)
-    # Print in required column order as TSV
-    header = ["Sequence Name", "Class", "Subtype", "Start", "End", "Length", "Sequence", "Score", "Arms/Repeat Unit/Copies", "Spacer"]
-    print("\t".join(header))
-    for r in rows:
-        print("\t".join(str(r[k]) for k in header))
