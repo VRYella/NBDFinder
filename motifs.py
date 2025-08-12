@@ -1,6 +1,10 @@
 import re
 import numpy as np
 
+# =========================
+# Basic sequence utilities
+# =========================
+
 def parse_fasta(fasta_str: str) -> str:
     return "".join([line.strip() for line in fasta_str.split('\n') if not line.startswith(">")]).upper().replace(" ", "").replace("U", "T")
 
@@ -27,20 +31,19 @@ def overlapping_finditer(pattern, seq):
         yield m
         pos = m.start() + 1
 
+# =========================
+# Curved DNA (PolyA/PolyT) with improved raw scoring
+# =========================
+
 def find_polyA_polyT_tracts(seq: str, min_len: int = 7) -> list:
     results = []
     i = 0
     n = len(seq)
     while i < n:
-        if seq[i] == 'A':
+        if seq[i] == 'A' or seq[i] == 'T':
+            ch = seq[i]
             start = i
-            while i < n and seq[i] == 'A':
-                i += 1
-            if i - start >= min_len:
-                results.append((start, i-1, seq[start:i]))
-        elif seq[i] == 'T':
-            start = i
-            while i < n and seq[i] == 'T':
+            while i < n and seq[i] == ch:
                 i += 1
             if i - start >= min_len:
                 results.append((start, i-1, seq[start:i]))
@@ -49,7 +52,14 @@ def find_polyA_polyT_tracts(seq: str, min_len: int = 7) -> list:
     return results
 
 def curvature_score(seq):
-    return len(seq)
+    # Raw score: length scaled by AT-bias and mild periodicity bonus based on A/T tracts
+    if not seq:
+        return 0.0
+    at_frac = (seq.count('A') + seq.count('T')) / len(seq)
+    # count segments of mono-base runs (A or T)
+    runs = re.findall(r"(A+|T+)", seq)
+    run_bonus = sum(len(r)**0.5 for r in runs)  # diminishing returns
+    return len(seq) * (1.0 + at_frac) + 0.5 * run_bonus
 
 def find_global_curved_polyA_polyT(seq: str, min_tract_len: int = 3, min_repeats: int = 3, min_spacing: int = 8, max_spacing: int = 12, min_score: int = 6) -> tuple:
     tracts = find_polyA_polyT_tracts(seq, min_tract_len)
@@ -70,14 +80,16 @@ def find_global_curved_polyA_polyT(seq: str, min_tract_len: int = 3, min_repeats
             score = curvature_score(motif_seq)
             if score >= min_score:
                 motif = {
+                    "Sequence Name": "",
                     "Class": "Curved_DNA",
                     "Subtype": "Global_Curved_Strict_PolyA_or_PolyT",
                     "Start": group[0][0] + 1,
                     "End": group[-1][1] + 1,
                     "Length": group[-1][1] - group[0][0] + 1,
                     "Sequence": wrap(motif_seq),
-                    "ScoreMethod": "Strict: PolyA/PolyT curvature tract score",
-                    "Score": score
+                    "Score": float(score),
+                    "Arms/Repeat Unit/Copies": "",
+                    "Spacer": ""
                 }
                 results.append(motif)
                 apr_regions.append((motif["Start"], motif["End"]))
@@ -90,14 +102,16 @@ def find_local_curved_polyA_polyT(seq: str, apr_regions: list, min_len: int = 7)
         s, e = start + 1, end + 1
         if not any(r_start <= s <= r_end or r_start <= e <= r_end for r_start, r_end in apr_regions):
             results.append({
+                "Sequence Name": "",
                 "Class": "Curved_DNA",
                 "Subtype": "Local_Curved_Strict_PolyA_or_PolyT",
                 "Start": s,
                 "End": e,
                 "Length": len(tract_seq),
                 "Sequence": wrap(tract_seq),
-                "ScoreMethod": "Strict: PolyA/PolyT tract length",
-                "Score": len(tract_seq)
+                "Score": float(curvature_score(tract_seq)),
+                "Arms/Repeat Unit/Copies": "",
+                "Spacer": ""
             })
     return results
 
@@ -105,6 +119,10 @@ def find_curved_DNA(seq: str) -> list:
     global_results, apr_regions = find_global_curved_polyA_polyT(seq)
     local_results = find_local_curved_polyA_polyT(seq, apr_regions)
     return global_results + local_results
+
+# =========================
+# Z-DNA seeker (raw scoring retained, no normalization)
+# =========================
 
 def zdna_seeker_scoring_array(seq, GC_weight=7.0, AT_weight=0.5, GT_weight=1.25, AC_weight=1.25,
         consecutive_AT_scoring=(0.5, 0.5, 0.5, 0.5, 0.0, 0.0, -5.0, -100.0),
@@ -142,11 +160,11 @@ def zdna_seeker_scoring_array(seq, GC_weight=7.0, AT_weight=0.5, GT_weight=1.25,
             mismatches_counter += 1
             consecutive_AT_counter = 0
             if mismatch_penalty_type == "exponential":
-                scoring_array[i] = -mismatch_penalty_starting_value ** mismatches_counter if mismatches_counter < 15 else -32000
+                scoring_array[i] = - (mismatch_penalty_starting_value ** mismatches_counter if mismatches_counter < 15 else 32000.0)
             elif mismatch_penalty_type == "linear":
                 scoring_array[i] = -mismatch_penalty_starting_value - mismatch_penalty_linear_delta * (mismatches_counter - 1)
             else:
-                scoring_array[i] = -10
+                scoring_array[i] = -10.0
         if t in ("GC", "CG", "GT", "TG", "AC", "CA", "AT", "TA"):
             scoring_array[i] += cadence_reward
     return scoring_array
@@ -188,30 +206,38 @@ def find_zdna(seq, threshold=50, drop_threshold=50, GC_weight=7.0, AT_weight=0.5
         if candidate and (max_ending_here < 0 or current_max - max_ending_here >= drop_threshold):
             s, e, score = candidate
             motifs.append({
+                "Sequence Name": "",
                 "Class": "Z-DNA",
                 "Subtype": "Z-Seeker",
                 "Start": s + 1,
                 "End": e + 1,
                 "Length": e - s + 1,
                 "Sequence": wrap(seq[s:e+1]),
-                "ScoreMethod": "Z-Seeker Weighted",
-                "Score": f"{score:.2f}",
+                "Score": float(score),
+                "Arms/Repeat Unit/Copies": "",
+                "Spacer": ""
             })
             candidate = None
             max_ending_here = current_max = 0
     if candidate:
         s, e, score = candidate
         motifs.append({
+            "Sequence Name": "",
             "Class": "Z-DNA",
             "Subtype": "Z-Seeker",
             "Start": s + 1,
             "End": e + 1,
             "Length": e - s + 1,
             "Sequence": wrap(seq[s:e+1]),
-            "ScoreMethod": "Z-Seeker Weighted",
-            "Score": f"{score:.2f}",
+            "Score": float(score),
+            "Arms/Repeat Unit/Copies": "",
+            "Spacer": ""
         })
     return motifs
+
+# =========================
+# eGZ (extruded-G) CGG repeats
+# =========================
 
 def find_egz_motif(seq):
     pattern = re.compile(r'(CGG){4,}', re.IGNORECASE)
@@ -219,8 +245,11 @@ def find_egz_motif(seq):
     for m in pattern.finditer(seq):
         motif_seq = m.group(0)
         n_repeats = len(motif_seq) // 3
-        score = min(1.0, n_repeats/12)
+        # Raw score: repeats * unit_len * G-bias
+        g_frac = motif_seq.count('G') / len(motif_seq)
+        score = n_repeats * 3 * (1.0 + 2.0*g_frac)
         results.append({
+            "Sequence Name": "",
             "Family": "Double-stranded",
             "Class": "Z-DNA",
             "Subclass": "eGZ (extruded-G)",
@@ -228,72 +257,96 @@ def find_egz_motif(seq):
             "End": m.end(),
             "Length": len(motif_seq),
             "Sequence": wrap(motif_seq),
-            "ScoreMethod": "Repeat_normalized",
-            "Score": f"{score:.2f}",
-            "CGG_Repeats": n_repeats
+            "ScoreMethod": "Repeat_raw",
+            "Score": float(score),
+            "CGG_Repeats": n_repeats,
+            "Arms/Repeat Unit/Copies": f"Unit=CGG;Copies={n_repeats}",
+            "Spacer": ""
         })
     return results
+
+# =========================
+# Slipped DNA (Direct repeats and STR)
+# =========================
 
 def find_slipped_dna(seq):
     results = []
     min_len_dr = 10
     max_len_dr = 300
+    # Direct repeats
     for i in range(len(seq) - min_len_dr * 2 + 1):
         for l in range(min_len_dr, min(max_len_dr+1, (len(seq)-i)//2+1)):
             repeat = seq[i:i+l]
             if seq[i+l:i+2*l] == repeat:
+                # Raw score: length with composition weight (AT-rich direct repeats more flexible)
+                at_frac = (repeat.count('A') + repeat.count('T')) / max(1, len(repeat))
+                score = 2*l * (1.0 + 0.5*at_frac)
                 results.append({
+                    "Sequence Name": "",
                     "Class": "Slipped_DNA",
                     "Subtype": "Direct_Repeat",
                     "Start": i+1,
                     "End": i+2*l,
                     "Length": 2*l,
                     "Sequence": wrap(repeat+repeat),
-                    "ScoreMethod": "nBST_DR",
-                    "Score": f"{min(1.0, l/300):.2f}"
+                    "ScoreMethod": "DR_raw",
+                    "Score": float(score),
+                    "Arms/Repeat Unit/Copies": f"UnitLen={l};Copies=2",
+                    "Spacer": ""
                 })
+    # STRs
     min_unit_str = 1
     max_unit_str = 6
     min_reps_str = 5
     min_len_str = 15
     i = 0
-    while i < len(seq) - min_unit_str * min_reps_str + 1:
+    n = len(seq)
+    while i < n - min_unit_str * min_reps_str + 1:
         found = False
         for unit in range(min_unit_str, max_unit_str+1):
-            if i + unit * min_reps_str > len(seq):
+            if i + unit * min_reps_str > n:
                 continue
             repeat_unit = seq[i:i+unit]
             if 'n' in repeat_unit.lower():
                 continue
             reps = 1
-            while (i + reps*unit + unit <= len(seq) and
-                   seq[i + reps*unit:i + (reps+1)*unit] == repeat_unit):
+            while (i + reps*unit + unit <= n and seq[i + reps*unit:i + (reps+1)*unit] == repeat_unit):
                 reps += 1
             if reps >= min_reps_str and reps*unit >= min_len_str:
                 remainder = 0
                 rs = i + reps*unit
                 re_idx = rs
-                while (re_idx < len(seq) and seq[re_idx] == repeat_unit[re_idx % unit]):
+                while (re_idx < n and seq[re_idx] == repeat_unit[re_idx % unit]):
                     remainder += 1
                     re_idx += 1
+                full_len = reps*unit + remainder
+                gc_frac = (repeat_unit.count('G') + repeat_unit.count('C')) / max(1, len(repeat_unit))
+                score = full_len * (1.0 + 0.3*gc_frac) * (reps ** 0.5)
                 results.append({
+                    "Sequence Name": "",
                     "Class": "Slipped_DNA",
                     "Subtype": "STR",
                     "Start": i+1,
-                    "End": i + reps*unit + remainder,
-                    "Length": reps*unit + remainder,
+                    "End": i + full_len,
+                    "Length": full_len,
                     "Unit": repeat_unit,
                     "Copies": reps,
-                    "Sequence": wrap(seq[i:i + reps*unit + remainder]),
-                    "ScoreMethod": "nBST_STR",
-                    "Score": f"{min(1.0, reps/20):.2f}"
+                    "Sequence": wrap(seq[i:i + full_len]),
+                    "ScoreMethod": "STR_raw",
+                    "Score": float(score),
+                    "Arms/Repeat Unit/Copies": f"Unit={repeat_unit};Copies={reps}",
+                    "Spacer": ""
                 })
-                i = i + reps*unit + remainder - 1
+                i = i + full_len - 1
                 found = True
                 break
         if not found:
             i += 1
     return results
+
+# =========================
+# R-Loop prediction (RLFS models) with raw stability
+# =========================
 
 RLFS_MODELS = {
     "m1": r"G{3,}[ATGC]{1,10}?G{3,}(?:[ATGC]{1,10}?G{3,}){1,}",
@@ -313,17 +366,23 @@ def find_rlfs(seq, models=("m1", "m2")):
             rez = find_rez_max(seq, m.end())
             if rez:
                 rez_seq = rez['seq']
-                stability = min(1.0, 0.6 * (gc_content(riz_seq + rez_seq) / 100) +
-                                0.4 * (len(re.findall(r"G{3,}", riz_seq + rez_seq)) / 5))
+                concat = riz_seq + rez_seq
+                g_runs = len(re.findall(r"G{3,}", concat))
+                # Raw stability: GC fraction weight + G-run density scaled by length
+                gc_frac = gc_content(concat) / 100.0
+                score = (gc_frac * 50.0 + g_runs * 10.0) * (len(concat) ** 0.25)
                 results.append({
+                    "Sequence Name": "",
                     "Class": "R-Loop",
                     "Subtype": f"RLFS_{model_name}",
                     "Start": m.start() + 1,
                     "End": m.start() + len(riz_seq) + rez['end'],
                     "Length": len(riz_seq) + rez['end'],
-                    "Sequence": wrap(riz_seq + rez_seq),
-                    "ScoreMethod": "QmRLFS_Thermo",
-                    "Score": f"{stability:.2f}"
+                    "Sequence": wrap(concat),
+                    "ScoreMethod": "QmRLFS_raw",
+                    "Score": float(score),
+                    "Arms/Repeat Unit/Copies": "",
+                    "Spacer": ""
                 })
     return results
 
@@ -338,30 +397,45 @@ def find_rez_max(seq, start_pos, max_len=2000, step=100, min_gc=40):
         return {'seq': max_window, 'end': len(max_window)}
     return None
 
+# =========================
+# Cruciform (Inverted repeats)
+# =========================
+
 def find_cruciform(seq):
     results = []
-    for i in range(len(seq) - 2*10):
-        for arm_len in range(10, min(101, (len(seq)-i)//2)):
+    n = len(seq)
+    for i in range(n - 2*10):
+        for arm_len in range(10, min(101, (n-i)//2)):
             for spacer_len in range(0, 4):
                 arm = seq[i:i+arm_len]
                 rev_arm = reverse_complement(arm)
                 mid = i + arm_len + spacer_len
-                if mid + arm_len > len(seq): continue
+                if mid + arm_len > n:
+                    continue
                 candidate = seq[mid:mid+arm_len]
                 if candidate == rev_arm:
                     full = seq[i:mid+arm_len]
-                    score = min(1.0, (arm_len / 100) + ((arm.count('A') + arm.count('T')) / arm_len * 0.3))
+                    # Raw score: arm length with AT-rich bonus minus spacer penalty
+                    at_frac = (arm.count('A') + arm.count('T')) / arm_len
+                    score = arm_len * (1.0 + 0.5*at_frac) - spacer_len * 2.0
                     results.append({
+                        "Sequence Name": "",
                         "Class": "Cruciform",
                         "Subtype": f"Inverted_Repeat_spacer{spacer_len}",
                         "Start": i+1,
                         "End": mid+arm_len,
                         "Length": len(full),
                         "Sequence": wrap(full),
-                        "ScoreMethod": "nBST_IR",
-                        "Score": f"{score:.2f}"
+                        "ScoreMethod": "IR_raw",
+                        "Score": float(score),
+                        "Arms/Repeat Unit/Copies": f"Arms={arm_len}",
+                        "Spacer": str(spacer_len)
                     })
     return results
+
+# =========================
+# Triplex / Mirror repeats (H-DNA)
+# =========================
 
 def purine_fraction(seq):
     return (seq.count('A') + seq.count('G')) / max(1, len(seq))
@@ -385,7 +459,11 @@ def find_hdna(seq):
                 pur_frac = purine_fraction(full_seq)
                 pyr_frac = pyrimidine_fraction(full_seq)
                 is_triplex = (pur_frac >= 0.9 or pyr_frac >= 0.9)
+                # Raw score: mirror length with homopurine/pyrimidine enrichment and spacer penalty
+                homogeneity = max(pur_frac, pyr_frac)
+                score = len(full_seq) * (1.0 + 1.5*homogeneity) - spacer * 1.0
                 results.append({
+                    "Sequence Name": "",
                     "Class": "Triplex_DNA" if is_triplex else "Mirror_Repeat",
                     "Subtype": "Triplex_Motif" if is_triplex else "Mirror_Repeat",
                     "Start": mirror_start + 1,
@@ -394,28 +472,46 @@ def find_hdna(seq):
                     "Spacer": spacer,
                     "Sequence": wrap(full_seq),
                     "PurineFrac": round(pur_frac, 2),
-                    "PyrimidineFrac": round(pyr_frac, 2)
+                    "PyrimidineFrac": round(pyr_frac, 2),
+                    "Score": float(score),
+                    "Arms/Repeat Unit/Copies": f"Arms={rep_len}",
+                    "Spacer": str(spacer)
                 })
     return results
+
+# =========================
+# Sticky DNA (GAA/TTC long repeats)
+# =========================
 
 def find_sticky_dna(seq):
     motifs = []
     seq = seq.replace('\n','').replace(' ','').upper()
     pattern = r"(?:GAA){59,}|(?:TTC){59,}"
     for m in re.finditer(pattern, seq):
-        repeat_count = len(m.group()) // 3
+        repeat_len = len(m.group())
+        repeat_count = repeat_len // 3
+        # Raw score: repeat_count * unit_length with A/T bias
+        at_frac = (m.group().count('A') + m.group().count('T')) / repeat_len
+        score = repeat_count * 3 * (1.0 + 0.5*at_frac)
         motifs.append({
+            "Sequence Name": "",
             "Class": "Sticky_DNA",
             "Subtype": "GAA_TTC_Repeat",
             "Start": m.start() + 1,
             "End": m.end(),
-            "Length": len(m.group()),
+            "Length": repeat_len,
             "RepeatCount": repeat_count,
-            "Sequence": m.group(),
-            "ScoreMethod": "Sakamoto1999",
-            "Score": f"{min(1.0, repeat_count/270):.2f}",
+            "Sequence": wrap(m.group()),
+            "ScoreMethod": "Sakamoto1999_raw",
+            "Score": float(score),
+            "Arms/Repeat Unit/Copies": f"Unit={'GAA' if 'GAA' in m.group() else 'TTC'};Copies={repeat_count}",
+            "Spacer": ""
         })
     return motifs
+
+# =========================
+# G4Hunter and G-quadruplex variants (raw scaling)
+# =========================
 
 def g4hunter_score(seq):
     scores = []
@@ -426,23 +522,29 @@ def g4hunter_score(seq):
             scores.append(-1)
         else:
             scores.append(0)
-    return np.mean(scores) if scores else 0
+    return np.mean(scores) if scores else 0.0
 
 def find_multimeric_gquadruplex(seq):
     results = []
     pattern = r"(G{3,}\w{1,12}){4,}"
     for m in overlapping_finditer(pattern, seq):
         motif_seq = m.group(0)
-        if g4hunter_score(motif_seq) >= 1.0:
+        g4h = g4hunter_score(motif_seq)
+        if g4h >= 0.5:
+            score = (g4h * len(motif_seq)) * 1.2
             results.append({
+                "Sequence Name": "",
                 "Class": "G4",
                 "Subtype": "Multimeric_G4",
                 "Start": m.start()+1,
                 "End": m.end(),
                 "Length": len(motif_seq),
                 "Sequence": wrap(motif_seq),
-                "ScoreMethod": "G4Hunter_Multimer",
-                "Score": f"{g4hunter_score(motif_seq)*1.2:.2f}"})
+                "ScoreMethod": "G4Hunter_Multimer_raw",
+                "Score": float(score),
+                "Arms/Repeat Unit/Copies": "",
+                "Spacer": ""
+            })
     return results
 
 def find_bipartite_gquadruplex(seq):
@@ -454,17 +556,21 @@ def find_bipartite_gquadruplex(seq):
             continue
         half = len(motif_seq)//2
         unit1, unit2 = motif_seq[:half], motif_seq[half:]
-        score = max(g4hunter_score(unit1), g4hunter_score(unit2)) * 0.9
-        if score >= 0.9:
+        score = max(g4hunter_score(unit1), g4hunter_score(unit2)) * len(motif_seq) * 0.9
+        if score > 0:
             results.append({
+                "Sequence Name": "",
                 "Class": "G4",
                 "Subtype": "Bipartite_G4",
                 "Start": m.start()+1,
                 "End": m.end(),
                 "Length": len(motif_seq),
                 "Sequence": wrap(motif_seq),
-                "ScoreMethod": "Bipartite_Score",
-                "Score": f"{score:.2f}"})
+                "ScoreMethod": "Bipartite_raw",
+                "Score": float(score),
+                "Arms/Repeat Unit/Copies": "",
+                "Spacer": ""
+            })
     return results
 
 def find_gquadruplex(seq):
@@ -472,17 +578,22 @@ def find_gquadruplex(seq):
     results = []
     for m in overlapping_finditer(pattern, seq):
         motif_seq = m.group(1)
-        score = g4hunter_score(motif_seq)
-        if score >= 1.2:
+        g4h = g4hunter_score(motif_seq)
+        score = g4h * len(motif_seq)  # raw
+        if g4h >= 0.8:
             results.append({
+                "Sequence Name": "",
                 "Class": "G4",
                 "Subtype": "Canonical_G4",
                 "Start": m.start()+1,
                 "End": m.end(),
                 "Length": len(motif_seq),
                 "Sequence": wrap(motif_seq),
-                "ScoreMethod": "G4Hunter_v2",
-                "Score": f"{score:.2f}"})
+                "ScoreMethod": "G4Hunter_v2_raw",
+                "Score": float(score),
+                "Arms/Repeat Unit/Copies": "",
+                "Spacer": ""
+            })
     return results
 
 def find_relaxed_gquadruplex(seq):
@@ -490,17 +601,22 @@ def find_relaxed_gquadruplex(seq):
     results = []
     for m in overlapping_finditer(pattern, seq):
         motif_seq = m.group(1)
-        score = g4hunter_score(motif_seq)
-        if score >= 0.8:
+        g4h = g4hunter_score(motif_seq)
+        score = g4h * len(motif_seq) * 0.8
+        if g4h >= 0.5:
             results.append({
+                "Sequence Name": "",
                 "Class": "G4",
                 "Subtype": "Relaxed_G4",
                 "Start": m.start()+1,
                 "End": m.end(),
                 "Length": len(motif_seq),
                 "Sequence": wrap(motif_seq),
-                "ScoreMethod": "G4Hunter_LongLoop",
-                "Score": f"{score*0.8:.2f}"})
+                "ScoreMethod": "G4Hunter_LongLoop_raw",
+                "Score": float(score),
+                "Arms/Repeat Unit/Copies": "",
+                "Spacer": ""
+            })
     return results
 
 def find_bulged_gquadruplex(seq):
@@ -509,16 +625,21 @@ def find_bulged_gquadruplex(seq):
     for m in overlapping_finditer(pattern, seq):
         motif_seq = m.group(1)
         if len(re.findall(r"G{3,}", motif_seq)) >= 4:
-            score = g4hunter_score(motif_seq)
-            results.append({
-                "Class": "G4",
-                "Subtype": "Bulged_G4",
-                "Start": m.start()+1,
-                "End": m.end(),
-                "Length": len(motif_seq),
-                "Sequence": wrap(motif_seq),
-                "ScoreMethod": "G4Hunter_Bulge",
-                "Score": f"{score*0.7:.2f}"})
+            score = g4hunter_score(motif_seq) * len(motif_seq) * 0.7
+            if score > 0:
+                results.append({
+                    "Sequence Name": "",
+                    "Class": "G4",
+                    "Subtype": "Bulged_G4",
+                    "Start": m.start()+1,
+                    "End": m.end(),
+                    "Length": len(motif_seq),
+                    "Sequence": wrap(motif_seq),
+                    "ScoreMethod": "G4Hunter_Bulge_raw",
+                    "Score": float(score),
+                    "Arms/Repeat Unit/Copies": "",
+                    "Spacer": ""
+                })
     return results
 
 def find_imperfect_gquadruplex(seq):
@@ -529,18 +650,27 @@ def find_imperfect_gquadruplex(seq):
     results = []
     for m in overlapping_finditer(pattern, seq):
         motif_seq = m.group(0)
-        score = g4hunter_score(motif_seq)
-        if score >= 1.2:
+        g4h = g4hunter_score(motif_seq)
+        score = g4h * len(motif_seq)  # raw
+        if g4h >= 0.7:
             results.append({
+                "Sequence Name": "",
                 "Class": "G4",
                 "Subtype": "Imperfect_G4",
                 "Start": m.start()+1,
                 "End": m.end(),
                 "Length": len(motif_seq),
                 "Sequence": wrap(motif_seq),
-                "ScoreMethod": "G4Hunter_Imperfect",
-                "Score": f"{score:.2f}"})
+                "ScoreMethod": "G4Hunter_Imperfect_raw",
+                "Score": float(score),
+                "Arms/Repeat Unit/Copies": "",
+                "Spacer": ""
+            })
     return results
+
+# =========================
+# G-triplex
+# =========================
 
 def find_gtriplex(seq):
     pattern = r"(G{3,}\w{1,7}G{3,}\w{1,7}G{3,})"
@@ -548,19 +678,44 @@ def find_gtriplex(seq):
     for m in overlapping_finditer(pattern, seq):
         motif_seq = m.group(1)
         g_runs = [len(r) for r in re.findall(r"G{3,}", motif_seq)]
-        if len(g_runs) < 3: continue
+        if len(g_runs) < 3:
+            continue
         loops = [len(l) for l in re.findall(r"G{3,}(\w{1,7})G{3,}", motif_seq)]
-        score = min(1.0, sum(g_runs)/15 + sum(1/l if l > 0 else 0.5 for l in loops)/3)
+        loop_term = sum(1/l if l > 0 else 0.5 for l in loops)
+        score = (sum(g_runs) * 2.0) + (loop_term * 5.0)
         results.append({
+            "Sequence Name": "",
             "Class": "G-Triplex",
             "Subtype": "Three_G-Runs",
             "Start": m.start()+1,
             "End": m.end(),
             "Length": len(motif_seq),
             "Sequence": wrap(motif_seq),
-            "ScoreMethod": "G3_Stability",
-            "Score": f"{score:.2f}"})
+            "ScoreMethod": "G3_raw",
+            "Score": float(score),
+            "Arms/Repeat Unit/Copies": "",
+            "Spacer": ""
+        })
     return results
+
+# =========================
+# i-Motif
+# =========================
+
+def imotif_score(seq):
+    c_runs = [len(r) for r in re.findall(r"C{3,}", seq)]
+    if len(c_runs) < 4 or len(seq) == 0:
+        return 0.0
+    c_fraction = seq.count('C') / len(seq)
+    c_run_spans = [match.span() for match in re.finditer(r"C{3,}", seq)]
+    loops = []
+    for i in range(len(c_run_spans)-1):
+        loop_start = c_run_spans[i][1]
+        loop_end = c_run_spans[i+1][0]
+        loops.append(loop_end - loop_start)
+    # Raw score: sum of C-run sizes plus compact loop bonuses and C-fraction
+    loop_bonus = sum(1.0/(l+1) for l in loops) if loops else 0.5
+    return (sum(c_runs) * 1.0) + (c_fraction * len(seq) * 0.5) + (loop_bonus * 3.0)
 
 def find_imotif(seq):
     results = []
@@ -568,7 +723,7 @@ def find_imotif(seq):
     for m in overlapping_finditer(pattern, seq):
         motif_seq = m.group(1)
         score = imotif_score(motif_seq)
-        if score >= 0.7:
+        if score > 0:
             c_run_spans = [match.span() for match in re.finditer(r"C{3,}", motif_seq)]
             loops = []
             for i in range(len(c_run_spans)-1):
@@ -582,30 +737,23 @@ def find_imotif(seq):
             else:
                 subtype = "Other_iMotif"
             results.append({
+                "Sequence Name": "",
                 "Class": "i-Motif",
                 "Subtype": subtype,
                 "Start": m.start() + 1,
                 "End": m.start() + len(motif_seq),
                 "Length": len(motif_seq),
                 "Sequence": wrap(motif_seq),
-                "ScoreMethod": "iM_G4HunterStyle",
-                "Score": f"{score:.2f}"
+                "ScoreMethod": "iM_raw",
+                "Score": float(score),
+                "Arms/Repeat Unit/Copies": "",
+                "Spacer": ""
             })
     return results
 
-def imotif_score(seq):
-    c_runs = [len(r) for r in re.findall(r"C{3,}", seq)]
-    c_fraction = seq.count('C') / len(seq) if seq else 0
-    if len(c_runs) < 4:
-        return 0
-    c_run_spans = [match.span() for match in re.finditer(r"C{3,}", seq)]
-    loops = []
-    for i in range(len(c_run_spans)-1):
-        loop_start = c_run_spans[i][1]
-        loop_end = c_run_spans[i+1][0]
-        loops.append(loop_end - loop_start)
-    loop_score = sum(1/(l+1) for l in loops) / max(1, len(loops)) if loops else 0.5
-    return min(1.0, sum(c_runs)/16 + c_fraction*0.5 + loop_score*0.3)
+# =========================
+# AC-motifs (consensus)
+# =========================
 
 def find_ac_motifs(seq):
     pattern = re.compile(
@@ -616,17 +764,28 @@ def find_ac_motifs(seq):
     results = []
     for m in pattern.finditer(seq):
         motif_seq = m.group(0).upper()
+        # Raw score: length times boundary run emphasis (A3 and C3 presence)
+        boundary_bonus = (3 if motif_seq.startswith('AAA') else 0) + (3 if motif_seq.endswith('AAA') else 0)
+        c_runs = len(re.findall(r"C{3}", motif_seq))
+        score = len(motif_seq) + boundary_bonus + c_runs * 2.0
         results.append({
+            "Sequence Name": "",
             "Class": "AC-Motif",
             "Subtype": "Consensus",
             "Start": m.start() + 1,
             "End": m.start() + len(motif_seq),
             "Length": len(motif_seq),
             "Sequence": wrap(motif_seq),
-            "ScoreMethod": "PatternMatch",
-            "Score": "1.0"
+            "ScoreMethod": "PatternMatch_raw",
+            "Score": float(score),
+            "Arms/Repeat Unit/Copies": "",
+            "Spacer": ""
         })
     return results
+
+# =========================
+# Hybrid overlaps and hotspots (augmented fields)
+# =========================
 
 def find_hybrids(motifs, seq):
     events = []
@@ -649,15 +808,21 @@ def find_hybrids(motifs, seq):
                 involved_classes = {motifs[i]['Class'] for i in involved_idxs}
                 if len(involved_classes) >= 2:
                     region_motifs = [motifs[i] for i in involved_idxs]
+                    score = sum(float(m.get("Score", 0.0)) for m in region_motifs) * 0.1
                     results.append({
+                        "Sequence Name": motifs[0].get("Sequence Name", ""),
                         "Class": "Hybrid",
                         "Subtype": "_".join(sorted(involved_classes)) + "_Overlap",
-                        "Start": region_start, "End": region_end,
+                        "Start": region_start,
+                        "End": region_end,
                         "Length": region_end - region_start + 1,
                         "MotifClasses": sorted(involved_classes),
-                        "ScoreMethod": "HybridOverlap",
-                        "Score": f"{min(1.0, len(involved_classes)/5 + len(region_motifs)/10):.2f}",
-                        "Sequence": seq[region_start-1:region_end]
+                        "ContributingMotifs": region_motifs,
+                        "ScoreMethod": "HybridOverlap_raw",
+                        "Score": float(score),
+                        "Sequence": wrap(seq[region_start-1:region_end]),
+                        "Arms/Repeat Unit/Copies": "",
+                        "Spacer": ""
                     })
             active.discard(idx)
     return results
@@ -671,23 +836,27 @@ def find_hotspots(motif_hits, seq_len, window=100, min_count=3):
         if count >= min_count:
             motifs_in_region = [m for m in motif_hits if m['Start'] <= region_end and m['End'] >= region_start]
             type_div = len({m['Subtype'] for m in motifs_in_region})
-            seq_region = motif_hits[0]['Sequence'] if motif_hits else ""
+            total_score = sum(float(m.get("Score", 0.0)) for m in motifs_in_region)
             hotspots.append({
+                "Sequence Name": motif_hits[0].get("Sequence Name", "") if motif_hits else "",
                 "Class": "Non-B DNA Clusters",
                 "Subtype": "Hotspot",
                 "Start": region_start,
                 "End": region_end,
                 "Length": region_end - region_start + 1,
                 "Sequence": "",
-                "ScoreMethod": "Hotspot",
-                "Score": f"{min(1.0, count/10 + type_div/5):.2f}",
+                "ScoreMethod": "Hotspot_raw",
+                "Score": float(total_score),
                 "MotifCount": count,
-                "TypeDiversity": type_div
+                "TypeDiversity": type_div,
+                "Arms/Repeat Unit/Copies": "",
+                "Spacer": ""
             })
     return merge_hotspots(hotspots)
 
 def merge_hotspots(hotspots):
-    if not hotspots: return []
+    if not hotspots:
+        return []
     merged = [hotspots[0]]
     for current in hotspots[1:]:
         last = merged[-1]
@@ -696,10 +865,14 @@ def merge_hotspots(hotspots):
             last['Length'] = last['End'] - last['Start'] + 1
             last['MotifCount'] += current['MotifCount']
             last['TypeDiversity'] = max(last['TypeDiversity'], current['TypeDiversity'])
-            last['Score'] = f"{min(1.0, float(last['Score']) + float(current['Score'])):.2f}"
+            last['Score'] = float(last['Score']) + float(current['Score'])
         else:
             merged.append(current)
     return merged
+
+# =========================
+# Selection, validation, stats
+# =========================
 
 def select_best_nonoverlapping_motifs(motifs: list, motif_priority: list = None) -> list:
     if motif_priority is None:
@@ -761,7 +934,11 @@ def get_basic_stats(seq, motifs=None):
         stats["Motif Coverage %"] = round(coverage_pct, 2)
     return stats
 
-def all_motifs(seq, nonoverlap=False, report_hotspots=False):
+# =========================
+# Aggregator
+# =========================
+
+def all_motifs(seq, nonoverlap=False, report_hotspots=False, sequence_name="Sequence"):
     if not seq or not re.match("^[ATGC]+$", seq, re.IGNORECASE):
         return []
     seq = seq.upper()
@@ -783,10 +960,64 @@ def all_motifs(seq, nonoverlap=False, report_hotspots=False):
         find_imotif(seq) +
         find_ac_motifs(seq)
     )
+    # Validate and standardize fields
     motif_list = [m for m in motif_list if validate_motif(m, len(seq))]
+    # Add hybrids
     motif_list += find_hybrids(motif_list, seq)
+    # De-overlap per class if asked
     if nonoverlap:
         motif_list = select_best_nonoverlapping_motifs(motif_list)
+    # Hotspots appended if asked
     if report_hotspots:
         motif_list += find_hotspots(motif_list, len(seq))
+    # Add Sequence Name and ensure ordered keys exist
+    for m in motif_list:
+        m["Sequence Name"] = sequence_name
+        # Ensure mandatory ordered fields exist and not missing
+        if "Arms/Repeat Unit/Copies" not in m:
+            m["Arms/Repeat Unit/Copies"] = ""
+        if "Spacer" not in m:
+            m["Spacer"] = ""
+        if "Score" in m:
+            try:
+                m["Score"] = float(m["Score"])
+            except Exception:
+                pass
     return motif_list
+
+# =========================
+# Utility: formatted output rows in the exact requested order
+# =========================
+
+def format_motif_rows(motifs):
+    ordered = []
+    for m in motifs:
+        row = {
+            "Sequence Name": m.get("Sequence Name", ""),
+            "Class": m.get("Class", ""),
+            "Subtype": m.get("Subtype", m.get("Subclass", "")),
+            "Start": m.get("Start", ""),
+            "End": m.get("End", ""),
+            "Length": m.get("Length", ""),
+            "Sequence": m.get("Sequence", ""),
+            "Score": m.get("Score", ""),
+            "Arms/Repeat Unit/Copies": m.get("Arms/Repeat Unit/Copies", ""),
+            "Spacer": m.get("Spacer", "")
+        }
+        ordered.append(row)
+    return ordered
+
+# =========================
+# Example main
+# =========================
+
+if __name__ == "__main__":
+    test_seq = "AAAAATTTTTAAAAGGGGTTTGGGGTTTGGGGTTTGGGGAGCTAGCTAGCTAGCT" \
+               "CGGCGGCGGCGGCGGGAA"*10 + "C"*20 + "TTT"*60 + "G"*12 + "C"*12 + "GAA"*60
+    motifs = all_motifs(test_seq, nonoverlap=False, report_hotspots=True, sequence_name="TestDNA")
+    rows = format_motif_rows(motifs)
+    # Print in required column order as TSV
+    header = ["Sequence Name", "Class", "Subtype", "Start", "End", "Length", "Sequence", "Score", "Arms/Repeat Unit/Copies", "Spacer"]
+    print("\t".join(header))
+    for r in rows:
+        print("\t".join(str(r[k]) for k in header))
