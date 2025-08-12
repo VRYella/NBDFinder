@@ -322,47 +322,29 @@ def find_slipped_dna(seq):
     results = []
     min_len_dr = 10
     max_len_dr = 300
-    min_score_threshold = 25.0  # Minimum score to avoid excessive low-quality matches
-    used_positions = set()  # Track used positions to prevent excessive overlap
-    
-    # Direct repeats - optimized to reduce overlapping matches
+    # Direct repeats
     for i in range(len(seq) - min_len_dr * 2 + 1):
-        # Skip if this starting position is already covered by a larger motif
-        if i in used_positions:
-            continue
-            
         for l in range(min_len_dr, min(max_len_dr+1, (len(seq)-i)//2+1)):
             repeat = seq[i:i+l]
             if seq[i+l:i+2*l] == repeat:
                 # Enhanced scoring: unit_len × composition weight (AT-rich direct repeats more flexible)
                 at_frac = (repeat.count('A') + repeat.count('T')) / max(1, len(repeat))
                 score = 2*l * (1.0 + 0.5*at_frac)
-                
-                # Only keep high-scoring matches and prevent excessive overlap
-                if score >= min_score_threshold:
-                    current_positions = set(range(i, i+2*l))
-                    overlap_ratio = len(current_positions.intersection(used_positions)) / len(current_positions)
-                    
-                    if overlap_ratio < 0.3:  # Allow some overlap but not excessive
-                        results.append({
-                            "Sequence Name": "",
-                            "Class": "Slipped_DNA",
-                            "Subtype": "Direct_Repeat",
-                            "Start": i+1,
-                            "End": i+2*l,
-                            "Length": 2*l,
-                            "Sequence": wrap(repeat+repeat),
-                            "ScoreMethod": "DR_Composition_raw",
-                            "Score": float(score),
-                            "AT_Fraction": round(at_frac, 3),
-                            "Arms/Repeat Unit/Copies": f"UnitLen={l};Copies=2",
-                            "Spacer": ""
-                        })
-                        # Mark core positions as used (not the entire range to allow some flexibility)
-                        used_positions.update(range(i, i+l))
-                        break  # Found a good match at this position, move to next
-    
-    # STRs - keep existing logic as it's already well-optimized
+                results.append({
+                    "Sequence Name": "",
+                    "Class": "Slipped_DNA",
+                    "Subtype": "Direct_Repeat",
+                    "Start": i+1,
+                    "End": i+2*l,
+                    "Length": 2*l,
+                    "Sequence": wrap(repeat+repeat),
+                    "ScoreMethod": "DR_Composition_raw",
+                    "Score": float(score),
+                    "AT_Fraction": round(at_frac, 3),
+                    "Arms/Repeat Unit/Copies": f"UnitLen={l};Copies=2",
+                    "Spacer": ""
+                })
+    # STRs
     min_unit_str = 1
     max_unit_str = 6
     min_reps_str = 5
@@ -602,23 +584,15 @@ def pyrimidine_fraction(seq):
 def find_hdna(seq):
     results = []
     n = len(seq)
-    min_score_threshold = 25.0  # Minimum score to avoid excessive low-quality matches
-    used_positions = set()  # Track used positions to prevent excessive overlap
-    
     for rep_len in range(10, min(101, n//2)):
         for spacer in range(0, 9):
-            pattern = re.compile(rf"(([ATGC]{{{rep_len}}})[ATGC]{{{spacer}}}\2)", re.IGNORECASE)
+            pattern = re.compile(rf"(?=(([ATGC]{{{rep_len}}})[ATGC]{{{spacer}}}\2))", re.IGNORECASE)
             for m in pattern.finditer(seq):
                 repeat = m.group(2)
                 mirror_start = m.start()
-                mirror_end = m.end()
-                
-                # Skip if this region significantly overlaps with an already found motif
-                current_positions = set(range(mirror_start, mirror_end))
-                overlap_ratio = len(current_positions.intersection(used_positions)) / len(current_positions)
-                if overlap_ratio > 0.5:  # Skip if >50% overlap
+                mirror_end = mirror_start + 2*rep_len + spacer
+                if mirror_end > n:
                     continue
-                
                 full_seq = seq[mirror_start:mirror_end]
                 pur_frac = purine_fraction(full_seq)
                 pyr_frac = pyrimidine_fraction(full_seq)
@@ -627,27 +601,23 @@ def find_hdna(seq):
                 homogeneity = max(pur_frac, pyr_frac)
                 score = len(full_seq) * (1.0 + 1.5*homogeneity) - spacer * 1.0
                 
-                # Only keep high-scoring matches to avoid excessive low-quality results
-                if score >= min_score_threshold:
-                    results.append({
-                        "Sequence Name": "",
-                        "Class": "Triplex_DNA" if is_triplex else "Mirror_Repeat",
-                        "Subtype": "Triplex_Motif" if is_triplex else "Mirror_Repeat",
-                        "Start": mirror_start + 1,
-                        "End": mirror_end,
-                        "Length": len(full_seq),
-                        "Spacer": spacer,
-                        "Sequence": wrap(full_seq),
-                        "ScoreMethod": "Triplex_Homogeneity_raw",
-                        "Score": float(score),
-                        "PurineFrac": round(pur_frac, 3),
-                        "PyrimidineFrac": round(pyr_frac, 3),
-                        "Homogeneity": round(homogeneity, 3),
-                        "Arms/Repeat Unit/Copies": f"Arms={rep_len}",
-                        "Spacer": str(spacer)
-                    })
-                    # Mark these positions as used
-                    used_positions.update(current_positions)
+                results.append({
+                    "Sequence Name": "",
+                    "Class": "Triplex_DNA" if is_triplex else "Mirror_Repeat",
+                    "Subtype": "Triplex_Motif" if is_triplex else "Mirror_Repeat",
+                    "Start": mirror_start + 1,
+                    "End": mirror_end,
+                    "Length": len(full_seq),
+                    "Spacer": spacer,
+                    "Sequence": wrap(full_seq),
+                    "ScoreMethod": "Triplex_Homogeneity_raw",
+                    "Score": float(score),
+                    "PurineFrac": round(pur_frac, 3),
+                    "PyrimidineFrac": round(pyr_frac, 3),
+                    "Homogeneity": round(homogeneity, 3),
+                    "Arms/Repeat Unit/Copies": f"Arms={rep_len}",
+                    "Spacer": str(spacer)
+                })
     return results
 
 # =========================
