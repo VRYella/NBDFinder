@@ -534,7 +534,7 @@ with tab_pages["Upload & Analyze"]:
             "Z-DNA": "NM_001126112.2 (human ADAR1 gene)",
             "R-loop": "NR_024540.1 (human SNRPN gene)"
         }
-        with st.expander("Example Queries"):
+        with st.expander(""):
             for motif, example in motif_examples.items():
                 st.write(f"**{motif}**: `{example}`")
         query = st.text_input("Enter query (accession, gene, etc.):")
