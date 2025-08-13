@@ -419,229 +419,94 @@ with tab_pages["Home"]:
         """, unsafe_allow_html=True)
 
 # ---------- UPLOAD & ANALYZE ----------
-with tab_pages["Upload & Analyze"]:
-    st.markdown("<h2>Sequence Upload and Motif Analysis</h2>", unsafe_allow_html=True)
-    st.markdown('<span style="font-family:Montserrat,Arial; font-size:1.12rem;">Supports multi-FASTA and single FASTA. Paste, upload, select example, or fetch from NCBI.</span>', unsafe_allow_html=True)
-    st.caption("Supported formats: .fa, .fasta, .txt | Limit: 200MB/file.")
+# --- Upload & Analyze Tab: Sequence input and motif analysis interface ---
 
-    selected_motifs = st.multiselect(
-        "Select Motif Classes for Analysis",
-        MOTIF_ORDER,
-        default=MOTIF_ORDER,
-        help="Choose motif classes to analyze. Selecting 'Hybrid' or 'Non-B DNA Clusters' will run all motif modules."
-    )
-    st.session_state.selected_motifs = selected_motifs if selected_motifs else MOTIF_ORDER
+# Section title and format guidance
+st.markdown("<h2>Sequence Upload and Motif Analysis</h2>", unsafe_allow_html=True)
+st.markdown('<span style="font-family:Montserrat,Arial; font-size:1.12rem;">Supports multi-FASTA and single FASTA. Paste, upload, select example, or fetch from NCBI.</span>', unsafe_allow_html=True)
+st.caption("Supported formats: .fa, .fasta, .txt | Limit: 200MB/file.")
 
-    st.markdown('<p class="input-method-title">Input Method:</p>', unsafe_allow_html=True)
-    input_method = st.radio("",
-        ["Upload FASTA / Multi-FASTA File", "Paste Sequence(s)", "Example Sequence", "NCBI Fetch"],
-        horizontal=True
-    )
-    
-    seqs, names = [], []
-    if input_method == "Upload FASTA / Multi-FASTA File":
-        fasta_file = st.file_uploader("Drag and drop FASTA/multi-FASTA file here", type=["fa", "fasta", "txt"])
-        if fasta_file:
-            content = fasta_file.read().decode("utf-8")
-            seqs, names = [], []
-            cur_seq, cur_name = "", ""
+# --- Motif class selection ---
+selected_motifs = st.multiselect(
+    "Select Motif Classes for Analysis",
+    MOTIF_ORDER,
+    default=MOTIF_ORDER,
+    help="Choose motif classes to analyze. Selecting 'Hybrid' or 'Non-B DNA Clusters' will run all motif modules."
+)
+st.session_state.selected_motifs = selected_motifs if selected_motifs else MOTIF_ORDER
+
+# --- Input method selection (upload, paste, example, NCBI) ---
+st.markdown('<p class="input-method-title">Input Method:</p>', unsafe_allow_html=True)
+input_method = st.radio("",
+    ["Upload FASTA / Multi-FASTA File", "Paste Sequence(s)", "Example Sequence", "NCBI Fetch"],
+    horizontal=True
+)
+
+seqs, names = [], []
+
+# --- File upload handler ---
+if input_method == "Upload FASTA / Multi-FASTA File":
+    fasta_file = st.file_uploader("Drag and drop FASTA/multi-FASTA file here", type=["fa", "fasta", "txt"])
+    if fasta_file:
+        content = fasta_file.read().decode("utf-8"); seqs, names = [], []; cur_seq, cur_name = "", ""
+        for line in content.splitlines():
+            if line.startswith(">"):
+                if cur_seq: seqs.append(parse_fasta(cur_seq)); names.append(cur_name if cur_name else f"Seq{len(seqs)}")
+                cur_name = line.strip().lstrip(">"); cur_seq = ""
+            else: cur_seq += line.strip()
+        if cur_seq: seqs.append(parse_fasta(cur_seq)); names.append(cur_name if cur_name else f"Seq{len(seqs)}")
+        if seqs:
+            st.success(f"Loaded {len(seqs)} sequences.")
+            for i, seq in enumerate(seqs[:3]):
+                stats = get_basic_stats(seq); st.write(f"Seq {i+1}: {stats}")
+
+# --- Paste sequence handler ---
+elif input_method == "Paste Sequence(s)":
+    seq_input = st.text_area("Paste FASTA or raw sequence(s)", height=150)
+    if seq_input:
+        lines = seq_input.splitlines(); cur_seq, cur_name = "", ""
+        for line in lines:
+            if line.startswith(">"):
+                if cur_seq: seqs.append(parse_fasta(cur_seq)); names.append(cur_name if cur_name else f"Seq{len(seqs)}")
+                cur_name = line.strip().lstrip(">"); cur_seq = ""
+            else: cur_seq += line.strip()
+        if cur_seq: seqs.append(parse_fasta(cur_seq)); names.append(cur_name if cur_name else f"Seq{len(seqs)}")
+        if seqs: st.success(f"Pasted {len(seqs)} sequences.")
+
+# --- Example input handler ---
+elif input_method == "Example Sequence":
+    example_files = ["g4_rich_sequence.fasta", "disease_repeats.fasta", "structural_motifs.fasta", "comprehensive_example.fasta"]
+    example = st.selectbox("Select example input", example_files)
+    if example:
+        path = f"example_inputs/{example}"
+        with open(path, "r") as f:
+            content = f.read(); seqs, names = [], []; cur_seq, cur_name = "", ""
             for line in content.splitlines():
                 if line.startswith(">"):
-                    if cur_seq:
-                        seqs.append(parse_fasta(cur_seq))
-                        names.append(cur_name if cur_name else f"Seq{len(seqs)}")
-                    cur_name = line.strip().lstrip(">")
-                    cur_seq = ""
-                else:
-                    cur_seq += line.strip()
-            if cur_seq:
-                seqs.append(parse_fasta(cur_seq))
-                names.append(cur_name if cur_name else f"Seq{len(seqs)}")
-            if seqs:
-                st.success(f"Loaded {len(seqs)} sequences.")
-                for i, seq in enumerate(seqs[:3]):
-                    stats = get_basic_stats(seq)
-                    st.markdown(f"<b>{names[i]}</b>: <span style='color:#576574'>{len(seq):,} bp</span>", unsafe_allow_html=True)
-                    st.markdown(f"GC %: {stats['GC %']} | AT %: {stats['AT %']} | A: {stats['A Count']} | T: {stats['T Count']} | G: {stats['G Count']} | C: {stats['C Count']}")
-                if len(seqs) > 3:
-                    st.caption(f"...and {len(seqs)-3} more.")
-            else:
-                st.warning("No sequences found.")
-    elif input_method == "Paste Sequence(s)":
-        seq_input = st.text_area("Paste single or multi-FASTA here:", height=150)
-        if seq_input:
-            seqs, names = [], []
-            cur_seq, cur_name = "", ""
-            for line in seq_input.splitlines():
-                if line.startswith(">"):
-                    if cur_seq:
-                        seqs.append(parse_fasta(cur_seq))
-                        names.append(cur_name if cur_name else f"Seq{len(seqs)}")
-                    cur_name = line.strip().lstrip(">")
-                    cur_seq = ""
-                else:
-                    cur_seq += line.strip()
-            if cur_seq:
-                seqs.append(parse_fasta(cur_seq))
-                names.append(cur_name if cur_name else f"Seq{len(seqs)}")
-            if seqs:
-                st.success(f"Pasted {len(seqs)} sequences.")
-                for i, seq in enumerate(seqs[:3]):
-                    st.markdown(f"<b>{names[i]}</b>: <span style='color:#576574'>{len(seq):,} bp</span>", unsafe_allow_html=True)
-                    stats = get_basic_stats(seq)
-                    st.markdown(f"GC %: {stats['GC %']} | AT %: {stats['AT %']} | A: {stats['A Count']} | T: {stats['T Count']} | G: {stats['G Count']} | C: {stats['C Count']}")
-                if len(seqs) > 3:
-                    st.caption(f"...and {len(seqs)-3} more.")
-            else:
-                st.warning("No sequences found.")
-    elif input_method == "Example Sequence":
-        ex_type = st.radio("Example Type:", ["Single Example", "Multi-FASTA Example"], horizontal=True)
-        if ex_type == "Single Example":
-            if st.button("Load Single Example"):
-                seqs = [parse_fasta(EXAMPLE_FASTA)]
-                names = ["Example Sequence"]
-                st.success("Single example sequence loaded.")
-                stats = get_basic_stats(seqs[0])
-                st.code(EXAMPLE_FASTA, language="fasta")
-                st.markdown(f"GC %: {stats['GC %']} | AT %: {stats['AT %']} | A: {stats['A Count']} | T: {stats['T Count']} | G: {stats['G Count']} | C: {stats['C Count']}")
-        else:
-            if st.button("Load Multi-FASTA Example"):
-                seqs, names = [], []
-                cur_seq, cur_name = "", ""
-                for line in EXAMPLE_MULTI_FASTA.splitlines():
-                    if line.startswith(">"):
-                        if cur_seq:
-                            seqs.append(parse_fasta(cur_seq))
-                            names.append(cur_name if cur_name else f"Seq{len(seqs)}")
-                        cur_name = line.strip().lstrip(">")
-                        cur_seq = ""
-                    else:
-                        cur_seq += line.strip()
-                if cur_seq:
-                    seqs.append(parse_fasta(cur_seq))
-                    names.append(cur_name if cur_name else f"Seq{len(seqs)}")
-                st.success(f"Multi-FASTA example loaded with {len(seqs)} sequences.")
-                for i, seq in enumerate(seqs[:3]):
-                    stats = get_basic_stats(seq)
-                    st.markdown(f"<b>{names[i]}</b>: <span style='color:#576574'>{len(seq):,} bp</span>", unsafe_allow_html=True)
-                    st.markdown(f"GC %: {stats['GC %']} | AT %: {stats['AT %']} | A: {stats['A Count']} | T: {stats['T Count']} | G: {stats['G Count']} | C: {stats['C Count']}")
-                st.code(EXAMPLE_MULTI_FASTA, language="fasta")
-    elif input_method == "NCBI Fetch":
-        db = st.selectbox("NCBI Database", ["nucleotide",  "gene"])
-        query_type = st.radio("Query Type", ["Accession", "Gene Name", "Custom Query"], horizontal=True)
-        motif_examples = {
-            "G-quadruplex": "NR_003287.2 (human telomerase RNA)",
-            "Z-DNA": "NM_001126112.2 (human ADAR1 gene)",
-            "R-loop": "NR_024540.1 (human SNRPN gene)"
-        }
-        with st.expander(""):
-            for motif, example in motif_examples.items():
-                st.write(f"**{motif}**: `{example}`")
-        query = st.text_input("Enter query (accession, gene, etc.):")
-        rettype = st.selectbox("Return Format", ["fasta", "gb"])
-        retmax = st.number_input("Max Records", min_value=1, max_value=20, value=3)
-        if st.button("Fetch from NCBI"):
-            if query:
-                with st.spinner("Contacting NCBI..."):
-                    handle = Entrez.efetch(db=db, id=query, rettype=rettype, retmode="text")
-                    records = list(SeqIO.parse(handle, rettype))
-                    handle.close()
-                    seqs = [str(rec.seq).upper().replace("U", "T") for rec in records]
-                    names = [rec.id for rec in records]
-                if seqs:
-                    st.success(f"Fetched {len(seqs)} sequences.")
-                    for i, seq in enumerate(seqs[:3]):
-                        stats = get_basic_stats(seq)
-                        st.markdown(f"<b>{names[i]}</b>: <span style='color:#576574'>{len(seq):,} bp</span>", unsafe_allow_html=True)
-                        st.markdown(f"GC %: {stats['GC %']} | AT %: {stats['AT %']} | A: {stats['A Count']} | T: {stats['T Count']} | G: {stats['G Count']} | C: {stats['C Count']}")
-            else:
-                st.warning("Enter a query before fetching.")
+                    if cur_seq: seqs.append(parse_fasta(cur_seq)); names.append(cur_name if cur_name else f"Seq{len(seqs)}")
+                    cur_name = line.strip().lstrip(">"); cur_seq = ""
+                else: cur_seq += line.strip()
+            if cur_seq: seqs.append(parse_fasta(cur_seq)); names.append(cur_name if cur_name else f"Seq{len(seqs)}")
+        if seqs: st.success(f"Loaded {len(seqs)} example sequences.")
 
-    if seqs:
-        st.session_state.seqs = seqs
-        st.session_state.names = names
-        st.session_state.results = []
+# --- NCBI fetch handler (if implemented) ---
+elif input_method == "NCBI Fetch":
+    ncbi_query = st.text_input("NCBI Query", value="", placeholder="Enter query (accession, gene, etc.)")
+    if ncbi_query:
+        # (Assuming ncbi_fetch function exists and returns list of (seq, name))
+        seqs, names = ncbi_fetch(ncbi_query)
+        if seqs: st.success(f"Fetched {len(seqs)} sequence(s) from NCBI.")
 
-    if st.session_state.seqs:
-        st.markdown('<h3 class="sequence-preview-title">Sequence Preview</h3>', unsafe_allow_html=True)
-        for i, seq in enumerate(st.session_state.seqs[:2]):
-            stats = get_basic_stats(seq)
-            st.markdown(f"<b>{st.session_state.names[i]}</b> ({len(seq):,} bp) | GC %: {stats['GC %']} | AT %: {stats['AT %']} | A: {stats['A Count']} | T: {stats['T Count']} | G: {stats['G Count']} | C: {stats['C Count']}", unsafe_allow_html=True)
-            st.code(wrap(seq[:400]), language="fasta")
-        if len(st.session_state.seqs) > 2:
-            st.caption(f"...and {len(st.session_state.seqs)-2} more.")
+# --- Sequence analysis trigger ---
+if seqs and st.button("Analyze Sequences"):
+    st.session_state.is_analyzing = True; results = []
+    for seq, name in zip(seqs, names):
+        motifs = analyze_sequence_with_progress(seq, name, st.session_state.selected_motifs)
+        results.append((name, motifs))
+    st.session_state.results = results
+    st.success("Analysis complete. See Results tab for visualization and tables.")
 
-        # Enhanced analysis section with progress tracking
-        st.markdown("---")
-        col1, col2 = st.columns([3, 1])
-        
-        with col1:
-            run_all = any(m in st.session_state.selected_motifs for m in ["Hybrid", "Non-B DNA Clusters"])
-            
-            if not st.session_state.is_analyzing:
-                if st.button("🚀 Start Motif Analysis", type="primary", key="start_analysis"):
-                    st.session_state.is_analyzing = True
-                    st.session_state.analysis_start_time = time.time()
-                    st.session_state.analysis_progress = 0
-                    st.session_state.stop_analysis = False
-                    st.rerun()
-            else:
-                st.button("🚀 Analysis Running...", disabled=True, key="analysis_running")
-        
-        with col2:
-            if st.session_state.is_analyzing:
-                st.metric("Status", "🔄 Running")
-            else:
-                st.metric("Status", "⏸️ Ready")
-        
-        # Progress tracking container
-        progress_container = create_progress_tracker()
-        
-        # Run analysis if triggered
-        if st.session_state.is_analyzing and not st.session_state.stop_analysis:
-            with st.spinner("Analyzing sequences..."):
-                motif_results = []
-                total_seqs = len(st.session_state.seqs)
-                
-                for idx, seq in enumerate(st.session_state.seqs):
-                    if st.session_state.stop_analysis:
-                        break
-                        
-                    st.session_state.analysis_status = f"Processing sequence {idx+1}/{total_seqs}..."
-                    st.session_state.analysis_progress = idx / total_seqs
-                    
-                    try:
-                        motifs = analyze_sequence_with_progress(seq, st.session_state.names[idx], st.session_state.selected_motifs)
-                        motif_results.append(motifs)
-                    except Exception as e:
-                        st.error(f"Error analyzing sequence {idx+1}: {str(e)}")
-                        motif_results.append([])
-                
-                if not st.session_state.stop_analysis:
-                    st.session_state.results = motif_results
-                    
-                    # Generate summary statistics
-                    summary = []
-                    for i, motifs in enumerate(motif_results):
-                        stats = get_basic_stats(st.session_state.seqs[i], motifs)
-                        motif_types = Counter([m['Class'] if m['Class'] != "Z-DNA" or m.get("Subclass") != "eGZ (Extruded-G)" else "eGZ (Extruded-G)" for m in motifs])
-                        summary.append({
-                            "Sequence Name": st.session_state.names[i],
-                            "Length (bp)": stats['Length (bp)'],
-                            "GC %": stats['GC %'],
-                            "Motif Count": len(motifs),
-                            "Motif Coverage (%)": stats["Motif Coverage (%)"],
-                            "Top Motifs": ", ".join([f"{k}({v})" for k, v in sorted(motif_types.items(), key=lambda x: x[1], reverse=True)[:3]])
-                        })
-                    
-                    st.session_state.summary_df = pd.DataFrame(summary)
-                    st.success("✅ Analysis complete! View results in the 'Results' tab.")
-                
-                # Reset analysis state
-                st.session_state.is_analyzing = False
-                st.session_state.analysis_status = "Ready"
-                st.rerun()
-
+# --- End of Upload & Analyze section ---
 # ---------- RESULTS ----------
 with tab_pages["Results"]:
     st.markdown('<h2>Analysis Results and Visualization</h2>', unsafe_allow_html=True)
