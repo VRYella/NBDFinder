@@ -182,18 +182,60 @@ st.set_page_config(
 )
 
 # ---------- CONSTANTS ----------
-MOTIF_ORDER = [
-    "Sticky DNA","Curved DNA","Z-DNA","eGZ (Extruded-G)","Slipped DNA","R-Loop",
-    "Cruciform","Triplex DNA","G-Triplex","Canonical G4","Relaxed G4","Bulged G4","Bipartite G4",
-    "Multimeric G4","Imperfect G4","i-Motif","AC-Motif","Hybrid","Non-B DNA Clusters"
-]
+# Motifs organized by category and alphabetically within each category as per requirements
+MOTIF_CATEGORIES = {
+    "G-quadruplex-related": [
+        "Bipartite G4", "Bulged G4", "Canonical G4", "Imperfect G4", "Multimeric G4", "Relaxed G4"
+    ],
+    "G-Triplex": [
+        "G-Triplex"
+    ],
+    "i-motif related": [
+        "AC-Motif", "i-Motif"
+    ],
+    "Helix deviations": [
+        "Curved DNA", "eGZ (Extruded-G)", "Z-DNA"
+    ],
+    "Repeat/junction": [
+        "Cruciform", "R-Loop", "Slipped DNA", "Sticky DNA", "Triplex DNA"
+    ],
+    "Hybrid": [
+        "Hybrid"
+    ],
+    "Non-B DNA Clusters": [
+        "Non-B DNA Clusters"
+    ]
+}
+
+# Flatten categories to create alphabetical order within categories
+MOTIF_ORDER = []
+for category, motifs in MOTIF_CATEGORIES.items():
+    MOTIF_ORDER.extend(sorted(motifs))
+
+# Enhanced color scheme organized by categories
 MOTIF_COLORS = {
-    "Curved DNA": "#FF9AA2","Z-DNA": "#FFB7B2","eGZ (Extruded-G)": "#6A4C93",
-    "Slipped DNA": "#FFDAC1","R-Loop": "#FFD3B6","Cruciform": "#E2F0CB",
-    "Triplex DNA": "#B5EAD7","Sticky DNA": "#DCB8CB","G-Triplex": "#C7CEEA",
-    "Canonical G4": "#A2D7D8","Relaxed G4": "#A2D7B8","Bulged G4": "#A2A7D8",
-    "Bipartite G4": "#A2D788","Multimeric G4": "#A2A7B8","Imperfect G4": "#D8A2D7",
-    "i-Motif": "#B0C4DE","Hybrid": "#C1A192","Non-B DNA Clusters": "#A2C8CC","AC-Motif": "#F5B041"
+    # G-quadruplex-related (Blue-Green palette)
+    "Bipartite G4": "#4A90E2", "Bulged G4": "#5BA3F5", "Canonical G4": "#2E86AB",
+    "Imperfect G4": "#7BB3F0", "Multimeric G4": "#3A9BC1", "Relaxed G4": "#6FAADB",
+    
+    # G-Triplex (Purple palette)
+    "G-Triplex": "#8E44AD",
+    
+    # i-motif related (Orange-Red palette)
+    "AC-Motif": "#E67E22", "i-Motif": "#F39C12",
+    
+    # Helix deviations (Red-Pink palette)
+    "Curved DNA": "#E74C3C", "eGZ (Extruded-G)": "#C0392B", "Z-DNA": "#EC7063",
+    
+    # Repeat/junction (Green palette)
+    "Cruciform": "#27AE60", "R-Loop": "#2ECC71", "Slipped DNA": "#58D68D",
+    "Sticky DNA": "#52C41A", "Triplex DNA": "#85C1E9",
+    
+    # Hybrid (Brown palette)
+    "Hybrid": "#8D6E63",
+    
+    # Non-B DNA Clusters (Gray palette)
+    "Non-B DNA Clusters": "#607D8B"
 }
 PAGES = {
     "Home": "Overview",
@@ -205,25 +247,41 @@ PAGES = {
 Entrez.email = "raazbiochem@gmail.com"
 Entrez.api_key = None
 
-EXAMPLE_FASTA = """>Example Sequence
-ATCGATCGATCGAAAATTTTATTTAAATTTAAATTTGGGTTAGGGTTAGGGTTAGGGCCCCCTCCCCCTCCCCCTCCCC
-ATCGATCGCGCGCGCGATCGCACACACACAGCTGCTGCTGCTTGGGAAAGGGGAAGGGTTAGGGAAAGGGGTTT
-GGGTTTAGGGGGGAGGGGCTGCTGCTGCATGCGGGAAGGGAGGGTAGAGGGTCCGGTAGGAACCCCTAACCCCTAA
-GAAAGAAGAAGAAGAAGAAGAAAGGAAGGAAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGG
-CGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGC
-GAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAA
-CTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCT
-"""
-EXAMPLE_MULTI_FASTA = """>Seq1
-ATCGATCGATCGAAAATTTTATTTAAATTTAAATTTGGGTTAGGGTTAGGGTTAGGGCCCCCTCCCCCTCCCCCTCCCC
-ATCGATCGCGCGCGCGATCGCACACACACAGCTGCTGCTGCTTGGGAAAGGGGAAGGGTTAGGGAAAGGGGTTT
->Seq2
-GGGTTTAGGGGGGAGGGGCTGCTGCTGCATGCGGGAAGGGAGGGTAGAGGGTCCGGTAGGAACCCCTAACCCCTAA
-GAAAGAAGAAGAAGAAGAAGAAAGGAAGGAAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGG
->Seq3
-CGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGC
-GAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAA
-"""
+# Enhanced example sequences with specific Non-B DNA structures
+EXAMPLE_SEQUENCES = {
+    "Human Telomere G4-Rich": {
+        "name": "G4_Rich_Human_Telomere_Example", 
+        "sequence": "TTAGGGTTAGGGTTAGGGTTAGGGAAAAATCCGTCGAGCAGAGTTAAAAAGGGGTTAGGGTTAGGGTTAGGGCCCCCTCCCCCTCCCCCTCCCCGAAAGAAAGAAAGAAAGAAACGCGCGCGCGCGCGCGCGCGATCGCACACACACAGCTGCTGCTGC",
+        "description": "Human telomeric sequence rich in G-quadruplex structures"
+    },
+    "Z-DNA Forming Sequence": {
+        "name": "Z_DNA_Example_Sequence",
+        "sequence": "CGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTAC",
+        "description": "Alternating CG sequence capable of Z-DNA formation"
+    },
+    "Disease-Associated Repeats": {
+        "name": "Disease_Repeat_Motifs",
+        "sequence": "GAAGAAGAAGAAGAAGAAGAAGAAGAAGAAGAAGAAGAAGAAGAAGAAGAAGAAGAAGAACAGCAGCAGCAGCAGCAGCAGCAGCAGCAGCAGCAGCAGCAGCAGCAGCAGCAGCAGCAGCAGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTG",
+        "description": "GAA and CAG repeats associated with genetic diseases"
+    },
+    "Comprehensive Non-B DNA": {
+        "name": "Multi_Structure_Example",
+        "sequence": "GGGTTAGGGTTAGGGTTAGGGCCCCCTCCCCCTCCCCCTCCCCGCGCGCGCGCGCGCGCGCGCGCGAAAAATTTTTAAAAATTTTTAAAAATTTTTAAACAGCAGCAGCAGCAGCAGCAGCAGCTGCTGCTGCTGCTGCTGCTGCTGCGAAAGAAAGAAAGAAAG",
+        "description": "Sequence containing multiple Non-B DNA forming motifs"
+    }
+}
+
+# Famous genes/sequences known for Non-B DNA motifs  
+FAMOUS_NCBI_EXAMPLES = {
+    "Human TERT Promoter": "NC_000005.10:1253147-1295047",
+    "Human c-MYC Promoter": "NG_007161.1",
+    "Human BCL2 Promoter": "NG_009361.1", 
+    "Fragile X FMR1 Gene": "NG_007529.1",
+    "Huntington HTT Gene": "NG_009378.1",
+    "Human Immunoglobulin Switch": "NG_001019.6",
+    "Human Alpha Globin": "NG_000006.1",
+    "Friedreich Ataxia FXN": "NG_008845.1"
+}
 
 for k, v in {
     'seqs': [],
@@ -462,10 +520,44 @@ with tab_pages["Upload & Analyze"]:
     st.markdown('<span style="font-family:Montserrat,Arial; font-size:1.12rem;">Supports multi-FASTA and single FASTA. Paste, upload, select example, or fetch from NCBI.</span>', unsafe_allow_html=True)
     st.caption("Supported formats: .fa, .fasta, .txt | Limit: 200MB/file.")
 
-    # Motif class selection
+    # Enhanced Motif class selection with categories
+    st.markdown('<p style="font-size:1.1rem; font-weight:600; color:#1f4e79; margin-bottom:0.5rem;">🧬 Select Motif Classes for Analysis</p>', unsafe_allow_html=True)
+    
+    # Display categories as expandable sections
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("**G-quadruplex & Triplex Structures:**")
+        gquad_motifs = MOTIF_CATEGORIES["G-quadruplex-related"] + MOTIF_CATEGORIES["G-Triplex"]
+        
+        st.markdown("**i-motif Structures:**")
+        imotif_motifs = MOTIF_CATEGORIES["i-motif related"]
+        
+        st.markdown("**Helix Deviations:**")
+        helix_motifs = MOTIF_CATEGORIES["Helix deviations"]
+        
+    with col2:
+        st.markdown("**Repeat & Junction Structures:**")
+        repeat_motifs = MOTIF_CATEGORIES["Repeat/junction"]
+        
+        st.markdown("**Advanced Analysis:**")
+        advanced_motifs = MOTIF_CATEGORIES["Hybrid"] + MOTIF_CATEGORIES["Non-B DNA Clusters"]
+    
+    # Main multiselect with organized options
     selected_motifs = st.multiselect(
-        "Select Motif Classes for Analysis", MOTIF_ORDER, default=MOTIF_ORDER,
-        help="Choose motif classes to analyze. Selecting 'Hybrid' or 'Non-B DNA Clusters' will run all motif modules."
+        "📋 Select specific motif classes:", 
+        MOTIF_ORDER, 
+        default=MOTIF_ORDER,
+        help="""
+        **Motif Categories:**
+        🔷 **G-quadruplex-related**: Canonical G4, Relaxed G4, Bulged G4, Bipartite G4, Multimeric G4, Imperfect G4
+        🟣 **G-Triplex**: Three-stranded DNA structures
+        🟠 **i-motif related**: Canonical i-Motif, AC-motif
+        🔴 **Helix deviations**: Z-DNA, eGZ (Extruded-G), Curved DNA
+        🟢 **Repeat/junction**: Slipped DNA, Cruciform, Sticky DNA, Triplex DNA, R-Loop
+        🟤 **Hybrid**: Combinations of overlapping motifs
+        ⚫ **Non-B DNA Clusters**: Hotspots of multiple structures
+        """
     )
     st.session_state.selected_motifs = selected_motifs if selected_motifs else MOTIF_ORDER
 
@@ -521,44 +613,78 @@ with tab_pages["Upload & Analyze"]:
                 st.success(f"Pasted {len(seqs)} sequences.")
 
     # --- Example input ---
+    # --- Example sequences (load as sequence, not file) ---
     elif input_method == "Example Sequence":
-        examples = ["g4_rich_sequence.fasta", "disease_repeats.fasta", "structural_motifs.fasta", "comprehensive_example.fasta"]
-        example = st.selectbox("Select example input", examples)
-        if example:
-            path = f"example_inputs/{example}"
-            try:
-                with open(path, "r") as f:
-                    content = f.read()
-                    cur_seq, cur_name = "", ""
-                    for line in content.splitlines():
-                        if line.startswith(">"):
-                            if cur_seq:
-                                seqs.append(parse_fasta(cur_seq))
-                                names.append(cur_name if cur_name else f"Seq{len(seqs)}")
-                            cur_name = line.strip().lstrip(">")
-                            cur_seq = ""
-                        else:
-                            cur_seq += line.strip()
-                    if cur_seq:
-                        seqs.append(parse_fasta(cur_seq))
-                        names.append(cur_name if cur_name else f"Seq{len(seqs)}")
-                if seqs:
-                    st.success(f"Loaded {len(seqs)} example sequences.")
-            except FileNotFoundError:
-                st.warning(f"Example file {example} not found. Using built-in example sequence.")
-                seqs = [EXAMPLE_FASTA.split('\n', 1)[1].replace('\n', '')]
-                names = ["Example Sequence"]
+        st.markdown("**🧪 Choose from curated Non-B DNA examples:**")
+        
+        # Display example options with descriptions
+        example_choices = list(EXAMPLE_SEQUENCES.keys())
+        
+        selected_example = st.selectbox(
+            "Select example sequence:",
+            options=example_choices,
+            format_func=lambda x: f"{x} - {EXAMPLE_SEQUENCES[x]['description']}"
+        )
+        
+        if selected_example:
+            example_data = EXAMPLE_SEQUENCES[selected_example]
+            seqs = [example_data["sequence"]]
+            names = [example_data["name"]]
+            
+            # Show sequence preview
+            with st.expander("📄 Preview Selected Sequence"):
+                st.text(f"Name: {example_data['name']}")
+                st.text(f"Length: {len(example_data['sequence'])} bp")
+                st.text(f"Description: {example_data['description']}")
+                st.code(wrap(example_data["sequence"], 80), language='text')
+            
+            st.success(f"✅ Loaded: {example_data['name']} ({len(example_data['sequence'])} bp)")
 
-    # --- NCBI Query input ---
+    # --- Enhanced NCBI Query with famous examples ---
     elif input_method == "NCBI Fetch":
-        ncbi_query = st.text_input("NCBI Query", value="", placeholder="Enter query (accession, gene, etc.)")
+        st.markdown("**🔬 Fetch sequences from NCBI database:**")
+        
+        # Show famous examples
+        with st.expander("💡 Famous genes/sequences with Non-B DNA motifs"):
+            st.markdown("**Click to copy accession numbers:**")
+            cols = st.columns(2)
+            with cols[0]:
+                for i, (gene, accession) in enumerate(list(FAMOUS_NCBI_EXAMPLES.items())[:4]):
+                    if st.button(f"📋 {gene}", key=f"copy_{i}"):
+                        st.session_state.ncbi_query = accession
+                        
+            with cols[1]:
+                for i, (gene, accession) in enumerate(list(FAMOUS_NCBI_EXAMPLES.items())[4:]):
+                    if st.button(f"📋 {gene}", key=f"copy_{i+4}"):
+                        st.session_state.ncbi_query = accession
+        
+        # NCBI query input
+        ncbi_query = st.text_input(
+            "Enter NCBI Query:", 
+            value=st.session_state.get('ncbi_query', ''),
+            placeholder="Gene name, accession number, or search term",
+            help="Examples: BRCA1, NM_007294.3, 'human telomerase'"
+        )
+        
         if ncbi_query:
-            try:
-                seqs, names = ncbi_fetch(ncbi_query)
-                if seqs:
-                    st.success(f"Fetched {len(seqs)} sequence(s) from NCBI.")
-            except Exception as e:
-                st.error(f"NCBI fetch failed: {e}")
+            if st.button("🔍 Fetch from NCBI"):
+                with st.spinner("Fetching sequences from NCBI..."):
+                    try:
+                        seqs, names = ncbi_fetch(ncbi_query)
+                        if seqs:
+                            st.success(f"✅ Fetched {len(seqs)} sequence(s) from NCBI.")
+                            # Show preview of fetched sequences
+                            with st.expander("📄 Preview Fetched Sequences"):
+                                for i, (seq, name) in enumerate(zip(seqs[:3], names[:3])):  # Show first 3
+                                    st.text(f"{i+1}. {name} ({len(seq)} bp)")
+                                    st.code(wrap(seq[:200], 80) + ("..." if len(seq) > 200 else ""), language='text')
+                                if len(seqs) > 3:
+                                    st.info(f"... and {len(seqs)-3} more sequences")
+                        else:
+                            st.warning("No sequences found for this query.")
+                    except Exception as e:
+                        st.error(f"NCBI fetch failed: {str(e)}")
+                        st.info("Try a different query or check your internet connection.")
 
     # --- Analysis trigger ---
     if seqs and st.button("Analyze Sequences"):
@@ -877,14 +1003,32 @@ with tab_pages["Download"]:
             cols = ['S.No'] + [col for col in cols if col != 'S.No']
             df_all = df_all[cols]
         
-        st.markdown("### 📥 Complete Results Table with Scoring Information")
+        st.markdown("### 📥 Complete Results Table with Scientific Scoring Information")
         st.markdown("""
-        <div style='background:#f0f8ff; padding:12px; border-radius:8px; margin-bottom:15px; border-left:4px solid #1565c0;'>
-        <b>Scoring Significance:</b><br>
-        • <b>High confidence:</b> Scores above established thresholds indicate strong structural likelihood<br>
-        • <b>Moderate confidence:</b> Scores at minimum thresholds suggest possible structural formation<br>
-        • <b>Low confidence:</b> Scores below minimum thresholds indicate weaker predictions<br>
-        • <b>Minimum Score Threshold:</b> Shows the lowest score considered reliable for each motif type
+        <div style='background:#f8fffe; padding:15px; border-radius:10px; margin-bottom:20px; border-left:5px solid #2e7d32;'>
+        <h4 style='color:#2e7d32; margin-top:0;'>🔬 Scientific Scoring Methodology</h4>
+        
+        <p><b>NBDFinder employs established scoring systems for accurate Non-B DNA prediction:</b></p>
+        
+        <ul>
+        <li><b>G-Quadruplex Motifs:</b> G4Hunter algorithm (Bedrat et al., 2016) with structural factors. 
+            Scores >1.0 indicate high G4 formation potential.</li>
+        <li><b>Z-DNA Motifs:</b> Modified Z-Hunt/ZhuntLSC approach based on dinucleotide propensities 
+            (Ho et al., 1986; Schroth et al., 1992). Scores >50 suggest Z-DNA formation.</li>
+        <li><b>i-Motif Structures:</b> Cytosine run analysis with loop constraints based on pH-dependent stability 
+            (Day et al., 2014; Wright et al., 2020).</li>
+        <li><b>Curved DNA:</b> Curvature propensity scoring using An/Tn tract positioning 
+            (Bolshoy et al., 1991; Gabrielian & Pongor, 1996).</li>
+        <li><b>Repeat Elements:</b> Pattern matching with biological constraints based on disease-associated sequences 
+            (Mirkin, 2007; Wells, 2007).</li>
+        </ul>
+        
+        <p><b>Confidence Levels:</b></p>
+        <ul>
+        <li><span style='color:#d32f2f;'><b>High Confidence:</b></span> Scores exceed established experimental thresholds</li>
+        <li><span style='color:#f57c00;'><b>Moderate Confidence:</b></span> Scores meet minimum formation thresholds</li>
+        <li><span style='color:#1976d2;'><b>Low Confidence:</b></span> Predicted but below optimal formation conditions</li>
+        </ul>
         </div>
         """, unsafe_allow_html=True)
         
