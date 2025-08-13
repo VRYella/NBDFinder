@@ -212,30 +212,15 @@ MOTIF_ORDER = []
 for category, motifs in MOTIF_CATEGORIES.items():
     MOTIF_ORDER.extend(sorted(motifs))
 
-# Enhanced color scheme organized by categories
+# Enhanced color scheme from the reference implementation
 MOTIF_COLORS = {
-    # G-quadruplex-related (Blue-Green palette)
-    "Bipartite G4": "#4A90E2", "Bulged G4": "#5BA3F5", "Canonical G4": "#2E86AB",
-    "Imperfect G4": "#7BB3F0", "Multimeric G4": "#3A9BC1", "Relaxed G4": "#6FAADB",
-    
-    # G-Triplex (Purple palette)
-    "G-Triplex": "#8E44AD",
-    
-    # i-motif related (Orange-Red palette)
-    "AC-Motif": "#E67E22", "i-Motif": "#F39C12",
-    
-    # Helix deviations (Red-Pink palette)
-    "Curved DNA": "#E74C3C", "eGZ (Extruded-G)": "#C0392B", "Z-DNA": "#EC7063",
-    
-    # Repeat/junction (Green palette)
-    "Cruciform": "#27AE60", "R-Loop": "#2ECC71", "Slipped DNA": "#58D68D",
-    "Sticky DNA": "#52C41A", "Triplex DNA": "#85C1E9",
-    
-    # Hybrid (Brown palette)
-    "Hybrid": "#8D6E63",
-    
-    # Non-B DNA Clusters (Gray palette)
-    "Non-B DNA Clusters": "#607D8B"
+    "Curved DNA": "#FF9AA2", "Z-DNA": "#FFB7B2", "eGZ (Extruded-G)": "#6A4C93",
+    "Slipped DNA": "#FFDAC1", "R-Loop": "#FFD3B6", "Cruciform": "#E2F0CB",
+    "Triplex DNA": "#B5EAD7", "Sticky DNA": "#DCB8CB", "G-Triplex": "#C7CEEA",
+    "Canonical G4": "#A2D7D8", "Relaxed G4": "#A2D7B8", "Bulged G4": "#A2A7D8",
+    "Bipartite G4": "#A2D788", "Multimeric G4": "#A2A7B8", "Imperfect G4": "#A2D7C8", 
+    "i-Motif": "#B0C4DE", "Hybrid": "#C1A192", "Non-B DNA Clusters": "#A2C8CC", 
+    "AC-Motif": "#F5B041"
 }
 PAGES = {
     "Home": "Overview",
@@ -246,6 +231,28 @@ PAGES = {
 }
 Entrez.email = "raazbiochem@gmail.com"
 Entrez.api_key = None
+
+# Example sequences from reference implementation
+EXAMPLE_FASTA = """>Example Sequence
+ATCGATCGATCGAAAATTTTATTTAAATTTAAATTTGGGTTAGGGTTAGGGTTAGGGCCCCCTCCCCCTCCCCCTCCCC
+ATCGATCGCGCGCGCGATCGCACACACACAGCTGCTGCTGCTTGGGAAAGGGGAAGGGTTAGGGAAAGGGGTTT
+GGGTTTAGGGGGGAGGGGCTGCTGCTGCATGCGGGAAGGGAGGGTAGAGGGTCCGGTAGGAACCCCTAACCCCTAA
+GAAAGAAGAAGAAGAAGAAGAAAGGAAGGAAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGG
+CGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGC
+GAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAA
+CTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCTCT
+"""
+
+EXAMPLE_MULTI_FASTA = """>Seq1
+ATCGATCGATCGAAAATTTTATTTAAATTTAAATTTGGGTTAGGGTTAGGGTTAGGGCCCCCTCCCCCTCCCCCTCCCC
+ATCGATCGCGCGCGCGATCGCACACACACAGCTGCTGCTGCTTGGGAAAGGGGAAGGGTTAGGGAAAGGGGTTT
+>Seq2
+GGGTTTAGGGGGGAGGGGCTGCTGCTGCATGCGGGAAGGGAGGGTAGAGGGTCCGGTAGGAACCCCTAACCCCTAA
+GAAAGAAGAAGAAGAAGAAGAAAGGAAGGAAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGG
+>Seq3
+CGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGC
+GAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAA
+"""
 
 # Enhanced example sequences with specific Non-B DNA structures
 EXAMPLE_SEQUENCES = {

@@ -1035,59 +1035,37 @@ def find_gtriplex(seq):
 # Reference: Zeraati et al. (2018) Nat Chem; Abou Assi et al. (2018) NAR
 # Algorithm: Advanced scoring with C-run analysis and loop optimization
 
-def advanced_imotif_score(seq):
+def imotif_score(seq):
     """
-    Advanced i-Motif scoring: sum of C-run sizes + compact loop bonuses + C-fraction term,
-    scaling by motif length for comparability. Penalizes long loops and interruptions.
+    G4Hunter-style scoring for i-Motifs: C vs G bias calculation similar to G4Hunter.
+    
+    Scientific Basis: i-Motifs are C-rich structures complementary to G-quadruplexes.
+    This scoring system mirrors G4Hunter but for C-rich sequences.
+    Reference: Zeraati et al. (2018) Nat Chem; G4Hunter methodology adapted for i-motifs
+    
+    Parameters:
+    seq (str): DNA sequence to score
+    
+    Returns:
+    float: i-Motif Hunter mean score (C vs G bias, negative values indicate i-motif propensity)
     """
-    if len(seq) == 0:
-        return 0.0
-    
-    # Find all C-runs of length 3 or more
-    c_runs = [len(r) for r in re.findall(r"C{3,}", seq)]
-    
-    if len(c_runs) < 4:  # Need at least 4 C-runs for canonical i-motif
-        return 0.0
-    
-    # Core component: sum of C-run sizes
-    c_run_sum = sum(c_runs)
-    
-    # C-fraction term scaled by length
-    c_fraction = seq.count('C') / len(seq)
-    c_fraction_term = c_fraction * len(seq) * 0.5
-    
-    # Loop analysis for compact loop bonuses
-    c_run_spans = [match.span() for match in re.finditer(r"C{3,}", seq)]
-    loops = []
-    for i in range(len(c_run_spans)-1):
-        loop_start = c_run_spans[i][1]
-        loop_end = c_run_spans[i+1][0]
-        loop_length = loop_end - loop_start
-        loops.append(loop_length)
-    
-    # Compact loop bonus (1-7nt loops) with penalty for long loops
-    loop_bonus = 0.0
-    if loops:
-        for loop_len in loops:
-            if 1 <= loop_len <= 7:  # Canonical loop length
-                loop_bonus += 3.0 / (loop_len + 1)  # Shorter loops get higher bonus
-            else:
-                loop_bonus -= 0.5 * (loop_len - 7)  # Penalty for long loops
-    else:
-        loop_bonus = 0.5  # Default bonus when no clear loops detected
-    
-    # Final score: C-run sum + C-fraction term + compact loop bonus
-    score = c_run_sum + c_fraction_term + loop_bonus
-    
-    return max(0.0, score)
+    scores = []
+    for c in seq.upper():
+        if c == 'C':
+            scores.append(1)  # C contributes positively to i-motif formation
+        elif c == 'G':
+            scores.append(-1)  # G opposes i-motif formation
+        else:
+            scores.append(0)  # A and T are neutral
+    return np.mean(scores) if scores else 0.0
 
 def find_imotif(seq):
     results = []
     pattern = r"(?=(C{3,}\w{1,12}C{3,}\w{1,12}C{3,}\w{1,12}C{3,}))"
     for m in overlapping_finditer(pattern, seq):
         motif_seq = m.group(1)
-        score = advanced_imotif_score(motif_seq)
-        if score > 0:
+        im_score = imotif_score(motif_seq)
+        if im_score >= 0.4:  # Threshold for i-motif propensity (positive C bias)
             # Analyze loop lengths for subtype classification
             c_run_spans = [match.span() for match in re.finditer(r"C{3,}", motif_seq)]
             loops = []
@@ -1104,6 +1082,9 @@ def find_imotif(seq):
             else:
                 subtype = "Other_iMotif"
             
+            # Calculate composite score: iM_score × length (similar to G4Hunter approach)
+            composite_score = im_score * len(motif_seq)
+            
             # Additional scoring details
             c_runs = [len(r) for r in re.findall(r"C{3,}", motif_seq)]
             c_fraction = motif_seq.count('C') / len(motif_seq)
@@ -1116,8 +1097,9 @@ def find_imotif(seq):
                 "End": m.start() + len(motif_seq),
                 "Length": len(motif_seq),
                 "Sequence": wrap(motif_seq),
-                "ScoreMethod": "iM_advanced_raw",
-                "Score": float(score),
+                "ScoreMethod": "iM_G4HunterStyle_raw",
+                "Score": float(composite_score),
+                "iMotif_Mean": float(im_score),
                 "C_Run_Count": len(c_runs),
                 "C_Run_Sum": sum(c_runs) if c_runs else 0,
                 "C_Fraction": round(c_fraction, 3),
@@ -1135,42 +1117,88 @@ def find_imotif(seq):
 # Reference: Kocsis et al. (2021) Int J Mol Sci; Varizhuk et al. (2019) Biochimie  
 # Algorithm: Pattern matching with boundary and C3-run emphasis scoring
 
+def ac_motif_score(seq):
+    """
+    Enhanced AC-motif scoring using alternating A/C bias analysis.
+    
+    Scientific Basis: AC-motifs show alternating purine-pyrimidine patterns that can
+    form non-canonical structures. Score based on A/C alternation and structural potential.
+    Reference: Kocsis et al. (2021) Int J Mol Sci; AC-motif structural analysis
+    
+    Parameters:
+    seq (str): DNA sequence to score
+    
+    Returns:
+    float: AC-motif propensity score
+    """
+    if len(seq) == 0:
+        return 0.0
+    
+    # Count A and C runs of length 3+
+    a3_runs = len(re.findall(r"A{3,}", seq))
+    c3_runs = len(re.findall(r"C{3,}", seq))
+    
+    # Calculate A/C fraction
+    ac_fraction = (seq.count('A') + seq.count('C')) / len(seq)
+    
+    # Boundary bonus for proper AC-motif structure
+    boundary_score = 0
+    if seq.startswith('AAA'):
+        boundary_score += 2
+    if seq.endswith('CCC') or seq.endswith('AAA'):
+        boundary_score += 2
+    
+    # Alternation pattern bonus - check for spacing between A3 and C3 runs
+    alternation_bonus = 0
+    if a3_runs >= 1 and c3_runs >= 3:  # Canonical AC-motif pattern
+        alternation_bonus = min(a3_runs, c3_runs) * 1.5
+    
+    # Final score: length-normalized AC content + structural bonuses
+    score = (len(seq) * ac_fraction * 0.5) + boundary_score + alternation_bonus + (a3_runs + c3_runs) * 2
+    
+    return score
+
 def find_ac_motifs(seq):
     pattern = re.compile(
-        r"(?=(?:A{3}[ACGT]{4,6}C{3}[ACGT]{4,6}C{3}[ACGT]{4,6}C{3}|"
-        r"C{3}[ACGT]{4,6}C{3}[ACGT]{4,6}C{3}[ACGT]{4,6}A{3}))",
+        r"(A{3}[ACGT]{4,6}C{3}[ACGT]{4,6}C{3}[ACGT]{4,6}C{3}|"
+        r"C{3}[ACGT]{4,6}C{3}[ACGT]{4,6}C{3}[ACGT]{4,6}A{3})",
         re.IGNORECASE
     )
     results = []
     for m in pattern.finditer(seq):
         motif_seq = m.group(0).upper()
-        # Enhanced scoring: length + boundary_bonus + C3_run_emphasis
-        # Privileges proper boundaries and multiple C3 runs
-        boundary_bonus = 0
-        if motif_seq.startswith('AAA'):
-            boundary_bonus += 3
-        if motif_seq.endswith('AAA') or motif_seq.endswith('CCC'):
-            boundary_bonus += 3
+        if len(motif_seq) == 0:  # Safety check
+            continue
             
-        c3_runs = len(re.findall(r"C{3}", motif_seq))
-        a3_runs = len(re.findall(r"A{3}", motif_seq))
+        score = ac_motif_score(motif_seq)
         
-        score = len(motif_seq) + boundary_bonus + 2.0*c3_runs + 1.5*a3_runs
+        # Calculate detailed metrics
+        a3_runs = len(re.findall(r"A{3,}", motif_seq))
+        c3_runs = len(re.findall(r"C{3,}", motif_seq))
+        ac_fraction = (motif_seq.count('A') + motif_seq.count('C')) / len(motif_seq)
+        
+        # Determine subtype based on structure
+        if motif_seq.startswith('AAA') and c3_runs >= 3:
+            subtype = "A3-C3_Consensus"
+        elif motif_seq.startswith('CCC') and a3_runs >= 1:
+            subtype = "C3-A3_Consensus"
+        else:
+            subtype = "AC_Variant"
         
         results.append({
             "Sequence Name": "",
             "Class": "AC-Motif",
-            "Subtype": "Consensus",
+            "Subtype": subtype,
             "Start": m.start() + 1,
-            "End": m.start() + len(motif_seq),
+            "End": m.end(),
             "Length": len(motif_seq),
             "Sequence": wrap(motif_seq),
-            "ScoreMethod": "AC_Boundary_raw",
+            "ScoreMethod": "AC_StructuralAnalysis_raw",
             "Score": float(score),
-            "Boundary_Bonus": boundary_bonus,
-            "C3_Runs": c3_runs,
+            "AC_Fraction": round(ac_fraction, 3),
             "A3_Runs": a3_runs,
-            "Arms/Repeat Unit/Copies": "",
+            "C3_Runs": c3_runs,
+            "Arms/Repeat Unit/Copies": f"A3={a3_runs};C3={c3_runs}",
             "Spacer": ""
         })
     return results
