@@ -421,91 +421,85 @@ with tab_pages["Home"]:
 # ---------- UPLOAD & ANALYZE ----------
 # --- Upload & Analyze Tab: Sequence input and motif analysis interface ---
 
-# Section title and format guidance
-st.markdown("<h2>Sequence Upload and Motif Analysis</h2>", unsafe_allow_html=True)
-st.markdown('<span style="font-family:Montserrat,Arial; font-size:1.12rem;">Supports multi-FASTA and single FASTA. Paste, upload, select example, or fetch from NCBI.</span>', unsafe_allow_html=True)
-st.caption("Supported formats: .fa, .fasta, .txt | Limit: 200MB/file.")
+# Section header and format instructions
+st.markdown("<h2>Sequence Upload and Motif Analysis</h2>", unsafe_allow_html=True); 
+st.markdown('<span style="font-family:Montserrat,Arial; font-size:1.12rem;">Supports multi-FASTA and single FASTA. Paste, upload, select example, or fetch from NCBI.</span>', unsafe_allow_html=True); 
+st.caption("Supported formats: .fa, .fasta, .txt | Limit: 200MB/file.");
 
-# --- Motif class selection ---
+# Motif class selection
 selected_motifs = st.multiselect(
-    "Select Motif Classes for Analysis",
-    MOTIF_ORDER,
-    default=MOTIF_ORDER,
+    "Select Motif Classes for Analysis", MOTIF_ORDER, default=MOTIF_ORDER,
     help="Choose motif classes to analyze. Selecting 'Hybrid' or 'Non-B DNA Clusters' will run all motif modules."
-)
-st.session_state.selected_motifs = selected_motifs if selected_motifs else MOTIF_ORDER
+); st.session_state.selected_motifs = selected_motifs if selected_motifs else MOTIF_ORDER;
 
-# --- Input method selection (upload, paste, example, NCBI) ---
-st.markdown('<p class="input-method-title">Input Method:</p>', unsafe_allow_html=True)
-input_method = st.radio("",
-    ["Upload FASTA / Multi-FASTA File", "Paste Sequence(s)", "Example Sequence", "NCBI Fetch"],
-    horizontal=True
-)
+# Input method selection
+st.markdown('<p class="input-method-title">Input Method:</p>', unsafe_allow_html=True);
+input_method = st.radio("", ["Upload FASTA / Multi-FASTA File", "Paste Sequence(s)", "Example Sequence", "NCBI Fetch"], horizontal=True);
 
-seqs, names = [], []
+seqs, names = [], [];
 
-# --- File upload handler ---
+# --- File upload ---
 if input_method == "Upload FASTA / Multi-FASTA File":
-    fasta_file = st.file_uploader("Drag and drop FASTA/multi-FASTA file here", type=["fa", "fasta", "txt"])
+    fasta_file = st.file_uploader("Drag and drop FASTA/multi-FASTA file here", type=["fa", "fasta", "txt"]);
     if fasta_file:
-        content = fasta_file.read().decode("utf-8"); seqs, names = [], []; cur_seq, cur_name = "", ""
+        content = fasta_file.read().decode("utf-8"); cur_seq, cur_name = "", "";
         for line in content.splitlines():
             if line.startswith(">"):
-                if cur_seq: seqs.append(parse_fasta(cur_seq)); names.append(cur_name if cur_name else f"Seq{len(seqs)}")
-                cur_name = line.strip().lstrip(">"); cur_seq = ""
-            else: cur_seq += line.strip()
-        if cur_seq: seqs.append(parse_fasta(cur_seq)); names.append(cur_name if cur_name else f"Seq{len(seqs)}")
+                if cur_seq: seqs.append(parse_fasta(cur_seq)); names.append(cur_name if cur_name else f"Seq{len(seqs)}");
+                cur_name = line.strip().lstrip(">"); cur_seq = "";
+            else: cur_seq += line.strip();
+        if cur_seq: seqs.append(parse_fasta(cur_seq)); names.append(cur_name if cur_name else f"Seq{len(seqs)}");
         if seqs:
-            st.success(f"Loaded {len(seqs)} sequences.")
+            st.success(f"Loaded {len(seqs)} sequences."); 
             for i, seq in enumerate(seqs[:3]):
-                stats = get_basic_stats(seq); st.write(f"Seq {i+1}: {stats}")
+                stats = get_basic_stats(seq); st.write(f"Seq {i+1}: {stats}");
 
-# --- Paste sequence handler ---
+# --- Paste sequence ---
 elif input_method == "Paste Sequence(s)":
-    seq_input = st.text_area("Paste FASTA or raw sequence(s)", height=150)
+    seq_input = st.text_area("Paste FASTA or raw sequence(s)", height=150);
     if seq_input:
-        lines = seq_input.splitlines(); cur_seq, cur_name = "", ""
+        lines = seq_input.splitlines(); cur_seq, cur_name = "", "";
         for line in lines:
             if line.startswith(">"):
-                if cur_seq: seqs.append(parse_fasta(cur_seq)); names.append(cur_name if cur_name else f"Seq{len(seqs)}")
-                cur_name = line.strip().lstrip(">"); cur_seq = ""
-            else: cur_seq += line.strip()
-        if cur_seq: seqs.append(parse_fasta(cur_seq)); names.append(cur_name if cur_name else f"Seq{len(seqs)}")
-        if seqs: st.success(f"Pasted {len(seqs)} sequences.")
+                if cur_seq: seqs.append(parse_fasta(cur_seq)); names.append(cur_name if cur_name else f"Seq{len(seqs)}");
+                cur_name = line.strip().lstrip(">"); cur_seq = "";
+            else: cur_seq += line.strip();
+        if cur_seq: seqs.append(parse_fasta(cur_seq)); names.append(cur_name if cur_name else f"Seq{len(seqs)}");
+        if seqs: st.success(f"Pasted {len(seqs)} sequences.");
 
-# --- Example input handler ---
+# --- Example input ---
 elif input_method == "Example Sequence":
-    example_files = ["g4_rich_sequence.fasta", "disease_repeats.fasta", "structural_motifs.fasta", "comprehensive_example.fasta"]
-    example = st.selectbox("Select example input", example_files)
+    examples = ["g4_rich_sequence.fasta", "disease_repeats.fasta", "structural_motifs.fasta", "comprehensive_example.fasta"];
+    example = st.selectbox("Select example input", examples);
     if example:
-        path = f"example_inputs/{example}"
+        path = f"example_inputs/{example}";
         with open(path, "r") as f:
-            content = f.read(); seqs, names = [], []; cur_seq, cur_name = "", ""
+            content = f.read(); cur_seq, cur_name = "", "";
             for line in content.splitlines():
                 if line.startswith(">"):
-                    if cur_seq: seqs.append(parse_fasta(cur_seq)); names.append(cur_name if cur_name else f"Seq{len(seqs)}")
-                    cur_name = line.strip().lstrip(">"); cur_seq = ""
-                else: cur_seq += line.strip()
-            if cur_seq: seqs.append(parse_fasta(cur_seq)); names.append(cur_name if cur_name else f"Seq{len(seqs)}")
-        if seqs: st.success(f"Loaded {len(seqs)} example sequences.")
+                    if cur_seq: seqs.append(parse_fasta(cur_seq)); names.append(cur_name if cur_name else f"Seq{len(seqs)}");
+                    cur_name = line.strip().lstrip(">"); cur_seq = "";
+                else: cur_seq += line.strip();
+            if cur_seq: seqs.append(parse_fasta(cur_seq)); names.append(cur_name if cur_name else f"Seq{len(seqs)}");
+        if seqs: st.success(f"Loaded {len(seqs)} example sequences.");
 
-# --- NCBI fetch handler (if implemented) ---
+# --- NCBI Query input (improved placeholder, retains features) ---
 elif input_method == "NCBI Fetch":
-    ncbi_query = st.text_input("NCBI Query", value="", placeholder="Enter query (accession, gene, etc.)")
+    ncbi_query = st.text_input("NCBI Query", value="", placeholder="Enter query (accession, gene, etc.)"); # Transparent example
     if ncbi_query:
-        # (Assuming ncbi_fetch function exists and returns list of (seq, name))
-        seqs, names = ncbi_fetch(ncbi_query)
-        if seqs: st.success(f"Fetched {len(seqs)} sequence(s) from NCBI.")
+        # User-defined implementation for NCBI fetch, e.g. ncbi_fetch(query) → (seqs, names)
+        try:
+            seqs, names = ncbi_fetch(ncbi_query); # This should be a function you define elsewhere
+            if seqs: st.success(f"Fetched {len(seqs)} sequence(s) from NCBI.");
+        except Exception as e:
+            st.error(f"NCBI fetch failed: {e}");
 
-# --- Sequence analysis trigger ---
+# --- Analysis trigger and result display ---
 if seqs and st.button("Analyze Sequences"):
-    st.session_state.is_analyzing = True; results = []
+    st.session_state.is_analyzing = True; results = [];
     for seq, name in zip(seqs, names):
-        motifs = analyze_sequence_with_progress(seq, name, st.session_state.selected_motifs)
-        results.append((name, motifs))
-    st.session_state.results = results
-    st.success("Analysis complete. See Results tab for visualization and tables.")
-
+        motifs = analyze_sequence_with_progress(seq, name, st.session_state.selected_motifs); results.append((name, motifs));
+    st.session_state.results = results; st.success("Analysis complete. See Results tab for visualization and tables.");
 # --- End of Upload & Analyze section ---
 # ---------- RESULTS ----------
 with tab_pages["Results"]:
