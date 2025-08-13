@@ -1,27 +1,27 @@
-# 🧬 NBDFinder: Advanced Non-B DNA Analysis Platform
+# NBDFinder: Non-B DNA Analysis Platform
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![Streamlit](https://img.shields.io/badge/Built%20with-Streamlit-red.svg)](https://streamlit.io/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![DOI](https://img.shields.io/badge/DOI-10.1038%2Fs41467--023--42156--1-blue.svg)](https://doi.org/10.1038/s41467-023-42156-1)
 
-## 🏆 The Global Standard for Non-B DNA Structure Detection
+## Non-B DNA Structure Detection Platform
 
-**NBDFinder** is the most comprehensive computational framework for genome-wide detection and analysis of Non-B DNA structural motifs. Trusted by 500+ research groups worldwide, our platform combines cutting-edge machine learning algorithms with experimental validation to deliver publication-ready results.
+**NBDFinder** is a computational framework for genome-wide detection and analysis of Non-B DNA structural motifs. The platform provides various algorithms for identifying different types of non-canonical DNA structures.
 
-### 🌟 Why NBDFinder is the Best Choice
+### Key Features
 
-- **🧠 AI-Powered Accuracy**: Machine learning algorithms achieve 92% sensitivity and 89% specificity
-- **🚀 Ultra-Fast Processing**: 350× faster than traditional methods while maintaining biological accuracy
-- **🔬 Experimental Validation**: Cross-validated against 2,000+ experimental datasets
-- **📊 Publication-Ready**: Interactive visualizations and comprehensive statistical analysis
-- **🌍 Global Recognition**: Cited in 15,000+ peer-reviewed publications
+- **Multiple Detection Algorithms**: Implements various algorithms for different motif types
+- **Sequence Processing**: Handles FASTA format sequences and NCBI database queries
+- **Interactive Visualizations**: Generates plots and statistical analysis of detected motifs
+- **Export Options**: Results can be exported in CSV and Excel formats
+- **Web Interface**: User-friendly Streamlit-based interface for analysis
 
-## 🧬 Comprehensive Motif Detection Suite
+## Comprehensive Motif Detection Suite
 
 NBDFinder detects and analyzes **19 distinct Non-B DNA motif classes** across all major structural categories:
 
-### 🔷 G-Quadruplex Family
+### G-Quadruplex Family
 - **Canonical G4**: Standard four-stranded structures with Hoogsteen base pairing
 - **Relaxed G4**: Extended loop regions maintaining quadruplex stability
 - **Bulged G4**: Nucleotide bulges within G-tracts preserving topology
@@ -29,28 +29,28 @@ NBDFinder detects and analyzes **19 distinct Non-B DNA motif classes** across al
 - **Multimeric G4**: Tandem arrays creating higher-order chromatin structures
 - **Imperfect G4**: Alternative structures with imperfect G-tracts
 
-### 🟣 Triplex & i-Motif Structures
+### Triplex & i-Motif Structures
 - **G-Triplex**: Three-stranded parallel structures with G·G·G base triads
 - **Triplex DNA**: Watson-Crick and Hoogsteen base pairing combinations
 - **i-Motif**: pH-dependent cytosine tetraplex structures
 
-### 🟠 Helix Deviations
+### Helix Deviations
 - **Z-DNA**: Left-handed double helix with alternating purine-pyrimidine sequences
 - **eGZ (Extruded-G)**: CGG repeat expansions causing chromatin silencing
 - **Curved DNA**: Intrinsic DNA curvature from phased A/T tracts
 - **AC-Motif**: Alternating purine-pyrimidine patterns with enhanced bendability
 
-### 🟢 Repeat & Junction Structures
+### Repeat & Junction Structures
 - **Slipped DNA**: Mispairing during replication creating hairpin structures
 - **Cruciform**: Four-way Holliday junctions from palindromic sequences
 - **Sticky DNA**: GAA/TTC expansions associated with neurodegeneration
 - **R-Loop**: RNA-DNA hybrids in transcriptionally active regions
 
-### 🟤 Advanced Analysis
+### Advanced Analysis
 - **Hybrid Motifs**: Superposition of multiple non-B structures
 - **Non-B DNA Clusters**: Genomic hotspots with multiple motif types
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Installation
 
@@ -68,33 +68,28 @@ streamlit run app.py
 
 The application will open in your browser at `http://localhost:8501`
 
-## 📊 Key Features
+## Key Features
 
-### 🔬 Advanced Algorithms
-- **G4Hunter v2.0**: Enhanced with structural factors and ML calibration
-- **Kadane's Algorithm**: Optimized Z-DNA detection with dinucleotide weighting
-- **RLFS+REZ Method**: Thermodynamic R-loop prediction
-- **Performance**: Linear complexity algorithms with memory-efficient processing
+### Detection Algorithms
+- **G4Hunter**: G-quadruplex detection with structural factors
+- **Kadane's Algorithm**: Z-DNA detection with dinucleotide weighting
+- **RLFS+REZ Method**: R-loop prediction based on thermodynamic principles
+- **Various Methods**: Additional algorithms for different motif types
 
-### 🎯 Scientific Accuracy
-- **Validation**: Cross-validated against PDB structures and experimental data
-- **Benchmarking**: ROC analysis on experimental datasets
-- **Confidence Levels**: Statistical significance testing for all predictions
-- **Quality Control**: False positive rate < 15% across all motifs
+### Analysis Features
+- **Sequence Input**: Supports FASTA format and NCBI database queries
+- **Interactive Visualizations**: Plotly-based charts and graphs
+- **Statistical Analysis**: Basic motif distribution analysis
+- **Export Options**: Results available in CSV and Excel formats
+- **Batch Processing**: Multi-FASTA file support
 
-### 📈 Professional Output
-- **Interactive Visualizations**: Publication-ready Plotly figures
-- **Statistical Analysis**: Comprehensive motif distribution analysis
-- **Export Formats**: CSV, Excel, and high-resolution image exports
-- **Batch Processing**: Multi-FASTA support up to 200MB
-
-### 🌐 Data Integration
+### Data Integration
 - **NCBI Access**: Direct GenBank sequence retrieval
-- **Example Datasets**: Curated sequences for method validation
+- **Example Datasets**: Curated sequences for testing
 - **Format Support**: FASTA, Multi-FASTA, plain text
-- **Real-time Progress**: Advanced progress tracking with timing
+- **Progress Tracking**: Basic progress monitoring
 
-## 📚 Scientific Documentation
+## Scientific Documentation
 
 ### Core Algorithm References
 
@@ -104,15 +99,11 @@ The application will open in your browser at `http://localhost:8501`
 
 3. **Santos-Pereira, J.M. & Aguilera, A. (2015)** "R loops: new modulators of genome dynamics and function." *Nature Reviews Genetics* 16(10): 583-597. [DOI: 10.1038/nrg3961](https://doi.org/10.1038/nrg3961)
 
-### Performance Benchmarks
+### Implementation Notes
 
-| Algorithm | Sensitivity | Specificity | Speed (seq/sec) | Validation Dataset |
-|-----------|-------------|-------------|-----------------|-------------------|
-| G4Hunter+ | 92% | 89% | ~10,000 | 2,000+ experimental G4s |
-| Z-DNA Kadane | 94% | 91% | ~5,000 | PDB crystal structures |
-| R-loop RLFS | 89% | 86% | ~3,000 | ChIP-seq datasets |
+The algorithms implemented in NBDFinder are based on published methods with various optimizations for computational efficiency. Performance may vary depending on sequence length and complexity.
 
-## 🏥 Clinical Applications
+## Clinical Applications
 
 ### Disease Associations
 - **Neurological Disorders**: Huntington's, Friedreich's ataxia, ALS
@@ -166,33 +157,17 @@ If you use NBDFinder in your research, please cite:
 - **Discussions**: Scientific discussions via GitHub Discussions
 - **Updates**: Follow releases for latest features
 
-## 📊 Usage Statistics
-
-- **Global Reach**: Used in 50+ countries
-- **Research Impact**: 15,000+ citations across publications
-- **Community**: 500+ active research groups
-- **Data Processed**: 100+ TB of genomic sequences analyzed
-
-## 🔒 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
-- **Scientific Community**: For experimental validation datasets
-- **Streamlit Team**: For the excellent web framework
-- **Plotly**: For interactive visualization capabilities
-- **Bioinformatics Community**: For algorithm development and validation
+- **Scientific Community**: For published algorithms and methods
+- **Streamlit Team**: For the web framework
+- **Plotly**: For visualization capabilities
+- **Bioinformatics Community**: For algorithm development
 
 ---
 
-<div align="center">
-
-**⭐ Star this repository if you find it useful! ⭐**
-
-[![GitHub stars](https://img.shields.io/github/stars/VRYella/NBDFinder.svg?style=social&label=Star)](https://github.com/VRYella/NBDFinder)
-[![GitHub forks](https://img.shields.io/github/forks/VRYella/NBDFinder.svg?style=social&label=Fork)](https://github.com/VRYella/NBDFinder/fork)
-
-**Making Non-B DNA Analysis Accessible to Everyone**
-
-</div>
+**NBDFinder** - A computational tool for Non-B DNA structure detection
