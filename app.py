@@ -600,6 +600,15 @@ with tab_pages["Upload & Analyze"]:
 
     # --- Paste sequence ---
     elif input_method == "Paste Sequence(s)":
+        # Show example format in an expandable section
+        with st.expander("💡 View Multi-FASTA Format Example"):
+            st.markdown("**Multi-FASTA Format Example:**")
+            st.code(EXAMPLE_MULTI_FASTA, language='text')
+            st.markdown("**Tips:**")
+            st.markdown("- Each sequence starts with `>` followed by sequence name")
+            st.markdown("- DNA sequence follows on the next line(s)")
+            st.markdown("- Multiple sequences can be pasted at once")
+        
         seq_input = st.text_area("Paste FASTA or raw sequence(s)", height=150)
         if seq_input:
             lines = seq_input.splitlines()
