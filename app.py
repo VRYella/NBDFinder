@@ -35,32 +35,46 @@ st.markdown("""
         background: #f7fafd !important;
         font-family: 'Montserrat', Arial, sans-serif !important;
     }
-    /* Tabs: medium-large, bold, clean */
+    /* Tabs: enhanced bold, large, appealing */
     .stTabs [data-baseweb="tab-list"] {
         width: 100vw !important;
         justify-content: stretch !important;
-        border-bottom: 2px solid #1565c0;
-        background: linear-gradient(90deg,#eaf3fa 0%,#f7fafd 100%) !important;
-        box-shadow: 0 2px 8px #dae5f2;
+        border-bottom: 3px solid #1565c0;
+        background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 30%, #e8f5e8 60%, #fff3e0 100%) !important;
+        box-shadow: 0 4px 16px rgba(21, 101, 192, 0.15);
         margin-bottom: 0;
+        border-radius: 12px 12px 0 0;
     }
     .stTabs [data-baseweb="tab"] {
-        font-size: 1.45rem !important;
-        font-weight: 700 !important;
+        font-size: 1.65rem !important;
+        font-weight: 800 !important;
         flex: 1 1 0%;
         min-width: 0 !important;
-        padding: 15px 0 15px 0 !important;
+        padding: 18px 12px 18px 12px !important;
         text-align: center;
         color: #1565c0 !important;
-        background: #eaf3fa !important;
-        border-right: 1px solid #eee !important;
-        letter-spacing: 0.03em;
+        background: linear-gradient(135deg, #f8fdff 0%, #f0f7ff 100%) !important;
+        border-right: 2px solid #e3f2fd !important;
+        letter-spacing: 0.05em;
+        text-shadow: 0 1px 2px rgba(21, 101, 192, 0.1);
+        border-radius: 8px 8px 0 0;
+        margin: 4px 2px 0 2px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .stTabs [data-baseweb="tab"]:hover {
+        background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%) !important;
+        color: #0d47a1 !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(21, 101, 192, 0.2);
     }
     .stTabs [aria-selected="true"] {
-        color: #002147 !important;
-        border-bottom: 5px solid #1565c0 !important;
-        background: #f7fafd !important;
-        box-shadow: 0 4px 8px #e0e5ea;
+        color: #ffffff !important;
+        border-bottom: 6px solid #d32f2f !important;
+        background: linear-gradient(135deg, #1565c0 0%, #1976d2 50%, #2196f3 100%) !important;
+        box-shadow: 0 8px 24px rgba(21, 101, 192, 0.3);
+        transform: translateY(-3px);
+        font-size: 1.7rem !important;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     }
     .stTabs [data-baseweb="tab"]:last-child {
         border-right: none !important;
@@ -102,6 +116,59 @@ st.markdown("""
     .stDataFrame, .stTable {
         font-size: 1.05rem !important;
         font-family: 'Montserrat', Arial, sans-serif !important;
+    }
+    /* Enhanced Motif Selection Styling */
+    .stMultiSelect > div {
+        background: linear-gradient(135deg, #f8fdff 0%, #eef8ff 100%) !important;
+        border: 2px solid #1565c0 !important;
+        border-radius: 12px !important;
+        box-shadow: 0 4px 12px rgba(21, 101, 192, 0.15) !important;
+    }
+    .stMultiSelect > div > div {
+        background: linear-gradient(135deg, #ffffff 0%, #f8fdff 100%) !important;
+        border-radius: 10px !important;
+    }
+    /* Enhanced Input Method Radio Buttons */
+    .stRadio > div {
+        background: linear-gradient(135deg, #f8fdff 0%, #f0f7ff 100%) !important;
+        border-radius: 12px !important;
+        padding: 16px !important;
+        border: 2px solid #e3f2fd !important;
+        box-shadow: 0 2px 8px rgba(21, 101, 192, 0.1) !important;
+    }
+    .stRadio > div > label {
+        font-weight: 600 !important;
+        color: #1565c0 !important;
+        font-size: 1.12rem !important;
+    }
+    .stRadio > div > label > div:first-child {
+        background: linear-gradient(45deg, #1565c0, #2196f3) !important;
+        border: 2px solid #ffffff !important;
+        box-shadow: 0 2px 6px rgba(21, 101, 192, 0.3) !important;
+    }
+    /* Enhanced Text Styling for Input Method */
+    .input-method-title {
+        font-weight: 800 !important;
+        font-size: 1.25rem !important;
+        color: #1565c0 !important;
+        text-shadow: 0 1px 2px rgba(21, 101, 192, 0.2) !important;
+    }
+    .input-method-subtitle {
+        font-weight: 600 !important;
+        font-style: italic !important;
+        color: #2e7d32 !important;
+        font-size: 1.1rem !important;
+    }
+    .input-method-regular {
+        font-weight: 400 !important;
+        color: #424242 !important;
+        font-size: 1.08rem !important;
+    }
+    .sequence-preview-title {
+        font-weight: 700 !important;
+        color: #d32f2f !important;
+        font-size: 1.2rem !important;
+        text-shadow: 0 1px 2px rgba(211, 47, 47, 0.2) !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -316,18 +383,38 @@ with tab_pages["Home"]:
         st.image("nbdcircle.JPG", use_container_width=True)
     with right:
         st.markdown("""
-        <div style='font-family:Montserrat, Arial; font-size:1.14rem; color:#222; line-height:1.7; padding:18px; background:#f8f9fa; border-radius:14px; box-shadow:0 2px 8px #eee;'>
-        <b>Non-canonical DNA structures</b> play key roles in genome stability, regulation, and evolution.<br>
-        This application detects and analyzes <b>18 distinct Non-B DNA motifs</b> in any DNA sequence or multi-FASTA file.<br>
-        <b>Motif Classes:</b><br>
-        <span style='color:#1565c0;'>
-            <b>G-quadruplex-related</b> (G4, Relaxed G4, Bulged G4, Bipartite G4, Multimeric G4, G-Triplex, i-Motif, Hybrid),<br>
-            <b>helix/curvature</b> (Z-DNA, eGZ (Extruded-G), Curved DNA, AC-Motif),<br>
-            <b>repeat/junction</b> (Slipped DNA, Cruciform, Sticky DNA, Triplex DNA),<br>
-            <b>hybrid/cluster</b> (R-Loop, Non-B DNA Clusters).
-        </span>
-        <br>
-        <b>Upload single or multi-FASTA files...</b>
+        <div style='font-family:Montserrat, Arial; font-size:1.16rem; color:#222; line-height:1.8; padding:20px; background:linear-gradient(135deg, #f8fdff 0%, #eaf6ff 100%); border-radius:16px; box-shadow:0 4px 12px #dae8f5; border:1px solid #e3f2fd;'>
+        
+        <div style='margin-bottom:25px;'>
+            <div style='display:flex; align-items:center; margin-bottom:15px;'>
+                <div style='width:8px; height:8px; background:linear-gradient(45deg, #1565c0, #2196f3); border-radius:50%; margin-right:12px;'></div>
+                <b style='color:#1565c0; font-size:1.18rem;'>Non-canonical DNA structures</b> play key roles in genome stability, regulation, and evolution.
+            </div>
+        </div>
+        
+        <div style='margin-bottom:25px;'>
+            <div style='display:flex; align-items:flex-start; margin-bottom:15px;'>
+                <div style='width:8px; height:8px; background:linear-gradient(45deg, #1565c0, #2196f3); border-radius:50%; margin-right:12px; margin-top:6px;'></div>
+                <div>This application detects and analyzes <b style='color:#d32f2f;'>18 distinct Non-B DNA motifs</b> in any DNA sequence or multi-FASTA file:<br>
+                <div style='margin-top:12px; padding-left:8px; border-left:3px solid #1565c0; background:#f1f8ff; padding:12px; border-radius:8px;'>
+                    <span style='color:#1565c0; font-weight:600;'>
+                        <b>G-quadruplex-related:</b> G4, Relaxed G4, Bulged G4, Bipartite G4, Multimeric G4, G-Triplex, i-Motif, Hybrid<br>
+                        <b>Helix/curvature:</b> Z-DNA, eGZ (Extruded-G), Curved DNA, AC-Motif<br>
+                        <b>Repeat/junction:</b> Slipped DNA, Cruciform, Sticky DNA, Triplex DNA<br>
+                        <b>Hybrid/cluster:</b> R-Loop, Non-B DNA Clusters
+                    </span>
+                </div>
+                </div>
+            </div>
+        </div>
+        
+        <div>
+            <div style='display:flex; align-items:center; margin-bottom:15px;'>
+                <div style='width:8px; height:8px; background:linear-gradient(45deg, #1565c0, #2196f3); border-radius:50%; margin-right:12px;'></div>
+                <b style='color:#1565c0; font-size:1.18rem;'>Upload single or multi-FASTA files</b> to analyze comprehensive motif patterns with scientific accuracy.
+            </div>
+        </div>
+        
         </div>
         """, unsafe_allow_html=True)
 
@@ -345,7 +432,8 @@ with tab_pages["Upload & Analyze"]:
     )
     st.session_state.selected_motifs = selected_motifs if selected_motifs else MOTIF_ORDER
 
-    input_method = st.radio("Input Method:",
+    st.markdown('<p class="input-method-title">Input Method:</p>', unsafe_allow_html=True)
+    input_method = st.radio("",
         ["Upload FASTA / Multi-FASTA File", "Paste Sequence(s)", "Example Sequence", "NCBI Fetch"],
         horizontal=True
     )
@@ -477,7 +565,7 @@ with tab_pages["Upload & Analyze"]:
         st.session_state.results = []
 
     if st.session_state.seqs:
-        st.subheader("Sequence Preview")
+        st.markdown('<h3 class="sequence-preview-title">Sequence Preview</h3>', unsafe_allow_html=True)
         for i, seq in enumerate(st.session_state.seqs[:2]):
             stats = get_basic_stats(seq)
             st.markdown(f"<b>{st.session_state.names[i]}</b> ({len(seq):,} bp) | GC %: {stats['GC %']} | AT %: {stats['AT %']} | A: {stats['A Count']} | T: {stats['T Count']} | G: {stats['G Count']} | C: {stats['C Count']}", unsafe_allow_html=True)
@@ -588,12 +676,38 @@ with tab_pages["Results"]:
                 df['Sequence Preview'] = df['Sequence'].apply(lambda x: x.replace('\n', '')[:50] + '...' if len(x.replace('\n', '')) > 50 else x.replace('\n', ''))
                 essential_columns.append('Sequence Preview')
             
+            # Add serial number starting from 1
+            df['S.No'] = range(1, len(df) + 1)
+            essential_columns = ['S.No'] + essential_columns
+            
             display_df = df[essential_columns].copy()
             
             # Format numeric columns
             if 'Score' in display_df.columns:
                 display_df['Score'] = display_df['Score'].apply(lambda x: f"{x:.2f}" if isinstance(x, (int, float)) else str(x))
             
+            # Add scoring significance column
+            if 'Score' in display_df.columns:
+                def get_score_significance(score, motif_class):
+                    try:
+                        score_val = float(score)
+                        if motif_class in ['G4', 'Relaxed G4', 'Bulged G4', 'Bipartite G4', 'Multimeric G4']:
+                            if score_val >= 1.5: return "🟢 High confidence"
+                            elif score_val >= 1.0: return "🟡 Moderate confidence" 
+                            else: return "🟠 Low confidence"
+                        elif motif_class in ['Z-DNA', 'R-Loop', 'Curved DNA']:
+                            if score_val >= 100: return "🟢 High confidence"
+                            elif score_val >= 50: return "🟡 Moderate confidence"
+                            else: return "🟠 Low confidence"
+                        else:
+                            if score_val >= 25: return "🟢 High confidence"
+                            elif score_val >= 15: return "🟡 Moderate confidence"
+                            else: return "🟠 Low confidence"
+                    except:
+                        return "⚪ Not assessed"
+                
+                display_df['Prediction Confidence'] = display_df.apply(lambda row: get_score_significance(row.get('Score', 0), row.get('Class', '')), axis=1)
+                
             st.dataframe(display_df, use_container_width=True, height=400)
             
             # Enhanced visualizations
@@ -615,9 +729,27 @@ with tab_pages["Results"]:
                     orientation='h',
                     color=class_counts.index,
                     color_discrete_map=MOTIF_COLORS,
-                    title="Motif Counts by Type"
+                    title="<b>Motif Counts by Type</b>"
                 )
-                fig_bar.update_layout(height=400, showlegend=False)
+                fig_bar.update_layout(
+                    height=400, 
+                    showlegend=False,
+                    xaxis=dict(
+                        title="<b>Number of Motifs</b>",
+                        title_font=dict(size=14, color='#1565c0'),
+                        tickfont=dict(size=12, color='#424242'),
+                        gridcolor='#e0e0e0',
+                        gridwidth=1
+                    ),
+                    yaxis=dict(
+                        title="<b>Motif Classes</b>",
+                        title_font=dict(size=14, color='#1565c0'),
+                        tickfont=dict(size=12, color='#424242')
+                    ),
+                    title_font=dict(size=16, color='#1565c0'),
+                    plot_bgcolor='rgba(248,253,255,0.7)',
+                    paper_bgcolor='white'
+                )
                 st.plotly_chart(fig_bar, use_container_width=True)
             
             with col2:
@@ -630,9 +762,41 @@ with tab_pages["Results"]:
                         x='Length', 
                         color='Class',
                         color_discrete_map=MOTIF_COLORS,
-                        title="Distribution of Motif Lengths"
+                        title="<b>Distribution of Motif Lengths</b>",
+                        nbins=20
                     )
-                    fig_hist.update_layout(height=400)
+                    fig_hist.update_layout(
+                        height=400,
+                        xaxis=dict(
+                            title="<b>Motif Length (base pairs)</b>",
+                            title_font=dict(size=14, color='#1565c0'),
+                            tickfont=dict(size=12, color='#424242'),
+                            gridcolor='#e0e0e0',
+                            gridwidth=1
+                        ),
+                        yaxis=dict(
+                            title="<b>Frequency</b>",
+                            title_font=dict(size=14, color='#1565c0'),
+                            tickfont=dict(size=12, color='#424242'),
+                            gridcolor='#e0e0e0',
+                            gridwidth=1
+                        ),
+                        title_font=dict(size=16, color='#1565c0'),
+                        plot_bgcolor='rgba(248,253,255,0.7)',
+                        paper_bgcolor='white',
+                        bargap=0.1
+                    )
+                    # Add annotation for interpretation
+                    fig_hist.add_annotation(
+                        text="<i>Shorter motifs (10-50 bp): Higher occurrence<br>Longer motifs (>100 bp): Rare but significant</i>",
+                        xref="paper", yref="paper",
+                        x=0.02, y=0.98,
+                        showarrow=False,
+                        font=dict(size=10, color='#666666'),
+                        bgcolor="rgba(255,255,255,0.8)",
+                        bordercolor="#cccccc",
+                        borderwidth=1
+                    )
                     st.plotly_chart(fig_hist, use_container_width=True)
             
             # Enhanced interactive motif map
@@ -692,12 +856,59 @@ with tab_pages["Download"]:
     else:
         df_all = []
         for i, motifs in enumerate(st.session_state.results):
-            for m in motifs:
+            for j, m in enumerate(motifs):
+                m = m.copy()  # Create a copy to avoid modifying original
                 m['Sequence Name'] = st.session_state.names[i]
+                m['S.No'] = j + 1  # Add serial number starting from 1
                 if m['Class'] == "Z-DNA" and m.get("Subclass", "") == "eGZ (Extruded-G)":
                     m['Class'] = "eGZ (Extruded-G)"
+                
+                # Add scoring significance
+                def get_score_significance(score, motif_class):
+                    try:
+                        score_val = float(score)
+                        if motif_class in ['G4', 'Relaxed G4', 'Bulged G4', 'Bipartite G4', 'Multimeric G4']:
+                            min_score = 1.0
+                            if score_val >= 1.5: return "High confidence", min_score
+                            elif score_val >= 1.0: return "Moderate confidence", min_score
+                            else: return "Low confidence", min_score
+                        elif motif_class in ['Z-DNA', 'R-Loop', 'Curved DNA']:
+                            min_score = 50.0
+                            if score_val >= 100: return "High confidence", min_score
+                            elif score_val >= 50: return "Moderate confidence", min_score
+                            else: return "Low confidence", min_score
+                        else:
+                            min_score = 15.0
+                            if score_val >= 25: return "High confidence", min_score
+                            elif score_val >= 15: return "Moderate confidence", min_score
+                            else: return "Low confidence", min_score
+                    except:
+                        return "Not assessed", "N/A"
+                
+                confidence, min_score = get_score_significance(m.get('Score', 0), m.get('Class', ''))
+                m['Prediction Confidence'] = confidence
+                m['Minimum Score Threshold'] = min_score
                 df_all.append(m)
+        
         df_all = pd.DataFrame(df_all)
+        
+        # Reorder columns to put S.No first
+        cols = df_all.columns.tolist()
+        if 'S.No' in cols:
+            cols = ['S.No'] + [col for col in cols if col != 'S.No']
+            df_all = df_all[cols]
+        
+        st.markdown("### 📥 Complete Results Table with Scoring Information")
+        st.markdown("""
+        <div style='background:#f0f8ff; padding:12px; border-radius:8px; margin-bottom:15px; border-left:4px solid #1565c0;'>
+        <b>Scoring Significance:</b><br>
+        • <b>High confidence:</b> Scores above established thresholds indicate strong structural likelihood<br>
+        • <b>Moderate confidence:</b> Scores at minimum thresholds suggest possible structural formation<br>
+        • <b>Low confidence:</b> Scores below minimum thresholds indicate weaker predictions<br>
+        • <b>Minimum Score Threshold:</b> Shows the lowest score considered reliable for each motif type
+        </div>
+        """, unsafe_allow_html=True)
+        
         st.dataframe(df_all, use_container_width=True, height=350)
         csv_data = df_all.to_csv(index=False).encode("utf-8")
         st.download_button("Download CSV", data=csv_data, file_name="motif_results.csv", mime="text/csv")
