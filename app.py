@@ -502,22 +502,22 @@ with tab_pages["Home"]:
         # Enhanced image with caption
         st.image("nbdcircle.JPG", use_container_width=True, caption="Non-B DNA structural diversity: From canonical B-form to complex alternative conformations")
         
-        # Add scientific impact metrics
+        # Add basic tool information
         st.markdown("""
         <div style='background: linear-gradient(135deg, #f0fdf4 0%, #f0f9ff 100%); border-radius: 12px; padding: 20px; margin-top: 15px; border-left: 4px solid #059669;'>
-            <h4 style='color: #059669; margin-top: 0; text-align: center;'>🏆 Scientific Impact & Recognition</h4>
+            <h4 style='color: #059669; margin-top: 0; text-align: center;'>Tool Information</h4>
             <div style='display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: center;'>
-                <div>
-                    <div style='font-size: 1.8rem; font-weight: bold; color: #1565c0;'>500+</div>
-                    <div style='font-size: 0.9rem; color: #666;'>Research Groups</div>
-                </div>
-                <div>
-                    <div style='font-size: 1.8rem; font-weight: bold; color: #1565c0;'>15K+</div>
-                    <div style='font-size: 0.9rem; color: #666;'>Citations</div>
-                </div>
                 <div>
                     <div style='font-size: 1.8rem; font-weight: bold; color: #1565c0;'>19</div>
                     <div style='font-size: 0.9rem; color: #666;'>Motif Types</div>
+                </div>
+                <div>
+                    <div style='font-size: 1.8rem; font-weight: bold; color: #1565c0;'>Web</div>
+                    <div style='font-size: 0.9rem; color: #666;'>Interface</div>
+                </div>
+                <div>
+                    <div style='font-size: 1.8rem; font-weight: bold; color: #1565c0;'>Free</div>
+                    <div style='font-size: 0.9rem; color: #666;'>Access</div>
                 </div>
             </div>
         </div>
@@ -528,38 +528,38 @@ with tab_pages["Home"]:
         <div style='font-family:Montserrat, Arial; font-size:1.16rem; color:#222; line-height:1.8; padding:25px; background:linear-gradient(135deg, #f8fdff 0%, #eaf6ff 100%); border-radius:16px; box-shadow:0 6px 20px rgba(21, 101, 192, 0.15); border:2px solid #e3f2fd;'>
         
         <div style='margin-bottom:30px;'>
-            <h3 style='color:#1565c0; margin-top:0; margin-bottom:15px; font-size:1.4rem;'>🔬 Revolutionary Non-B DNA Detection</h3>
-            <p style='margin-bottom:20px;'><strong>Non-canonical DNA structures</strong> are fundamental to genome organization, gene regulation, and disease pathogenesis. Our platform represents the <strong>gold standard</strong> for computational structural biology.</p>
+            <h3 style='color:#1565c0; margin-top:0; margin-bottom:15px; font-size:1.4rem;'>Non-B DNA Detection Platform</h3>
+            <p style='margin-bottom:20px;'><strong>Non-canonical DNA structures</strong> are important for genome organization, gene regulation, and disease pathogenesis. This platform provides computational tools for analyzing these structures.</p>
         </div>
         
         <div style='margin-bottom:30px;'>
-            <h4 style='color:#d32f2f; margin-bottom:15px; font-size:1.2rem;'>🎯 Comprehensive Motif Detection Suite</h4>
+            <h4 style='color:#d32f2f; margin-bottom:15px; font-size:1.2rem;'>Comprehensive Motif Detection Suite</h4>
             <div style='background:#f1f8ff; padding:15px; border-radius:10px; border-left:4px solid #1565c0;'>
                 <div style='margin-bottom:10px;'>
-                    <span style='color:#1565c0; font-weight:700;'>🔷 G-Quadruplex Family:</span> Canonical G4, Relaxed G4, Bulged G4, Bipartite G4, Multimeric G4, Imperfect G4
+                    <span style='color:#1565c0; font-weight:700;'>G-Quadruplex Family:</span> Canonical G4, Relaxed G4, Bulged G4, Bipartite G4, Multimeric G4, Imperfect G4
                 </div>
                 <div style='margin-bottom:10px;'>
-                    <span style='color:#9c27b0; font-weight:700;'>🟣 Triplex Structures:</span> G-Triplex, Triplex DNA, i-Motif
+                    <span style='color:#9c27b0; font-weight:700;'>Triplex Structures:</span> G-Triplex, Triplex DNA, i-Motif
                 </div>
                 <div style='margin-bottom:10px;'>
-                    <span style='color:#f57c00; font-weight:700;'>🟠 Helix Deviations:</span> Z-DNA, eGZ (Extruded-G), Curved DNA, AC-Motif
+                    <span style='color:#f57c00; font-weight:700;'>Helix Deviations:</span> Z-DNA, eGZ (Extruded-G), Curved DNA, AC-Motif
                 </div>
                 <div style='margin-bottom:10px;'>
-                    <span style='color:#388e3c; font-weight:700;'>🟢 Junction/Repeat:</span> Slipped DNA, Cruciform, Sticky DNA, R-Loop
+                    <span style='color:#388e3c; font-weight:700;'>Junction/Repeat:</span> Slipped DNA, Cruciform, Sticky DNA, R-Loop
                 </div>
                 <div>
-                    <span style='color:#795548; font-weight:700;'>🟤 Advanced Analysis:</span> Hybrid Motifs, Non-B DNA Clusters
+                    <span style='color:#795548; font-weight:700;'>Advanced Analysis:</span> Hybrid Motifs, Non-B DNA Clusters
                 </div>
             </div>
         </div>
         
         <div style='margin-bottom:25px;'>
-            <h4 style='color:#2e7d32; margin-bottom:15px; font-size:1.2rem;'>⚡ Cutting-Edge Features</h4>
+            <h4 style='color:#2e7d32; margin-bottom:15px; font-size:1.2rem;'>Key Features</h4>
             <ul style='padding-left:20px; margin-bottom:0;'>
-                <li><strong>Machine Learning Enhanced:</strong> AI-powered scoring calibrated on 2,000+ experimental structures</li>
-                <li><strong>Ultra-High Performance:</strong> 350× faster than traditional methods with maintained accuracy</li>
-                <li><strong>Publication-Ready Output:</strong> Interactive visualizations and statistical analysis</li>
-                <li><strong>Multi-Scale Analysis:</strong> From single sequences to complete genomes</li>
+                <li><strong>Multiple Algorithms:</strong> Various detection methods for different motif types</li>
+                <li><strong>Web Interface:</strong> Easy-to-use browser-based platform</li>
+                <li><strong>Interactive Output:</strong> Visualizations and basic statistical analysis</li>
+                <li><strong>Flexible Input:</strong> Supports individual sequences and FASTA files</li>
             </ul>
         </div>
         
@@ -570,7 +570,7 @@ with tab_pages["Home"]:
     st.markdown("""
     <div style='margin-top: 40px;'>
         <h3 style='text-align: center; color: #1565c0; font-family: Montserrat, Arial; font-weight: 700; margin-bottom: 30px;'>
-            🌟 Why NBDFinder is the Global Standard for Non-B DNA Analysis
+            NBDFinder Key Features
         </h3>
     </div>
     """, unsafe_allow_html=True)
@@ -582,8 +582,8 @@ with tab_pages["Home"]:
         st.markdown("""
         <div style='background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%); padding: 25px; border-radius: 15px; height: 280px; border: 2px solid #e1bee7; text-align: center;'>
             <div style='font-size: 3rem; margin-bottom: 15px;'>🧠</div>
-            <h4 style='color: #1565c0; margin-bottom: 15px;'>AI-Powered Accuracy</h4>
-            <p style='color: #555; line-height: 1.6;'>Machine learning algorithms trained on experimental datasets achieve 92% sensitivity and 89% specificity across all motif types.</p>
+            <h4 style='color: #1565c0; margin-bottom: 15px;'>Multiple Algorithms</h4>
+            <p style='color: #555; line-height: 1.6;'>Various detection algorithms implemented for different types of non-B DNA structures and motifs.</p>
         </div>
         """, unsafe_allow_html=True)
     
@@ -591,8 +591,8 @@ with tab_pages["Home"]:
         st.markdown("""
         <div style='background: linear-gradient(135deg, #f0fdf4 0%, #f0f9ff 100%); padding: 25px; border-radius: 15px; height: 280px; border: 2px solid #c8e6c9; text-align: center;'>
             <div style='font-size: 3rem; margin-bottom: 15px;'>🚀</div>
-            <h4 style='color: #2e7d32; margin-bottom: 15px;'>Ultra-Fast Processing</h4>
-            <p style='color: #555; line-height: 1.6;'>Revolutionary optimization delivers 350× speed improvement while maintaining biological accuracy for genome-scale analysis.</p>
+            <h4 style='color: #2e7d32; margin-bottom: 15px;'>Web-Based Interface</h4>
+            <p style='color: #555; line-height: 1.6;'>Easy-to-use browser-based platform with interactive visualizations and export options.</p>
         </div>
         """, unsafe_allow_html=True)
     
@@ -600,31 +600,31 @@ with tab_pages["Home"]:
         st.markdown("""
         <div style='background: linear-gradient(135deg, #fff3e0 0%, #fce4ec 100%); padding: 25px; border-radius: 15px; height: 280px; border: 2px solid #ffcc02; text-align: center;'>
             <div style='font-size: 3rem; margin-bottom: 15px;'>📊</div>
-            <h4 style='color: #f57c00; margin-bottom: 15px;'>Publication-Ready</h4>
-            <p style='color: #555; line-height: 1.6;'>Interactive visualizations, statistical analysis, and comprehensive exports ready for high-impact journal submissions.</p>
+            <h4 style='color: #f57c00; margin-bottom: 15px;'>Flexible Input/Output</h4>
+            <p style='color: #555; line-height: 1.6;'>Supports various input formats including FASTA files and NCBI queries with CSV/Excel export options.</p>
         </div>
         """, unsafe_allow_html=True)
     
-    # Add scientific validation section
+    # Add tool description section
     st.markdown("""
     <div style='margin-top: 30px; background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%); padding: 25px; border-radius: 15px; border: 1px solid #e0e0e0;'>
-        <h4 style='color: #1565c0; text-align: center; margin-bottom: 20px;'>🔬 Experimental Validation & Scientific Rigor</h4>
+        <h4 style='color: #1565c0; text-align: center; margin-bottom: 20px;'>Algorithm Information</h4>
         <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;'>
             <div style='text-align: center;'>
-                <div style='font-weight: bold; color: #d32f2f;'>G-Quadruplex Validation</div>
-                <div style='font-size: 0.9rem; color: #666;'>Cross-validated with ChIP-seq data from 1,200+ experimental studies</div>
+                <div style='font-weight: bold; color: #d32f2f;'>G-Quadruplex Detection</div>
+                <div style='font-size: 0.9rem; color: #666;'>G4Hunter algorithm with structural factor scoring</div>
             </div>
             <div style='text-align: center;'>
-                <div style='font-weight: bold; color: #d32f2f;'>Z-DNA Confirmation</div>
-                <div style='font-size: 0.9rem; color: #666;'>Benchmarked against crystallographic structures from PDB</div>
+                <div style='font-weight: bold; color: #d32f2f;'>Z-DNA Detection</div>
+                <div style='font-size: 0.9rem; color: #666;'>Kadane's algorithm with dinucleotide weighting</div>
             </div>
             <div style='text-align: center;'>
-                <div style='font-weight: bold; color: #d32f2f;'>Disease Association</div>
-                <div style='font-size: 0.9rem; color: #666;'>Validated against ClinVar and OMIM disease databases</div>
+                <div style='font-weight: bold; color: #d32f2f;'>R-Loop Prediction</div>
+                <div style='font-size: 0.9rem; color: #666;'>RLFS+REZ method for RNA-DNA hybrid detection</div>
             </div>
             <div style='text-align: center;'>
-                <div style='font-weight: bold; color: #d32f2f;'>Phylogenetic Conservation</div>
-                <div style='font-size: 0.9rem; color: #666;'>Evolutionary analysis across 100+ species</div>
+                <div style='font-weight: bold; color: #d32f2f;'>Multiple Formats</div>
+                <div style='font-size: 0.9rem; color: #666;'>FASTA, NCBI queries, and text input support</div>
             </div>
         </div>
     </div>
@@ -636,10 +636,10 @@ with tab_pages["Upload & Analyze"]:
     st.markdown("""
     <div style='background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0fdf4 100%); border-radius: 16px; padding: 25px; margin-bottom: 30px; border: 2px solid #e3f2fd;'>
         <h2 style='color: #1565c0; font-family: Montserrat, Arial; font-weight: 700; margin-bottom: 15px; font-size: 2rem;'>
-            🧬 Advanced Sequence Analysis & Motif Detection
+            Sequence Analysis & Motif Detection
         </h2>
         <p style='color: #2e7d32; font-size: 1.2rem; font-weight: 600; margin-bottom: 10px;'>
-            Professional-Grade Non-B DNA Structure Prediction Platform
+            Non-B DNA Structure Analysis Platform
         </p>
         <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;'>
             <div style='background: rgba(255,255,255,0.8); padding: 12px; border-radius: 8px; text-align: center;'>
@@ -829,7 +829,7 @@ with tab_pages["Upload & Analyze"]:
     # --- Example input ---
     # --- Example sequences (load as sequence, not file) ---
     elif input_method == "Example Sequence":
-        st.markdown("**🧪 Choose from curated Non-B DNA examples:**")
+        st.markdown("**Choose from curated Non-B DNA examples:**")
         
         # Display example options with descriptions
         example_choices = list(EXAMPLE_SEQUENCES.keys())
@@ -845,8 +845,11 @@ with tab_pages["Upload & Analyze"]:
             seqs = [example_data["sequence"]]
             names = [example_data["name"]]
             
-            # Show sequence preview
-            with st.expander("📄 Preview Selected Sequence"):
+            # Add spacing before the expander to prevent overlap
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            # Show sequence preview with expanded by default to avoid overlap issues
+            with st.expander("Preview Selected Sequence", expanded=False):
                 st.text(f"Name: {example_data['name']}")
                 st.text(f"Length: {len(example_data['sequence'])} bp")
                 st.text(f"Description: {example_data['description']}")
@@ -1380,22 +1383,22 @@ with tab_pages["Documentation"]:
         st.dataframe(df_motifs, use_container_width=True, height=600)
         
     with doc_tabs[1]:
-        st.subheader("🔬 Advanced Detection Algorithms & Computational Methods")
+        st.subheader("Detection Algorithms & Computational Methods")
         
         # Add algorithmic context
         st.markdown("""
         <div style='background:linear-gradient(135deg, #fef3c7 0%, #f0f9ff 100%); border-radius:12px; padding:20px; margin:15px 0; border-left:4px solid #f59e0b;'>
-        <h4 style='color:#f59e0b; margin-top:0;'>⚡ High-Performance Computing Framework</h4>
-        <p style='margin-bottom:0;'>NBDFinder implements state-of-the-art algorithms optimized for speed and accuracy. Each detection method is validated against experimental datasets and employs machine learning-enhanced scoring systems.</p>
+        <h4 style='color:#f59e0b; margin-top:0;'>Algorithm Implementation</h4>
+        <p style='margin-bottom:0;'>NBDFinder implements various published algorithms for detecting different types of non-B DNA structures. Each method uses specific scoring criteria and thresholds.</p>
         </div>
         """, unsafe_allow_html=True)
         
         # Enhanced methods table with performance metrics
         methods_data = {
             "Motif Type": [
-                "🌟 Canonical G4", "🔄 Imperfect G4", "🧬 Z-DNA", "🌀 Curved DNA", "⚔️ Cruciform", "🔗 R-Loop",
-                "📐 Slipped DNA", "🏗️ Triplex DNA", "🧪 i-Motif", "🎯 AC-Motif", "🔺 G-Triplex", "⭐ Bipartite G4",
-                "🔗 Multimeric G4", "🩺 Sticky DNA", "🌈 Non-B Clusters"
+                "Canonical G4", "Imperfect G4", "Z-DNA", "Curved DNA", "Cruciform", "R-Loop",
+                "Slipped DNA", "Triplex DNA", "i-Motif", "AC-Motif", "G-Triplex", "Bipartite G4",
+                "Multimeric G4", "Sticky DNA", "Non-B Clusters"
             ],
             "Core Algorithm": [
                 "G4Hunter v2.0 + Structural Factors", 
@@ -1475,57 +1478,56 @@ with tab_pages["Documentation"]:
         
         st.dataframe(df_methods, use_container_width=True, height=500)
         
-        # Add performance benchmarks
+        # Add performance information  
         st.markdown("""
         <div style='background:linear-gradient(135deg, #f0fdf4 0%, #f0f9ff 100%); border-radius:12px; padding:20px; margin:15px 0; border-left:4px solid #059669;'>
-        <h4 style='color:#059669; margin-top:0;'>📊 Performance Benchmarks & Validation</h4>
+        <h4 style='color:#059669; margin-top:0;'>Algorithm Implementation Details</h4>
         <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;'>
             <div>
-                <b>🚀 Speed Optimization:</b><br>
-                • 350× faster than traditional methods<br>
-                • Linear complexity for most algorithms<br>
-                • Memory-efficient streaming processing
+                <b>Implementation:</b><br>
+                • Python-based algorithms<br>
+                • Efficient sequence processing<br>
+                • Web-based interface
             </div>
             <div>
-                <b>🎯 Accuracy Validation:</b><br>
-                • Cross-validated against PDB structures<br>
-                • ROC analysis on experimental datasets<br>
-                • False positive rate < 15% across all motifs
+                <b>Detection Methods:</b><br>
+                • G4Hunter for G-quadruplexes<br>
+                • Kadane's algorithm for Z-DNA<br>
+                • RLFS+REZ for R-loops
             </div>
             <div>
-                <b>🔬 Experimental Correlation:</b><br>
-                • ChIP-seq validation for G4 structures<br>
-                • NMR validation for Z-DNA conformations<br>
-                • Crystallographic structure validation
+                <b>Output Features:</b><br>
+                • CSV and Excel export<br>
+                • Basic statistical analysis
             </div>
         </div>
         </div>
         """, unsafe_allow_html=True)
         
         # Add algorithm details expandable section
-        with st.expander("🧮 **Detailed Algorithm Specifications** (Click to expand)"):
+        with st.expander("**Detailed Algorithm Specifications** (Click to expand)"):
             st.markdown("""
             <div style='background:#f8fdff; border-radius:12px; padding:20px; font-size:1.05rem;'>
             
-            <h5 style='color:#1565c0;'>🌟 G4Hunter Algorithm Enhancement:</h5>
+            <h5 style='color:#1565c0;'>G4Hunter Algorithm:</h5>
             <ul>
                 <li><b>Structural Factor Integration:</b> Incorporates loop length penalties, G-tract spacing, and bulge tolerance</li>
-                <li><b>Machine Learning Calibration:</b> Trained on 2,000+ experimentally validated G4 structures</li>
-                <li><b>Dynamic Thresholding:</b> Context-dependent scoring based on local sequence composition</li>
+                <li><b>Scoring System:</b> Based on G/C content and structural factors</li>
+                <li><b>Threshold Selection:</b> Configurable scoring thresholds</li>
             </ul>
             
-            <h5 style='color:#1565c0;'>🧬 Z-DNA Kadane's Algorithm:</h5>
+            <h5 style='color:#1565c0;'>Z-DNA Kadane's Algorithm:</h5>
             <ul>
                 <li><b>Dinucleotide Weighting:</b> CG=+1.0, GC=+0.8, CA/TG=+0.6, other=-0.3</li>
                 <li><b>Window-Based Scoring:</b> Sliding window analysis with overlapping regions</li>
                 <li><b>Thermodynamic Validation:</b> ΔG calculations for B-to-Z transition energy</li>
             </ul>
             
-            <h5 style='color:#1565c0;'>🔗 R-Loop RLFS+REZ Method:</h5>
+            <h5 style='color:#1565c0;'>R-Loop RLFS+REZ Method:</h5>
             <ul>
                 <li><b>RNA-DNA Hybrid Stability:</b> Thermodynamic modeling of R-loop formation energy</li>
-                <li><b>Transcriptional Context:</b> Integration with promoter and gene body regions</li>
-                <li><b>Co-transcriptional Formation:</b> RNA polymerase pause site prediction</li>
+                <li><b>Sequence Analysis:</b> Detection based on sequence composition</li>
+                <li><b>Formation Prediction:</b> Identification of potential R-loop regions</li>
             </ul>
             
             </div>
@@ -1703,15 +1705,15 @@ with tab_pages["Documentation"]:
             </div>
             """, unsafe_allow_html=True)
         
-        # Add methodology validation section
+        # Add methodology information section
         st.markdown("""
         <div style='background:linear-gradient(135deg, #f0f9ff 0%, #fef3c7 100%); border-radius:12px; padding:20px; margin:20px 0; border-left:4px solid #f59e0b;'>
-        <h4 style='color:#f59e0b; margin-top:0;'>🔬 Algorithm Validation & Performance</h4>
+        <h4 style='color:#f59e0b; margin-top:0;'>Algorithm Information</h4>
         <ul style='line-height:1.8;'>
-            <li><b>G4Hunter Algorithm:</b> Validated against 2,000+ experimentally confirmed G4 structures (Sensitivity: 92%, Specificity: 89%)</li>
-            <li><b>Z-DNA Detection:</b> Benchmarked using crystallographic structures from Protein Data Bank (PDB)</li>
-            <li><b>R-loop Prediction:</b> Cross-validated with ChIP-seq and RNA-seq experimental data</li>
-            <li><b>Performance Metrics:</b> 350× speed improvement over traditional methods with maintained accuracy</li>
+            <li><b>G4Hunter Algorithm:</b> Implements the published G4Hunter method for G-quadruplex detection</li>
+            <li><b>Z-DNA Detection:</b> Uses Kadane's algorithm with dinucleotide scoring</li>
+            <li><b>R-loop Prediction:</b> RLFS+REZ method for RNA-DNA hybrid detection</li>
+            <li><b>Implementation:</b> Python-based algorithms with web interface</li>
         </ul>
         </div>
         """, unsafe_allow_html=True)
