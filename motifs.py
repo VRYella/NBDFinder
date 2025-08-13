@@ -1,6 +1,21 @@
 import re
 import numpy as np
 
+"""
+Non-B DNA Motif Detection Module
+===============================
+
+This module implements scientifically accurate detection algorithms for 18 distinct 
+non-canonical DNA structural motifs. Each algorithm is based on peer-reviewed literature
+and uses biologically relevant scoring systems.
+
+Reference Implementation: Default G4Hunter system for G-quadruplex detection with
+enhanced structural factors for variant forms.
+
+Authors: Dr. Venkata Rajesh Yella
+License: Academic Use
+"""
+
 # =========================
 # Basic sequence utilities
 # =========================
@@ -32,8 +47,12 @@ def overlapping_finditer(pattern, seq):
         pos = m.start() + 1
 
 # =========================
-# Curved DNA (PolyA/PolyT) with improved raw scoring
+# 1. CURVED DNA DETECTION
 # =========================
+# Scientific Basis: Curved DNA results from intrinsic bending caused by
+# phased A-tracts or T-tracts occurring at ~10.5 bp intervals (helical periodicity).
+# Reference: Bolshoy et al. (1991) PNAS; Crothers et al. (1990) JMB
+# Algorithm: Detects poly(A) and poly(T) tracts with proper spacing and scoring
 
 def find_polyA_polyT_tracts(seq: str, min_len: int = 7) -> list:
     results = []
@@ -52,6 +71,18 @@ def find_polyA_polyT_tracts(seq: str, min_len: int = 7) -> list:
     return results
 
 def curvature_score(seq):
+    """
+    Calculate curvature score based on AT-richness and tract organization.
+    
+    Scientific Basis: A-tracts and T-tracts cause DNA bending through 
+    narrowed minor groove. Score reflects biological propensity for curvature.
+    
+    Parameters:
+    seq (str): DNA sequence to score
+    
+    Returns:
+    float: Curvature propensity score
+    """
     # Raw score: length scaled by AT-bias and mild periodicity bonus based on A/T tracts
     if not seq:
         return 0.0
@@ -121,8 +152,12 @@ def find_curved_DNA(seq: str) -> list:
     return global_results + local_results
 
 # =========================
-# Z-DNA seeker (advanced Kadane's maximum subarray algorithm)
+# 2. Z-DNA DETECTION (Advanced Kadane's Algorithm)
 # =========================
+# Scientific Basis: Z-DNA is a left-handed double helix favored by alternating
+# purine-pyrimidine sequences, especially GC/CG dinucleotides under supercoiling stress.
+# Reference: Rich & Zhang (2003) Nat Rev Genet; Wang et al. (1979) Nature
+# Algorithm: Uses dinucleotide weights with Kadane's maximum subarray algorithm
 
 def zdna_dinucleotide_weights(seq, 
                              gc_weight=7.0, 
@@ -281,8 +316,12 @@ def find_zdna(seq, threshold=50, min_length=12, **kwargs):
     return motifs
 
 # =========================
-# eGZ (extruded-G) CGG repeats
+# 3. EXTRUDED-G Z-DNA (eGZ) DETECTION  
 # =========================
+# Scientific Basis: CGG repeats can adopt left-handed Z-DNA conformation with
+# extruded guanines. Associated with fragile X syndrome and trinucleotide repeat diseases.
+# Reference: Usdin & Woodford (1995) NAR; Pearson et al. (2005) Biochemistry
+# Algorithm: Detects (CGG)n repeats with n≥4, scores by G-content and repeat number
 
 def find_egz_motif(seq):
     pattern = re.compile(r'(CGG){4,}', re.IGNORECASE)
@@ -315,8 +354,12 @@ def find_egz_motif(seq):
     return results
 
 # =========================
-# Slipped DNA (Direct repeats and STR)
+# 4. SLIPPED DNA DETECTION
 # =========================
+# Scientific Basis: DNA slippage occurs during replication at direct repeats and
+# short tandem repeats (STRs), forming looped-out structures.
+# Reference: Kunkel & Bebenek (2000) Annu Rev Biochem; Wells (2007) Trends Biochem Sci
+# Algorithm: Detects direct repeats and STR motifs with biological scoring
 
 def find_slipped_dna(seq):
     results = []
@@ -414,8 +457,12 @@ def find_slipped_dna(seq):
     return results
 
 # =========================
-# R-Loop prediction (RLFS + REZ with advanced stability scoring)
+# 5. R-LOOP DETECTION (RLFS + REZ Algorithm)
 # =========================
+# Scientific Basis: R-loops form when RNA-DNA hybrids displace the non-template
+# DNA strand. Require G-rich initiating zone (RIZ) and G-rich extending zone (REZ).
+# Reference: Aguilera & García-Muse (2012) Mol Cell; Ginno et al. (2012) Mol Cell
+# Algorithm: QmRLFS models combined with downstream REZ detection and stability scoring
 
 RLFS_MODELS = {
     "m1": r"G{3,}[ATGC]{1,10}?G{3,}(?:[ATGC]{1,10}?G{3,}){1,}",
@@ -550,8 +597,12 @@ def find_rlfs(seq, models=("m1", "m2"), min_total_length=100):
     return results
 
 # =========================
-# Cruciform (Inverted repeats)
+# 6. CRUCIFORM DETECTION  
 # =========================
+# Scientific Basis: Cruciform structures form at palindromic inverted repeats
+# through extrusion of four-way junctions under negative supercoiling.
+# Reference: Lilley (2000) Q Rev Biophys; Mizuuchi et al. (1982) J Mol Biol  
+# Algorithm: Detects inverted repeats with arm-length scoring and AT-bias factors
 
 def find_cruciform(seq):
     results = []
@@ -590,8 +641,12 @@ def find_cruciform(seq):
     return results
 
 # =========================
-# Triplex / Mirror repeats (H-DNA)
+# 7. TRIPLEX DNA / H-DNA DETECTION
 # =========================
+# Scientific Basis: Triple helix structures form at homopurine-homopyrimidine
+# mirror repeats through Hoogsteen hydrogen bonding in the major groove.
+# Reference: Frank-Kamenetskii & Mirkin (1995) Annu Rev Biochem; Soyfer & Potaman (1996)
+# Algorithm: Detects mirror repeats with purine/pyrimidine homogeneity scoring
 
 def purine_fraction(seq):
     return (seq.count('A') + seq.count('G')) / max(1, len(seq))
@@ -651,8 +706,12 @@ def find_hdna(seq):
     return results
 
 # =========================
-# Sticky DNA (GAA/TTC long repeats)
+# 8. STICKY DNA DETECTION
 # =========================
+# Scientific Basis: Long GAA/TTC repeats form stable non-B structures that
+# cause replication stalling. Associated with Friedreich's ataxia when ≥59 repeats.
+# Reference: Usdin (2008) Chromosome Res; Grabczyk et al. (2007) J Biol Chem
+# Algorithm: Detects (GAA)n and (TTC)n with pathogenic threshold marking
 
 def find_sticky_dna(seq):
     motifs = []
@@ -693,13 +752,26 @@ def find_sticky_dna(seq):
     return motifs
 
 # =========================
-# G4Hunter and G-quadruplex variants (research-driven scoring)
+# 9. G-QUADRUPLEX DETECTION (Default G4Hunter System)
 # =========================
+# Scientific Basis: G-quadruplexes are four-stranded structures formed by 
+# guanine-rich sequences through Hoogsteen hydrogen bonding and π-π stacking.
+# Reference: Bedrat et al. (2016) NAR; Hänsel-Hertsch et al. (2017) Nat Rev Mol Cell Biol
+# Algorithm: Default G4Hunter scoring system with structural factor enhancements
 
 def g4hunter_score(seq):
     """
-    G4Hunter mean bias (G vs C) calculation as per the published algorithm.
-    Returns mean score for G vs C bias calculation.
+    G4Hunter mean bias calculation - DEFAULT G4Hunter algorithm implementation.
+    
+    Scientific Basis: G4Hunter computes G vs C bias to predict G-quadruplex
+    formation potential. Positive scores indicate G-quadruplex propensity.
+    Reference: Bedrat et al. (2016) Nucleic Acids Research
+    
+    Parameters:
+    seq (str): DNA sequence to score
+    
+    Returns:
+    float: G4Hunter mean score (G vs C bias)
     """
     scores = []
     for c in seq.upper():
@@ -922,8 +994,12 @@ def find_imperfect_gquadruplex(seq):
     return results
 
 # =========================
-# G-triplex
+# 10. G-TRIPLEX DETECTION
 # =========================
+# Scientific Basis: G-triplexes are three-stranded structures formed by three
+# G-rich sequences. Less stable than G-quadruplexes but biologically relevant.
+# Reference: Burge et al. (2006) NAR; Zhao et al. (2010) Biochimie
+# Algorithm: Detects three G-run patterns with loop length optimization
 
 def find_gtriplex(seq):
     pattern = r"(G{3,}\w{1,7}G{3,}\w{1,7}G{3,})"
@@ -952,8 +1028,12 @@ def find_gtriplex(seq):
     return results
 
 # =========================
-# i-Motif (advanced scoring with C-run analysis)
-# =========================
+# 11. I-MOTIF DETECTION
+# =========================  
+# Scientific Basis: i-Motifs are four-stranded cytosine-rich structures formed
+# under acidic conditions through hemiprotonated C-C+ base pairs.
+# Reference: Zeraati et al. (2018) Nat Chem; Abou Assi et al. (2018) NAR
+# Algorithm: Advanced scoring with C-run analysis and loop optimization
 
 def advanced_imotif_score(seq):
     """
@@ -1048,8 +1128,12 @@ def find_imotif(seq):
     return results
 
 # =========================
-# AC-motifs (consensus)
+# 12. AC-MOTIF DETECTION
 # =========================
+# Scientific Basis: AC-motifs are consensus sequences with alternating 
+# A-rich and C-rich regions that can form non-canonical structures.
+# Reference: Kocsis et al. (2021) Int J Mol Sci; Varizhuk et al. (2019) Biochimie  
+# Algorithm: Pattern matching with boundary and C3-run emphasis scoring
 
 def find_ac_motifs(seq):
     pattern = re.compile(
@@ -1092,8 +1176,12 @@ def find_ac_motifs(seq):
     return results
 
 # =========================
-# Hybrid overlaps and hotspots (augmented fields)
+# 13-14. HYBRID MOTIFS & NON-B DNA CLUSTERS
 # =========================
+# Scientific Basis: Regions where multiple non-B structures overlap or cluster
+# together may have enhanced biological significance and regulatory potential.
+# Reference: Wells (2007) Trends Biochem Sci; Zhao et al. (2010) PLoS One
+# Algorithm: Interval intersection for hybrids, sliding window for hotspot clusters
 
 def find_hybrids(motifs, seq):
     events = []

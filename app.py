@@ -1,7 +1,11 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import io
+import time
 from collections import Counter
 from Bio import Entrez, SeqIO
 
@@ -161,6 +165,10 @@ for k, v in {
     'summary_df': pd.DataFrame(),
     'hotspots': [],
     'analysis_status': "Ready",
+    'analysis_start_time': None,
+    'analysis_progress': 0,
+    'is_analyzing': False,
+    'stop_analysis': False,
     'selected_motifs': MOTIF_ORDER,
 }.items():
     if k not in st.session_state:
@@ -182,6 +190,119 @@ def get_basic_stats(seq, motifs=None):
         coverage_pct = (len(covered) / length * 100) if length else 0
         stats["Motif Coverage (%)"] = round(coverage_pct, 2)
     return stats
+
+def create_progress_tracker():
+    """Create a progress tracking container"""
+    if st.session_state.is_analyzing:
+        progress_container = st.container()
+        with progress_container:
+            col1, col2, col3 = st.columns([2, 1, 1])
+            
+            with col1:
+                progress_bar = st.progress(st.session_state.analysis_progress)
+                if st.session_state.analysis_start_time:
+                    elapsed = time.time() - st.session_state.analysis_start_time
+                    st.write(f"⏱️ Analysis time: {elapsed:.1f}s | Status: {st.session_state.analysis_status}")
+            
+            with col2:
+                if st.button("⏸️ Stop Analysis", key="stop_btn"):
+                    st.session_state.stop_analysis = True
+                    st.session_state.is_analyzing = False
+                    st.warning("Analysis stopped by user")
+                    
+            with col3:
+                st.write("🔄 Processing...")
+        
+        return progress_container
+    return None
+
+def analyze_sequence_with_progress(seq, seq_name, selected_motifs):
+    """Analyze sequence with progress updates"""
+    total_steps = len(selected_motifs) if selected_motifs else 18
+    
+    # Initialize progress
+    st.session_state.analysis_progress = 0
+    st.session_state.analysis_status = "Starting analysis..."
+    
+    # Check if we need to run all motifs
+    run_all = any(m in selected_motifs for m in ["Hybrid", "Non-B DNA Clusters"])
+    
+    if run_all:
+        st.session_state.analysis_status = "Running comprehensive motif analysis..."
+        motifs = all_motifs(seq)
+        st.session_state.analysis_progress = 0.8
+    else:
+        motifs = all_motifs(seq)
+        # Filter by selected motifs
+        motifs = [m for m in motifs if m['Class'] in selected_motifs]
+        st.session_state.analysis_progress = 0.7
+    
+    st.session_state.analysis_status = "Processing results..."
+    # PATCH: Ensure every motif has a 'Subtype'
+    motifs = [ensure_subtype(m) for m in motifs]
+    nonoverlapping = select_best_nonoverlapping_motifs(motifs)
+    
+    st.session_state.analysis_progress = 1.0
+    st.session_state.analysis_status = "Analysis complete!"
+    
+    return nonoverlapping
+
+def create_enhanced_motif_visualization(motifs, seq_name, seq_length):
+    """Create enhanced interactive motif visualization using Plotly"""
+    if not motifs:
+        st.warning("No motifs to visualize")
+        return
+    
+    # Create interactive plot
+    fig = go.Figure()
+    
+    # Color mapping for motifs
+    y_positions = {}
+    y_counter = 0
+    
+    for i, motif in enumerate(motifs):
+        motif_class = motif['Class']
+        if motif_class == "Z-DNA" and motif.get("Subclass", "") == "eGZ (Extruded-G)":
+            motif_class = "eGZ (Extruded-G)"
+        
+        if motif_class not in y_positions:
+            y_positions[motif_class] = y_counter
+            y_counter += 1
+        
+        color = MOTIF_COLORS.get(motif_class, "#888888")
+        
+        # Add motif as a horizontal bar
+        fig.add_trace(go.Scatter(
+            x=[motif['Start'], motif['End']],
+            y=[y_positions[motif_class], y_positions[motif_class]],
+            mode='lines',
+            line=dict(color=color, width=8),
+            name=motif_class,
+            showlegend=motif_class not in [trace.name for trace in fig.data],
+            hovertemplate=f"<b>{motif_class}</b><br>" +
+                         f"Position: {motif['Start']}-{motif['End']}<br>" +
+                         f"Length: {motif['Length']} bp<br>" +
+                         f"Score: {motif.get('Score', 'N/A')}<br>" +
+                         "<extra></extra>"
+        ))
+    
+    # Update layout
+    fig.update_layout(
+        title=f"Interactive Motif Map: {seq_name}",
+        xaxis_title="Sequence Position (bp)",
+        yaxis_title="Motif Classes",
+        yaxis=dict(
+            tickmode='array',
+            tickvals=list(y_positions.values()),
+            ticktext=list(y_positions.keys()),
+            showgrid=True
+        ),
+        height=max(400, len(y_positions) * 50),
+        hovermode='closest',
+        showlegend=True
+    )
+    
+    return fig
 
 # ---- TABS ----
 tabs = st.tabs(list(PAGES.keys()))
@@ -364,41 +485,76 @@ with tab_pages["Upload & Analyze"]:
         if len(st.session_state.seqs) > 2:
             st.caption(f"...and {len(st.session_state.seqs)-2} more.")
 
-        run_all = any(m in st.session_state.selected_motifs for m in ["Hybrid", "Non-B DNA Clusters"])
-        if st.button("Run Motif Analysis", type="primary"):
-            st.session_state.analysis_status = "Running"
-            motif_results = []
-            for seq in st.session_state.seqs:
-                if run_all:
-                    motifs = all_motifs(seq)
-                else:
-                    motifs = [m for m in all_motifs(seq) if m['Class'] in st.session_state.selected_motifs]
-                # PATCH: Ensure every motif has a 'Subtype'
-                motifs = [ensure_subtype(m) for m in motifs]
-                nonoverlapping = select_best_nonoverlapping_motifs(motifs)
-                motif_results.append(nonoverlapping)
-            st.session_state.results = motif_results
-
-            summary = []
-            for i, motifs in enumerate(motif_results):
-                stats = get_basic_stats(st.session_state.seqs[i], motifs)
-                motif_types = Counter([m['Class'] if m['Class'] != "Z-DNA" or m.get("Subclass") != "eGZ (Extruded-G)" else "eGZ (Extruded-G)" for m in motifs])
-                summary.append({
-                    "Sequence Name": st.session_state.names[i],
-                    "Length (bp)": stats['Length (bp)'],
-                    "GC %": stats['GC %'],
-                    "AT %": stats['AT %'],
-                    "A Count": stats['A Count'],
-                    "T Count": stats['T Count'],
-                    "G Count": stats['G Count'],
-                    "C Count": stats['C Count'],
-                    "Motif Count": len(motifs),
-                    "Motif Coverage (%)": stats["Motif Coverage (%)"],
-                    "Motif Classes": ", ".join(f"{k} ({v})" for k, v in motif_types.items())
-                })
-            st.session_state.summary_df = pd.DataFrame(summary)
-            st.success("Analysis complete! See 'Analysis Results and Visualization' tab for details.")
-            st.session_state.analysis_status = "Complete"
+        # Enhanced analysis section with progress tracking
+        st.markdown("---")
+        col1, col2 = st.columns([3, 1])
+        
+        with col1:
+            run_all = any(m in st.session_state.selected_motifs for m in ["Hybrid", "Non-B DNA Clusters"])
+            
+            if not st.session_state.is_analyzing:
+                if st.button("🚀 Start Motif Analysis", type="primary", key="start_analysis"):
+                    st.session_state.is_analyzing = True
+                    st.session_state.analysis_start_time = time.time()
+                    st.session_state.analysis_progress = 0
+                    st.session_state.stop_analysis = False
+                    st.rerun()
+            else:
+                st.button("🚀 Analysis Running...", disabled=True, key="analysis_running")
+        
+        with col2:
+            if st.session_state.is_analyzing:
+                st.metric("Status", "🔄 Running")
+            else:
+                st.metric("Status", "⏸️ Ready")
+        
+        # Progress tracking container
+        progress_container = create_progress_tracker()
+        
+        # Run analysis if triggered
+        if st.session_state.is_analyzing and not st.session_state.stop_analysis:
+            with st.spinner("Analyzing sequences..."):
+                motif_results = []
+                total_seqs = len(st.session_state.seqs)
+                
+                for idx, seq in enumerate(st.session_state.seqs):
+                    if st.session_state.stop_analysis:
+                        break
+                        
+                    st.session_state.analysis_status = f"Processing sequence {idx+1}/{total_seqs}..."
+                    st.session_state.analysis_progress = idx / total_seqs
+                    
+                    try:
+                        motifs = analyze_sequence_with_progress(seq, st.session_state.names[idx], st.session_state.selected_motifs)
+                        motif_results.append(motifs)
+                    except Exception as e:
+                        st.error(f"Error analyzing sequence {idx+1}: {str(e)}")
+                        motif_results.append([])
+                
+                if not st.session_state.stop_analysis:
+                    st.session_state.results = motif_results
+                    
+                    # Generate summary statistics
+                    summary = []
+                    for i, motifs in enumerate(motif_results):
+                        stats = get_basic_stats(st.session_state.seqs[i], motifs)
+                        motif_types = Counter([m['Class'] if m['Class'] != "Z-DNA" or m.get("Subclass") != "eGZ (Extruded-G)" else "eGZ (Extruded-G)" for m in motifs])
+                        summary.append({
+                            "Sequence Name": st.session_state.names[i],
+                            "Length (bp)": stats['Length (bp)'],
+                            "GC %": stats['GC %'],
+                            "Motif Count": len(motifs),
+                            "Motif Coverage (%)": stats["Motif Coverage (%)"],
+                            "Top Motifs": ", ".join([f"{k}({v})" for k, v in sorted(motif_types.items(), key=lambda x: x[1], reverse=True)[:3]])
+                        })
+                    
+                    st.session_state.summary_df = pd.DataFrame(summary)
+                    st.success("✅ Analysis complete! View results in the 'Results' tab.")
+                
+                # Reset analysis state
+                st.session_state.is_analyzing = False
+                st.session_state.analysis_status = "Ready"
+                st.rerun()
 
 # ---------- RESULTS ----------
 with tab_pages["Results"]:
@@ -406,44 +562,127 @@ with tab_pages["Results"]:
     if not st.session_state.results:
         st.info("No analysis results. Please run motif analysis first.")
     else:
-        st.dataframe(st.session_state.summary_df, use_container_width=True)
+        # Enhanced summary table with key metrics only
+        st.subheader("📊 Analysis Summary")
+        summary_cols = ["Sequence Name", "Length (bp)", "GC %", "Motif Count", "Motif Coverage (%)", "Top Motifs"]
+        st.dataframe(st.session_state.summary_df[summary_cols], use_container_width=True)
+        
         seq_idx = 0
         if len(st.session_state.seqs) > 1:
-            seq_idx = st.selectbox("Choose Sequence for Details:", range(len(st.session_state.seqs)), format_func=lambda i: st.session_state.names[i])
+            seq_idx = st.selectbox("Choose Sequence for Detailed Analysis:", range(len(st.session_state.seqs)), format_func=lambda i: st.session_state.names[i])
+        
         motifs = st.session_state.results[seq_idx]
         if not motifs:
             st.warning("No motifs detected for this sequence.")
         else:
             df = pd.DataFrame(motifs)
-            st.markdown(f"<h3>Motif Table for <b>{st.session_state.names[seq_idx]}</b></h3>", unsafe_allow_html=True)
-            display_columns = [col for col in df.columns if col not in ['Sequence', 'SequenceName']]
-            st.dataframe(df[display_columns], use_container_width=True, height=360)
-            st.markdown('<span style="font-family:Montserrat,Arial;font-size:1.11rem;"><b>Motif Type Distribution</b></span>', unsafe_allow_html=True)
-            fig, ax = plt.subplots(figsize=(8,6))
-            class_counts = df['Class'].value_counts().reindex(
-                st.session_state.selected_motifs if not any(m in st.session_state.selected_motifs for m in ['Hybrid', 'Non-B DNA Clusters']) else MOTIF_ORDER, fill_value=0)
-            if "Subclass" in df.columns:
-                egz_count = (df["Subclass"] == "eGZ (Extruded-G)").sum()
-                if "eGZ (Extruded-G)" in class_counts.index:
-                    class_counts["eGZ (Extruded-G)"] = egz_count
-            ax.barh(class_counts.index, class_counts.values, color=[MOTIF_COLORS.get(c, "#888") for c in class_counts.index])
-            ax.set_xlabel("Motif Count")
-            st.pyplot(fig)
-            st.markdown('<span style="font-family:Montserrat,Arial;font-size:1.11rem;"><b>Motif Map</b></span>', unsafe_allow_html=True)
-            fig, ax = plt.subplots(figsize=(12,3))
-            y = 1
-            for _, row in df.iterrows():
-                motif_class = row['Class']
-                if motif_class == "Z-DNA" and row.get("Subclass", "") == "eGZ (Extruded-G)":
-                    motif_class = "eGZ (Extruded-G)"
-                color = MOTIF_COLORS.get(motif_class, "#888")
-                ax.plot([row['Start'], row['End']], [y, y], lw=8, color=color, alpha=0.8)
-                y += 0.12
-            ax.set_yticks([])
-            ax.set_xlabel("Sequence Position (bp)")
-            ax.set_xlim(0, len(st.session_state.seqs[seq_idx]))
-            ax.set_title(f"Motif Tracks: {st.session_state.names[seq_idx]}", fontweight='bold', fontsize=14)
-            st.pyplot(fig)
+            
+            # Enhanced motif table with essential columns only
+            st.markdown(f"<h3>🧬 Detailed Motifs for <b>{st.session_state.names[seq_idx]}</b></h3>", unsafe_allow_html=True)
+            
+            # Key columns for display (removing arm length, adding predicted sequence preview)
+            essential_columns = ['Class', 'Subtype', 'Start', 'End', 'Length', 'Score']
+            
+            # Add predicted sequence preview (first 50 chars)
+            if 'Sequence' in df.columns:
+                df['Sequence Preview'] = df['Sequence'].apply(lambda x: x.replace('\n', '')[:50] + '...' if len(x.replace('\n', '')) > 50 else x.replace('\n', ''))
+                essential_columns.append('Sequence Preview')
+            
+            display_df = df[essential_columns].copy()
+            
+            # Format numeric columns
+            if 'Score' in display_df.columns:
+                display_df['Score'] = display_df['Score'].apply(lambda x: f"{x:.2f}" if isinstance(x, (int, float)) else str(x))
+            
+            st.dataframe(display_df, use_container_width=True, height=400)
+            
+            # Enhanced visualizations
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.markdown('<h4>📈 Motif Type Distribution</h4>', unsafe_allow_html=True)
+                
+                # Create interactive bar chart
+                class_counts = df['Class'].value_counts()
+                if "Subclass" in df.columns:
+                    egz_count = (df["Subclass"] == "eGZ (Extruded-G)").sum()
+                    if egz_count > 0:
+                        class_counts["eGZ (Extruded-G)"] = egz_count
+                
+                fig_bar = px.bar(
+                    x=class_counts.values, 
+                    y=class_counts.index,
+                    orientation='h',
+                    color=class_counts.index,
+                    color_discrete_map=MOTIF_COLORS,
+                    title="Motif Counts by Type"
+                )
+                fig_bar.update_layout(height=400, showlegend=False)
+                st.plotly_chart(fig_bar, use_container_width=True)
+            
+            with col2:
+                st.markdown('<h4>📊 Motif Length Distribution</h4>', unsafe_allow_html=True)
+                
+                # Create motif length histogram
+                if 'Length' in df.columns:
+                    fig_hist = px.histogram(
+                        df, 
+                        x='Length', 
+                        color='Class',
+                        color_discrete_map=MOTIF_COLORS,
+                        title="Distribution of Motif Lengths"
+                    )
+                    fig_hist.update_layout(height=400)
+                    st.plotly_chart(fig_hist, use_container_width=True)
+            
+            # Enhanced interactive motif map
+            st.markdown('<h4>🗺️ Interactive Motif Map</h4>', unsafe_allow_html=True)
+            
+            # Create the enhanced visualization
+            interactive_fig = create_enhanced_motif_visualization(motifs, st.session_state.names[seq_idx], len(st.session_state.seqs[seq_idx]))
+            if interactive_fig:
+                st.plotly_chart(interactive_fig, use_container_width=True)
+            
+            # Additional sequence composition analysis
+            st.markdown('<h4>🔬 Sequence Composition Analysis</h4>', unsafe_allow_html=True)
+            seq = st.session_state.seqs[seq_idx]
+            stats = get_basic_stats(seq, motifs)
+            
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("GC Content", f"{stats['GC %']}%")
+            with col2:
+                st.metric("AT Content", f"{stats['AT %']}%")
+            with col3:
+                st.metric("Motif Coverage", f"{stats['Motif Coverage (%)']}%")
+            with col4:
+                st.metric("Total Motifs", len(motifs))
+                
+            # Motif density heatmap
+            if len(motifs) > 0:
+                st.markdown('<h4>🌡️ Motif Density Heatmap</h4>', unsafe_allow_html=True)
+                
+                # Create density array
+                seq_len = len(seq)
+                window_size = max(50, seq_len // 20)  # Adaptive window size
+                density = []
+                positions = []
+                
+                for i in range(0, seq_len, window_size):
+                    window_end = min(i + window_size, seq_len)
+                    window_motifs = [m for m in motifs if m['Start'] >= i and m['End'] <= window_end]
+                    density.append(len(window_motifs))
+                    positions.append(f"{i}-{window_end}")
+                
+                if density:
+                    fig_heatmap = px.bar(
+                        x=positions,
+                        y=density,
+                        title=f"Motif Density (window size: {window_size} bp)",
+                        labels={'x': 'Sequence Position', 'y': 'Motif Count'}
+                    )
+                    fig_heatmap.update_layout(height=300)
+                    st.plotly_chart(fig_heatmap, use_container_width=True)
 
 # ---------- DOWNLOAD ----------
 with tab_pages["Download"]:
