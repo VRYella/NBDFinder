@@ -258,6 +258,44 @@ def get_basic_stats(seq, motifs=None):
         stats["Motif Coverage (%)"] = round(coverage_pct, 2)
     return stats
 
+def ncbi_fetch(query):
+    """Fetch sequences from NCBI using Entrez"""
+    try:
+        # Search for the query
+        handle = Entrez.esearch(db="nucleotide", term=query, retmax=5)
+        search_results = Entrez.read(handle)
+        handle.close()
+        
+        if not search_results['IdList']:
+            return [], []
+        
+        # Fetch sequences
+        ids = search_results['IdList']
+        handle = Entrez.efetch(db="nucleotide", id=ids, rettype="fasta", retmode="text")
+        fasta_content = handle.read()
+        handle.close()
+        
+        # Parse FASTA content
+        seqs, names = [], []
+        cur_seq, cur_name = "", ""
+        for line in fasta_content.splitlines():
+            if line.startswith(">"):
+                if cur_seq:
+                    seqs.append(parse_fasta(cur_seq))
+                    names.append(cur_name if cur_name else f"Seq{len(seqs)}")
+                cur_name = line.strip().lstrip(">")
+                cur_seq = ""
+            else:
+                cur_seq += line.strip()
+        if cur_seq:
+            seqs.append(parse_fasta(cur_seq))
+            names.append(cur_name if cur_name else f"Seq{len(seqs)}")
+        
+        return seqs, names
+    except Exception as e:
+        st.error(f"NCBI fetch failed: {e}")
+        return [], []
+
 def create_progress_tracker():
     """Create a progress tracking container"""
     if st.session_state.is_analyzing:
@@ -419,88 +457,144 @@ with tab_pages["Home"]:
         """, unsafe_allow_html=True)
 
 # ---------- UPLOAD & ANALYZE ----------
-# --- Upload & Analyze Tab: Sequence input and motif analysis interface ---
+with tab_pages["Upload & Analyze"]:
+    st.markdown("<h2>Sequence Upload and Motif Analysis</h2>", unsafe_allow_html=True)
+    st.markdown('<span style="font-family:Montserrat,Arial; font-size:1.12rem;">Supports multi-FASTA and single FASTA. Paste, upload, select example, or fetch from NCBI.</span>', unsafe_allow_html=True)
+    st.caption("Supported formats: .fa, .fasta, .txt | Limit: 200MB/file.")
 
-# Section header and format instructions
-st.markdown("<h2>Sequence Upload and Motif Analysis</h2>", unsafe_allow_html=True); 
-st.markdown('<span style="font-family:Montserrat,Arial; font-size:1.12rem;">Supports multi-FASTA and single FASTA. Paste, upload, select example, or fetch from NCBI.</span>', unsafe_allow_html=True); 
-st.caption("Supported formats: .fa, .fasta, .txt | Limit: 200MB/file.");
+    # Motif class selection
+    selected_motifs = st.multiselect(
+        "Select Motif Classes for Analysis", MOTIF_ORDER, default=MOTIF_ORDER,
+        help="Choose motif classes to analyze. Selecting 'Hybrid' or 'Non-B DNA Clusters' will run all motif modules."
+    )
+    st.session_state.selected_motifs = selected_motifs if selected_motifs else MOTIF_ORDER
 
-# Motif class selection
-selected_motifs = st.multiselect(
-    "Select Motif Classes for Analysis", MOTIF_ORDER, default=MOTIF_ORDER,
-    help="Choose motif classes to analyze. Selecting 'Hybrid' or 'Non-B DNA Clusters' will run all motif modules."
-); st.session_state.selected_motifs = selected_motifs if selected_motifs else MOTIF_ORDER;
+    # Input method selection
+    st.markdown('<p class="input-method-title">Input Method:</p>', unsafe_allow_html=True)
+    input_method = st.radio("", ["Upload FASTA / Multi-FASTA File", "Paste Sequence(s)", "Example Sequence", "NCBI Fetch"], horizontal=True)
 
-# Input method selection
-st.markdown('<p class="input-method-title">Input Method:</p>', unsafe_allow_html=True);
-input_method = st.radio("", ["Upload FASTA / Multi-FASTA File", "Paste Sequence(s)", "Example Sequence", "NCBI Fetch"], horizontal=True);
+    seqs, names = [], []
 
-seqs, names = [], [];
-
-# --- File upload ---
-if input_method == "Upload FASTA / Multi-FASTA File":
-    fasta_file = st.file_uploader("Drag and drop FASTA/multi-FASTA file here", type=["fa", "fasta", "txt"]);
-    if fasta_file:
-        content = fasta_file.read().decode("utf-8"); cur_seq, cur_name = "", "";
-        for line in content.splitlines():
-            if line.startswith(">"):
-                if cur_seq: seqs.append(parse_fasta(cur_seq)); names.append(cur_name if cur_name else f"Seq{len(seqs)}");
-                cur_name = line.strip().lstrip(">"); cur_seq = "";
-            else: cur_seq += line.strip();
-        if cur_seq: seqs.append(parse_fasta(cur_seq)); names.append(cur_name if cur_name else f"Seq{len(seqs)}");
-        if seqs:
-            st.success(f"Loaded {len(seqs)} sequences."); 
-            for i, seq in enumerate(seqs[:3]):
-                stats = get_basic_stats(seq); st.write(f"Seq {i+1}: {stats}");
-
-# --- Paste sequence ---
-elif input_method == "Paste Sequence(s)":
-    seq_input = st.text_area("Paste FASTA or raw sequence(s)", height=150);
-    if seq_input:
-        lines = seq_input.splitlines(); cur_seq, cur_name = "", "";
-        for line in lines:
-            if line.startswith(">"):
-                if cur_seq: seqs.append(parse_fasta(cur_seq)); names.append(cur_name if cur_name else f"Seq{len(seqs)}");
-                cur_name = line.strip().lstrip(">"); cur_seq = "";
-            else: cur_seq += line.strip();
-        if cur_seq: seqs.append(parse_fasta(cur_seq)); names.append(cur_name if cur_name else f"Seq{len(seqs)}");
-        if seqs: st.success(f"Pasted {len(seqs)} sequences.");
-
-# --- Example input ---
-elif input_method == "Example Sequence":
-    examples = ["g4_rich_sequence.fasta", "disease_repeats.fasta", "structural_motifs.fasta", "comprehensive_example.fasta"];
-    example = st.selectbox("Select example input", examples);
-    if example:
-        path = f"example_inputs/{example}";
-        with open(path, "r") as f:
-            content = f.read(); cur_seq, cur_name = "", "";
+    # --- File upload ---
+    if input_method == "Upload FASTA / Multi-FASTA File":
+        fasta_file = st.file_uploader("Drag and drop FASTA/multi-FASTA file here", type=["fa", "fasta", "txt"])
+        if fasta_file:
+            content = fasta_file.read().decode("utf-8")
+            cur_seq, cur_name = "", ""
             for line in content.splitlines():
                 if line.startswith(">"):
-                    if cur_seq: seqs.append(parse_fasta(cur_seq)); names.append(cur_name if cur_name else f"Seq{len(seqs)}");
-                    cur_name = line.strip().lstrip(">"); cur_seq = "";
-                else: cur_seq += line.strip();
-            if cur_seq: seqs.append(parse_fasta(cur_seq)); names.append(cur_name if cur_name else f"Seq{len(seqs)}");
-        if seqs: st.success(f"Loaded {len(seqs)} example sequences.");
+                    if cur_seq:
+                        seqs.append(parse_fasta(cur_seq))
+                        names.append(cur_name if cur_name else f"Seq{len(seqs)}")
+                    cur_name = line.strip().lstrip(">")
+                    cur_seq = ""
+                else:
+                    cur_seq += line.strip()
+            if cur_seq:
+                seqs.append(parse_fasta(cur_seq))
+                names.append(cur_name if cur_name else f"Seq{len(seqs)}")
+            if seqs:
+                st.success(f"Loaded {len(seqs)} sequences.")
+                for i, seq in enumerate(seqs[:3]):
+                    stats = get_basic_stats(seq)
+                    st.write(f"Seq {i+1}: {stats}")
 
-# --- NCBI Query input (improved placeholder, retains features) ---
-elif input_method == "NCBI Fetch":
-    ncbi_query = st.text_input("NCBI Query", value="", placeholder="Enter query (accession, gene, etc.)"); # Transparent example
-    if ncbi_query:
-        # User-defined implementation for NCBI fetch, e.g. ncbi_fetch(query) → (seqs, names)
-        try:
-            seqs, names = ncbi_fetch(ncbi_query); # This should be a function you define elsewhere
-            if seqs: st.success(f"Fetched {len(seqs)} sequence(s) from NCBI.");
-        except Exception as e:
-            st.error(f"NCBI fetch failed: {e}");
+    # --- Paste sequence ---
+    elif input_method == "Paste Sequence(s)":
+        seq_input = st.text_area("Paste FASTA or raw sequence(s)", height=150)
+        if seq_input:
+            lines = seq_input.splitlines()
+            cur_seq, cur_name = "", ""
+            for line in lines:
+                if line.startswith(">"):
+                    if cur_seq:
+                        seqs.append(parse_fasta(cur_seq))
+                        names.append(cur_name if cur_name else f"Seq{len(seqs)}")
+                    cur_name = line.strip().lstrip(">")
+                    cur_seq = ""
+                else:
+                    cur_seq += line.strip()
+            if cur_seq:
+                seqs.append(parse_fasta(cur_seq))
+                names.append(cur_name if cur_name else f"Seq{len(seqs)}")
+            if seqs:
+                st.success(f"Pasted {len(seqs)} sequences.")
 
-# --- Analysis trigger and result display ---
-if seqs and st.button("Analyze Sequences"):
-    st.session_state.is_analyzing = True; results = [];
-    for seq, name in zip(seqs, names):
-        motifs = analyze_sequence_with_progress(seq, name, st.session_state.selected_motifs); results.append((name, motifs));
-    st.session_state.results = results; st.success("Analysis complete. See Results tab for visualization and tables.");
-# --- End of Upload & Analyze section ---
+    # --- Example input ---
+    elif input_method == "Example Sequence":
+        examples = ["g4_rich_sequence.fasta", "disease_repeats.fasta", "structural_motifs.fasta", "comprehensive_example.fasta"]
+        example = st.selectbox("Select example input", examples)
+        if example:
+            path = f"example_inputs/{example}"
+            try:
+                with open(path, "r") as f:
+                    content = f.read()
+                    cur_seq, cur_name = "", ""
+                    for line in content.splitlines():
+                        if line.startswith(">"):
+                            if cur_seq:
+                                seqs.append(parse_fasta(cur_seq))
+                                names.append(cur_name if cur_name else f"Seq{len(seqs)}")
+                            cur_name = line.strip().lstrip(">")
+                            cur_seq = ""
+                        else:
+                            cur_seq += line.strip()
+                    if cur_seq:
+                        seqs.append(parse_fasta(cur_seq))
+                        names.append(cur_name if cur_name else f"Seq{len(seqs)}")
+                if seqs:
+                    st.success(f"Loaded {len(seqs)} example sequences.")
+            except FileNotFoundError:
+                st.warning(f"Example file {example} not found. Using built-in example sequence.")
+                seqs = [EXAMPLE_FASTA.split('\n', 1)[1].replace('\n', '')]
+                names = ["Example Sequence"]
+
+    # --- NCBI Query input ---
+    elif input_method == "NCBI Fetch":
+        ncbi_query = st.text_input("NCBI Query", value="", placeholder="Enter query (accession, gene, etc.)")
+        if ncbi_query:
+            try:
+                seqs, names = ncbi_fetch(ncbi_query)
+                if seqs:
+                    st.success(f"Fetched {len(seqs)} sequence(s) from NCBI.")
+            except Exception as e:
+                st.error(f"NCBI fetch failed: {e}")
+
+    # --- Analysis trigger ---
+    if seqs and st.button("Analyze Sequences"):
+        st.session_state.is_analyzing = True
+        results = []
+        progress_container = create_progress_tracker()
+        
+        for seq, name in zip(seqs, names):
+            motifs = analyze_sequence_with_progress(seq, name, st.session_state.selected_motifs)
+            results.append((name, motifs))
+            
+        st.session_state.seqs = seqs
+        st.session_state.names = names
+        st.session_state.results = results
+        st.session_state.is_analyzing = False
+        
+        # Create summary dataframe
+        summary_data = []
+        for i, (name, motifs) in enumerate(results):
+            seq = seqs[i]
+            stats = get_basic_stats(seq, motifs)
+            motif_classes = [m['Class'] for m in motifs]
+            top_motifs = ', '.join(list(set(motif_classes))[:3]) if motif_classes else "None"
+            
+            summary_data.append({
+                "Sequence Name": name,
+                "Length (bp)": stats["Length (bp)"],
+                "GC %": stats["GC %"],
+                "Motif Count": len(motifs),
+                "Motif Coverage (%)": stats.get("Motif Coverage (%)", 0),
+                "Top Motifs": top_motifs
+            })
+        
+        st.session_state.summary_df = pd.DataFrame(summary_data)
+        st.success("Analysis complete. See Results tab for visualization and tables.")
+
 # ---------- RESULTS ----------
 with tab_pages["Results"]:
     st.markdown('<h2>Analysis Results and Visualization</h2>', unsafe_allow_html=True)
@@ -516,7 +610,8 @@ with tab_pages["Results"]:
         if len(st.session_state.seqs) > 1:
             seq_idx = st.selectbox("Choose Sequence for Detailed Analysis:", range(len(st.session_state.seqs)), format_func=lambda i: st.session_state.names[i])
         
-        motifs = st.session_state.results[seq_idx]
+        # Extract motifs from results tuple (name, motifs)
+        _, motifs = st.session_state.results[seq_idx]
         if not motifs:
             st.warning("No motifs detected for this sequence.")
         else:
@@ -525,19 +620,39 @@ with tab_pages["Results"]:
             # Enhanced motif table with essential columns only
             st.markdown(f"<h3>🧬 Detailed Motifs for <b>{st.session_state.names[seq_idx]}</b></h3>", unsafe_allow_html=True)
             
-            # Key columns for display (removing arm length, adding predicted sequence preview)
-            essential_columns = ['Class', 'Subtype', 'Start', 'End', 'Length', 'Score']
+            # Check available columns and adapt
+            available_columns = df.columns.tolist()
+            
+            # Key columns for display (adapting to actual column names)
+            essential_columns = []
+            column_mapping = {
+                'Class': ['Class'],
+                'Subtype': ['Subtype'],
+                'Start': ['Start'],
+                'End': ['End'],
+                'Length': ['Length'],
+                'Score': ['Score']
+            }
+            
+            # Add columns that exist
+            for display_name, possible_names in column_mapping.items():
+                for col_name in possible_names:
+                    if col_name in available_columns:
+                        essential_columns.append(col_name)
+                        break
             
             # Add predicted sequence preview (first 50 chars)
             if 'Sequence' in df.columns:
-                df['Sequence Preview'] = df['Sequence'].apply(lambda x: x.replace('\n', '')[:50] + '...' if len(x.replace('\n', '')) > 50 else x.replace('\n', ''))
+                df['Sequence Preview'] = df['Sequence'].apply(lambda x: str(x).replace('\n', '')[:50] + '...' if len(str(x).replace('\n', '')) > 50 else str(x).replace('\n', ''))
                 essential_columns.append('Sequence Preview')
             
             # Add serial number starting from 1
             df['S.No'] = range(1, len(df) + 1)
             essential_columns = ['S.No'] + essential_columns
             
-            display_df = df[essential_columns].copy()
+            # Only use columns that actually exist
+            final_columns = [col for col in essential_columns if col in df.columns]
+            display_df = df[final_columns].copy()
             
             # Format numeric columns
             if 'Score' in display_df.columns:
@@ -574,51 +689,55 @@ with tab_pages["Results"]:
                 st.markdown('<h4>📈 Motif Type Distribution</h4>', unsafe_allow_html=True)
                 
                 # Create interactive bar chart
-                class_counts = df['Class'].value_counts()
-                if "Subclass" in df.columns:
-                    egz_count = (df["Subclass"] == "eGZ (Extruded-G)").sum()
-                    if egz_count > 0:
-                        class_counts["eGZ (Extruded-G)"] = egz_count
-                
-                fig_bar = px.bar(
-                    x=class_counts.values, 
-                    y=class_counts.index,
-                    orientation='h',
-                    color=class_counts.index,
-                    color_discrete_map=MOTIF_COLORS,
-                    title="<b>Motif Counts by Type</b>"
-                )
-                fig_bar.update_layout(
-                    height=400, 
-                    showlegend=False,
-                    xaxis=dict(
-                        title="<b>Number of Motifs</b>",
-                        title_font=dict(size=14, color='#1565c0'),
-                        tickfont=dict(size=12, color='#424242'),
-                        gridcolor='#e0e0e0',
-                        gridwidth=1
-                    ),
-                    yaxis=dict(
-                        title="<b>Motif Classes</b>",
-                        title_font=dict(size=14, color='#1565c0'),
-                        tickfont=dict(size=12, color='#424242')
-                    ),
-                    title_font=dict(size=16, color='#1565c0'),
-                    plot_bgcolor='rgba(248,253,255,0.7)',
-                    paper_bgcolor='white'
-                )
-                st.plotly_chart(fig_bar, use_container_width=True)
+                if 'Class' in df.columns and len(df) > 0:
+                    class_counts = df['Class'].value_counts()
+                    if "Subclass" in df.columns:
+                        egz_count = (df["Subclass"] == "eGZ (Extruded-G)").sum()
+                        if egz_count > 0:
+                            class_counts["eGZ (Extruded-G)"] = egz_count
+                    
+                    fig_bar = px.bar(
+                        x=class_counts.values, 
+                        y=class_counts.index,
+                        orientation='h',
+                        color=class_counts.index,
+                        color_discrete_map=MOTIF_COLORS,
+                        title="<b>Motif Counts by Type</b>"
+                    )
+                    fig_bar.update_layout(
+                        height=400, 
+                        showlegend=False,
+                        xaxis=dict(
+                            title="<b>Number of Motifs</b>",
+                            title_font=dict(size=14, color='#1565c0'),
+                            tickfont=dict(size=12, color='#424242'),
+                            gridcolor='#e0e0e0',
+                            gridwidth=1
+                        ),
+                        yaxis=dict(
+                            title="<b>Motif Classes</b>",
+                            title_font=dict(size=14, color='#1565c0'),
+                            tickfont=dict(size=12, color='#424242')
+                        ),
+                        title_font=dict(size=16, color='#1565c0'),
+                        plot_bgcolor='rgba(248,253,255,0.7)',
+                        paper_bgcolor='white'
+                    )
+                    st.plotly_chart(fig_bar, use_container_width=True)
+                else:
+                    st.info("No motifs available for visualization.")
             
             with col2:
                 st.markdown('<h4>📊 Motif Length Distribution</h4>', unsafe_allow_html=True)
                 
                 # Create motif length histogram
-                if 'Length' in df.columns:
+                if 'Length' in df.columns and len(df) > 0:
+                    color_col = 'Class' if 'Class' in df.columns else None
                     fig_hist = px.histogram(
                         df, 
                         x='Length', 
-                        color='Class',
-                        color_discrete_map=MOTIF_COLORS,
+                        color=color_col,
+                        color_discrete_map=MOTIF_COLORS if color_col else None,
                         title="<b>Distribution of Motif Lengths</b>",
                         nbins=20
                     )
@@ -655,6 +774,8 @@ with tab_pages["Results"]:
                         borderwidth=1
                     )
                     st.plotly_chart(fig_hist, use_container_width=True)
+                else:
+                    st.info("No length data available for visualization.")
             
             # Enhanced interactive motif map
             st.markdown('<h4>🗺️ Interactive Motif Map</h4>', unsafe_allow_html=True)
@@ -712,40 +833,41 @@ with tab_pages["Download"]:
         st.info("No results available to download.")
     else:
         df_all = []
-        for i, motifs in enumerate(st.session_state.results):
+        for i, (name, motifs) in enumerate(st.session_state.results):
             for j, m in enumerate(motifs):
-                m = m.copy()  # Create a copy to avoid modifying original
-                m['Sequence Name'] = st.session_state.names[i]
-                m['S.No'] = j + 1  # Add serial number starting from 1
-                if m['Class'] == "Z-DNA" and m.get("Subclass", "") == "eGZ (Extruded-G)":
-                    m['Class'] = "eGZ (Extruded-G)"
-                
-                # Add scoring significance
-                def get_score_significance(score, motif_class):
-                    try:
-                        score_val = float(score)
-                        if motif_class in ['G4', 'Relaxed G4', 'Bulged G4', 'Bipartite G4', 'Multimeric G4']:
-                            min_score = 1.0
-                            if score_val >= 1.5: return "High confidence", min_score
-                            elif score_val >= 1.0: return "Moderate confidence", min_score
-                            else: return "Low confidence", min_score
-                        elif motif_class in ['Z-DNA', 'R-Loop', 'Curved DNA']:
-                            min_score = 50.0
-                            if score_val >= 100: return "High confidence", min_score
-                            elif score_val >= 50: return "Moderate confidence", min_score
-                            else: return "Low confidence", min_score
-                        else:
-                            min_score = 15.0
-                            if score_val >= 25: return "High confidence", min_score
-                            elif score_val >= 15: return "Moderate confidence", min_score
-                            else: return "Low confidence", min_score
-                    except:
-                        return "Not assessed", "N/A"
-                
-                confidence, min_score = get_score_significance(m.get('Score', 0), m.get('Class', ''))
-                m['Prediction Confidence'] = confidence
-                m['Minimum Score Threshold'] = min_score
-                df_all.append(m)
+                if isinstance(m, dict):  # Ensure m is a dictionary
+                    m = m.copy()  # Create a copy to avoid modifying original
+                    m['Sequence Name'] = st.session_state.names[i]
+                    m['S.No'] = j + 1  # Add serial number starting from 1
+                    if m.get('Class') == "Z-DNA" and m.get("Subclass", "") == "eGZ (Extruded-G)":
+                        m['Class'] = "eGZ (Extruded-G)"
+                    
+                    # Add scoring significance
+                    def get_score_significance(score, motif_class):
+                        try:
+                            score_val = float(score)
+                            if motif_class in ['G4', 'Relaxed G4', 'Bulged G4', 'Bipartite G4', 'Multimeric G4']:
+                                min_score = 1.0
+                                if score_val >= 1.5: return "High confidence", min_score
+                                elif score_val >= 1.0: return "Moderate confidence", min_score
+                                else: return "Low confidence", min_score
+                            elif motif_class in ['Z-DNA', 'R-Loop', 'Curved DNA']:
+                                min_score = 50.0
+                                if score_val >= 100: return "High confidence", min_score
+                                elif score_val >= 50: return "Moderate confidence", min_score
+                                else: return "Low confidence", min_score
+                            else:
+                                min_score = 15.0
+                                if score_val >= 25: return "High confidence", min_score
+                                elif score_val >= 15: return "Moderate confidence", min_score
+                                else: return "Low confidence", min_score
+                        except:
+                            return "Not assessed", "N/A"
+                    
+                    confidence, min_score = get_score_significance(m.get('Score', 0), m.get('Class', ''))
+                    m['Prediction Confidence'] = confidence
+                    m['Minimum Score Threshold'] = min_score
+                    df_all.append(m)
         
         df_all = pd.DataFrame(df_all)
         
