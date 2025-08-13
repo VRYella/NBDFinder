@@ -225,7 +225,8 @@ MOTIF_COLORS = {
 PAGES = {
     "Home": "Overview",
     "Upload & Analyze": "Sequence Upload and Motif Analysis",
-    "Results": "Analysis Results and Visualization",
+    "Results": "Analysis Results and Visualization", 
+    "Model Organisms": "Model Organism G4 Analysis & Conservation Scores",
     "Download": "Export Data",
     "Documentation": "Scientific Documentation & References"
 }
@@ -324,41 +325,77 @@ def get_basic_stats(seq, motifs=None):
     return stats
 
 def ncbi_fetch(query):
-    """Fetch sequences from NCBI using Entrez"""
+    """Fetch sequences from NCBI using Entrez with improved error handling"""
     try:
-        # Search for the query
-        handle = Entrez.esearch(db="nucleotide", term=query, retmax=5)
+        # Set email for NCBI Entrez (required for good practice)
+        Entrez.email = "user@example.com"
+        
+        # Search for the query with better parameters
+        handle = Entrez.esearch(db="nucleotide", term=query, retmax=5, usehistory="y")
         search_results = Entrez.read(handle)
         handle.close()
         
         if not search_results['IdList']:
+            st.warning(f"No sequences found for query: '{query}'. Try a different search term.")
             return [], []
         
-        # Fetch sequences
+        # Fetch sequences with better error handling
         ids = search_results['IdList']
+        st.info(f"Found {len(ids)} sequence(s). Fetching data...")
+        
         handle = Entrez.efetch(db="nucleotide", id=ids, rettype="fasta", retmode="text")
         fasta_content = handle.read()
         handle.close()
         
-        # Parse FASTA content
+        if not fasta_content.strip():
+            st.error("Empty response from NCBI. Try again later.")
+            return [], []
+        
+        # Parse FASTA content with better validation
         seqs, names = [], []
         cur_seq, cur_name = "", ""
         for line in fasta_content.splitlines():
+            line = line.strip()
+            if not line:
+                continue
             if line.startswith(">"):
                 if cur_seq:
-                    seqs.append(parse_fasta(cur_seq))
-                    names.append(cur_name if cur_name else f"Seq{len(seqs)}")
-                cur_name = line.strip().lstrip(">")
+                    cleaned_seq = parse_fasta(cur_seq)
+                    if len(cleaned_seq) > 10:  # Only include sequences > 10 bp
+                        seqs.append(cleaned_seq)
+                        # Clean up the name for better display
+                        display_name = cur_name[:100] + "..." if len(cur_name) > 100 else cur_name
+                        names.append(display_name if display_name else f"Sequence_{len(seqs)}")
+                cur_name = line.lstrip(">").strip()
                 cur_seq = ""
             else:
-                cur_seq += line.strip()
+                cur_seq += line
+        
+        # Add the last sequence
         if cur_seq:
-            seqs.append(parse_fasta(cur_seq))
-            names.append(cur_name if cur_name else f"Seq{len(seqs)}")
+            cleaned_seq = parse_fasta(cur_seq)
+            if len(cleaned_seq) > 10:
+                seqs.append(cleaned_seq)
+                display_name = cur_name[:100] + "..." if len(cur_name) > 100 else cur_name
+                names.append(display_name if display_name else f"Sequence_{len(seqs)}")
+        
+        if not seqs:
+            st.warning("No valid sequences found (sequences must be >10 bp).")
+            return [], []
         
         return seqs, names
+        
     except Exception as e:
-        st.error(f"NCBI fetch failed: {e}")
+        error_msg = str(e)
+        if "HTTP Error 429" in error_msg:
+            st.error("NCBI rate limit exceeded. Please wait a moment and try again.")
+        elif "URLError" in error_msg or "timeout" in error_msg.lower():
+            st.error("Network connection issue. Please check your internet connection and try again.")
+        elif "XML" in error_msg or "parse" in error_msg.lower():
+            st.error("NCBI response parsing error. The service may be temporarily unavailable.")
+        else:
+            st.error(f"NCBI fetch failed: {error_msg}")
+        
         return [], []
 
 def create_progress_tracker():
@@ -1168,6 +1205,251 @@ with tab_pages["Results"]:
                     )
                     fig_heatmap.update_layout(height=300)
                     st.plotly_chart(fig_heatmap, use_container_width=True)
+
+# ---------- MODEL ORGANISMS ----------
+with tab_pages["Model Organisms"]:
+    st.header("🧬 Model Organism G4 Analysis & Conservation Scores")
+    
+    st.markdown("""
+    <div style='background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0fdf4 100%); border-radius: 16px; padding: 25px; margin-bottom: 30px; border: 2px solid #e3f2fd;'>
+        <h3 style='color: #1565c0; margin-bottom: 15px;'>Enhanced G4Hunter Analysis with Experimental Formation Data</h3>
+        <p style='color: #2e7d32; font-size: 1.1rem; margin-bottom: 10px;'>
+            Explore G-quadruplex formation potential across model organisms with conservation scoring and experimental validation data.
+        </p>
+        <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;'>
+            <div style='background: rgba(255,255,255,0.8); padding: 12px; border-radius: 8px; text-align: center;'>
+                <div style='font-weight: bold; color: #1565c0;'>Formation Categories</div>
+                <div style='font-size: 0.9rem; color: #666;'>≥1.5, 1.0-1.5, <1.0</div>
+            </div>
+            <div style='background: rgba(255,255,255,0.8); padding: 12px; border-radius: 8px; text-align: center;'>
+                <div style='font-weight: bold; color: #1565c0;'>Conservation Analysis</div>
+                <div style='font-size: 0.9rem; color: #666;'>Evolutionary conservation scoring</div>
+            </div>
+            <div style='background: rgba(255,255,255,0.8); padding: 12px; border-radius: 8px; text-align: center;'>
+                <div style='font-weight: bold; color: #1565c0;'>Experimental Data</div>
+                <div style='font-size: 0.9rem; color: #666;'>Formation probability & stability</div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Import the necessary functions
+    from motifs import find_gquadruplex, g4hunter_score, get_g4_formation_category, calculate_conservation_score
+    
+    # Model organism sequences with known G4 motifs
+    model_organisms_data = [
+        # Human sequences
+        ("TTAGGGTTAGGGTTAGGGTTAGGG", "Human Telomeric Repeat", "Homo sapiens", "Telomeric"),
+        ("TGGGGAGGGTGGGGAGGGTGGGGAAGG", "c-MYC Promoter G4", "Homo sapiens", "Oncogene"),
+        ("GGGCGGGGGCGGGGGCGGGGGAGG", "VEGF Promoter G4", "Homo sapiens", "Growth Factor"),
+        ("GGGCGCGGGAGGAAGGGGGCGGG", "BCL2 Promoter G4", "Homo sapiens", "Apoptosis"),
+        ("GGGGGAGGGGCTGGGCCGGG", "BRCA1 G4 Motif", "Homo sapiens", "DNA Repair"),
+        
+        # Model organisms
+        ("TGTGGGTGTGGTGTGGGTGTGG", "Yeast Telomeric", "Saccharomyces cerevisiae", "Telomeric"),
+        ("GGGTTGGGTTGGGTTGGGTT", "Plant G4 Motif", "Arabidopsis thaliana", "Plant"),
+        ("GGGAGGGAGGGAGGGA", "Drosophila G4", "Drosophila melanogaster", "Regulatory"),
+        ("GGGCGGGGCGGGGCGGG", "E. coli Ribosomal G4", "Escherichia coli", "Ribosomal"),
+        
+        # Pathogenic sequences
+        ("GGGAGGGAGGGAGGGGGGCCC", "HIV-1 LTR G4", "HIV-1", "Viral"),
+        ("GGGCGGGGCTGGGCGGG", "Hepatitis B G4", "Hepatitis B Virus", "Viral"),
+        ("GGGGAGGGGAGGGGAGGG", "Cancer Hotspot G4", "Human (Cancer)", "Oncogenic")
+    ]
+    
+    # Calculate analysis for all sequences
+    analysis_results = []
+    for seq, name, organism, seq_type in model_organisms_data:
+        g4h_score = g4hunter_score(seq)
+        category = get_g4_formation_category(g4h_score)
+        conservation = calculate_conservation_score(seq, "G4")
+        motifs = find_gquadruplex(seq)
+        
+        analysis_results.append({
+            "Sequence_Name": name,
+            "Organism": organism,
+            "Type": seq_type,
+            "Length": len(seq),
+            "G4Hunter_Score": g4h_score,
+            "Formation_Category": category["category"],
+            "Formation_Probability": category["formation_probability"],
+            "Experimental_Evidence": category["experimental_evidence"],
+            "Conservation_Score": conservation,
+            "Motifs_Detected": len(motifs),
+            "Sequence": seq
+        })
+    
+    # Create tabs for different views
+    model_tabs = st.tabs(["📊 Overview Analysis", "🧪 Formation Categories", "🌍 Conservation Analysis", "📈 Detailed Results"])
+    
+    with model_tabs[0]:
+        st.subheader("Model Organism G4 Analysis Overview")
+        
+        # Create summary DataFrame
+        df_summary = pd.DataFrame(analysis_results)
+        
+        # Summary statistics
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("Total Sequences", len(df_summary))
+        with col2:
+            high_formation = len(df_summary[df_summary["G4Hunter_Score"] >= 1.5])
+            st.metric("High Formation (≥1.5)", high_formation)
+        with col3:
+            avg_conservation = df_summary["Conservation_Score"].mean()
+            st.metric("Avg Conservation", f"{avg_conservation:.3f}")
+        with col4:
+            total_motifs = df_summary["Motifs_Detected"].sum()
+            st.metric("Total G4 Motifs", total_motifs)
+        
+        # Organism distribution
+        st.subheader("G4Hunter Scores by Organism")
+        fig_scatter = px.scatter(df_summary, 
+                               x="G4Hunter_Score", 
+                               y="Conservation_Score",
+                               color="Organism",
+                               size="Length",
+                               hover_data=["Sequence_Name", "Formation_Category", "Formation_Probability"],
+                               title="G4Hunter Score vs Conservation Score by Organism")
+        fig_scatter.update_layout(height=500)
+        st.plotly_chart(fig_scatter, use_container_width=True)
+        
+        # Formation category distribution
+        category_counts = df_summary["Formation_Category"].value_counts()
+        fig_pie = px.pie(values=category_counts.values, 
+                        names=category_counts.index,
+                        title="Distribution of G4 Formation Categories")
+        st.plotly_chart(fig_pie, use_container_width=True)
+    
+    with model_tabs[1]:
+        st.subheader("🧪 G4 Formation Categories & Experimental Evidence")
+        
+        # Show formation category information
+        st.markdown("""
+        <div style='background: #f8fdff; border-radius: 12px; padding: 20px; margin-bottom: 20px;'>
+            <h4 style='color: #1565c0; margin-top: 0;'>G4Hunter Formation Categories</h4>
+            <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;'>
+                <div style='background: #d32f2f20; padding: 15px; border-radius: 8px; border-left: 4px solid #d32f2f;'>
+                    <h5 style='color: #d32f2f; margin: 0 0 10px 0;'>High Formation Potential (≥1.5)</h5>
+                    <p><strong>Experimental Evidence:</strong> Strong</p>
+                    <p><strong>Formation Probability:</strong> 85-95%</p>
+                    <p><strong>Stability:</strong> High</p>
+                </div>
+                <div style='background: #f57c0020; padding: 15px; border-radius: 8px; border-left: 4px solid #f57c00;'>
+                    <h5 style='color: #f57c00; margin: 0 0 10px 0;'>Moderate Formation Potential (1.0-1.5)</h5>
+                    <p><strong>Experimental Evidence:</strong> Moderate</p>
+                    <p><strong>Formation Probability:</strong> 60-85%</p>
+                    <p><strong>Stability:</strong> Moderate</p>
+                </div>
+                <div style='background: #388e3c20; padding: 15px; border-radius: 8px; border-left: 4px solid #388e3c;'>
+                    <h5 style='color: #388e3c; margin: 0 0 10px 0;'>Low Formation Potential (<1.0)</h5>
+                    <p><strong>Experimental Evidence:</strong> Weak/Variable</p>
+                    <p><strong>Formation Probability:</strong> 10-60%</p>
+                    <p><strong>Stability:</strong> Low</p>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Filter by formation category
+        category_filter = st.selectbox("Filter by Formation Category:", 
+                                     ["All"] + list(df_summary["Formation_Category"].unique()))
+        
+        if category_filter != "All":
+            filtered_df = df_summary[df_summary["Formation_Category"] == category_filter]
+        else:
+            filtered_df = df_summary
+        
+        # Display filtered results
+        display_cols = ["Sequence_Name", "Organism", "G4Hunter_Score", "Formation_Category", 
+                       "Formation_Probability", "Experimental_Evidence", "Conservation_Score"]
+        st.dataframe(filtered_df[display_cols], use_container_width=True)
+        
+        # Bar chart of formation categories
+        fig_bar = px.bar(df_summary.groupby("Formation_Category").size().reset_index(name="Count"),
+                        x="Formation_Category", y="Count",
+                        title="Number of Sequences by Formation Category",
+                        color="Formation_Category")
+        st.plotly_chart(fig_bar, use_container_width=True)
+    
+    with model_tabs[2]:
+        st.subheader("🌍 Evolutionary Conservation Analysis")
+        
+        st.markdown("""
+        <div style='background: #f0fdf4; border-radius: 12px; padding: 20px; margin-bottom: 20px;'>
+            <h4 style='color: #2e7d32; margin-top: 0;'>Conservation Score Interpretation</h4>
+            <p>Conservation scores reflect evolutionary pressure to maintain functional DNA structures:</p>
+            <ul>
+                <li><strong>High (>0.7):</strong> Strongly conserved, likely functionally important</li>
+                <li><strong>Moderate (0.5-0.7):</strong> Moderately conserved, potential functional role</li>
+                <li><strong>Low (<0.5):</strong> Weakly conserved, less functional constraint</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Conservation distribution
+        fig_hist = px.histogram(df_summary, x="Conservation_Score", nbins=20,
+                              title="Distribution of Conservation Scores",
+                              labels={"Conservation_Score": "Conservation Score", "count": "Number of Sequences"})
+        st.plotly_chart(fig_hist, use_container_width=True)
+        
+        # Conservation by organism
+        fig_box = px.box(df_summary, x="Organism", y="Conservation_Score",
+                        title="Conservation Scores by Organism")
+        fig_box.update_xaxes(tickangle=45)
+        st.plotly_chart(fig_box, use_container_width=True)
+        
+        # Conservation vs G4Hunter correlation
+        correlation = df_summary["G4Hunter_Score"].corr(df_summary["Conservation_Score"])
+        st.metric("G4Hunter Score - Conservation Correlation", f"{correlation:.3f}")
+    
+    with model_tabs[3]:
+        st.subheader("📈 Detailed Analysis Results")
+        
+        # Show full results table
+        st.dataframe(df_summary, use_container_width=True)
+        
+        # Detailed sequence analysis
+        st.subheader("Individual Sequence Analysis")
+        selected_seq = st.selectbox("Select sequence for detailed analysis:", 
+                                   df_summary["Sequence_Name"].tolist())
+        
+        if selected_seq:
+            seq_data = df_summary[df_summary["Sequence_Name"] == selected_seq].iloc[0]
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                st.write(f"**Organism:** {seq_data['Organism']}")
+                st.write(f"**Type:** {seq_data['Type']}")
+                st.write(f"**Length:** {seq_data['Length']} bp")
+                st.write(f"**G4Hunter Score:** {seq_data['G4Hunter_Score']:.3f}")
+                st.write(f"**Formation Category:** {seq_data['Formation_Category']}")
+            
+            with col2:
+                st.write(f"**Formation Probability:** {seq_data['Formation_Probability']}")
+                st.write(f"**Experimental Evidence:** {seq_data['Experimental_Evidence']}")
+                st.write(f"**Conservation Score:** {seq_data['Conservation_Score']:.3f}")
+                st.write(f"**Motifs Detected:** {seq_data['Motifs_Detected']}")
+            
+            st.write("**Sequence:**")
+            st.code(seq_data['Sequence'], language='text')
+            
+            # Run detailed motif analysis
+            if st.button("🔍 Run Detailed Motif Analysis"):
+                motifs = find_gquadruplex(seq_data['Sequence'])
+                if motifs:
+                    st.write(f"**Detected {len(motifs)} G4 motif(s):**")
+                    for i, motif in enumerate(motifs):
+                        st.write(f"**Motif {i+1}:**")
+                        st.write(f"- Position: {motif['Start']}-{motif['End']}")
+                        st.write(f"- G4Hunter Score: {motif['G4Hunter_Mean']:.3f}")
+                        st.write(f"- Conservation: {motif['Conservation_Score']:.3f}")
+                        st.write(f"- Formation Category: {motif['Formation_Category']}")
+                        st.write(f"- Formation Probability: {motif['Formation_Probability']}")
+                        st.write(f"- Structural Factor: {motif['Structural_Factor']:.3f}")
+                        st.write("---")
+                else:
+                    st.write("No G4 motifs detected above threshold.")
 
 # ---------- DOWNLOAD ----------
 with tab_pages["Download"]:
