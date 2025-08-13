@@ -184,16 +184,16 @@ st.set_page_config(
 # ---------- CONSTANTS ----------
 MOTIF_ORDER = [
     "Sticky DNA","Curved DNA","Z-DNA","eGZ (Extruded-G)","Slipped DNA","R-Loop",
-    "Cruciform","Triplex DNA","G-Triplex","G4","Relaxed G4","Bulged G4","Bipartite G4",
-    "Multimeric G4","i-Motif","AC-Motif","Hybrid","Non-B DNA Clusters"
+    "Cruciform","Triplex DNA","G-Triplex","Canonical G4","Relaxed G4","Bulged G4","Bipartite G4",
+    "Multimeric G4","Imperfect G4","i-Motif","AC-Motif","Hybrid","Non-B DNA Clusters"
 ]
 MOTIF_COLORS = {
     "Curved DNA": "#FF9AA2","Z-DNA": "#FFB7B2","eGZ (Extruded-G)": "#6A4C93",
     "Slipped DNA": "#FFDAC1","R-Loop": "#FFD3B6","Cruciform": "#E2F0CB",
     "Triplex DNA": "#B5EAD7","Sticky DNA": "#DCB8CB","G-Triplex": "#C7CEEA",
-    "G4": "#A2D7D8","Relaxed G4": "#A2D7B8","Bulged G4": "#A2A7D8",
-    "Bipartite G4": "#A2D788","Multimeric G4": "#A2A7B8","i-Motif": "#B0C4DE",
-    "Hybrid": "#C1A192","Non-B DNA Clusters": "#A2C8CC","AC-Motif": "#F5B041"
+    "Canonical G4": "#A2D7D8","Relaxed G4": "#A2D7B8","Bulged G4": "#A2A7D8",
+    "Bipartite G4": "#A2D788","Multimeric G4": "#A2A7B8","Imperfect G4": "#D8A2D7",
+    "i-Motif": "#B0C4DE","Hybrid": "#C1A192","Non-B DNA Clusters": "#A2C8CC","AC-Motif": "#F5B041"
 }
 PAGES = {
     "Home": "Overview",
@@ -433,10 +433,10 @@ with tab_pages["Home"]:
         <div style='margin-bottom:25px;'>
             <div style='display:flex; align-items:flex-start; margin-bottom:15px;'>
                 <div style='width:8px; height:8px; background:linear-gradient(45deg, #1565c0, #2196f3); border-radius:50%; margin-right:12px; margin-top:6px;'></div>
-                <div>This application detects and analyzes <b style='color:#d32f2f;'>18 distinct Non-B DNA motifs</b> in any DNA sequence or multi-FASTA file:<br>
+                <div>This application detects and analyzes <b style='color:#d32f2f;'>19 distinct Non-B DNA motifs</b> in any DNA sequence or multi-FASTA file:<br>
                 <div style='margin-top:12px; padding-left:8px; border-left:3px solid #1565c0; background:#f1f8ff; padding:12px; border-radius:8px;'>
                     <span style='color:#1565c0; font-weight:600;'>
-                        <b>G-quadruplex-related:</b> G4, Relaxed G4, Bulged G4, Bipartite G4, Multimeric G4, G-Triplex, i-Motif, Hybrid<br>
+                        <b>G-quadruplex-related:</b> Canonical G4, Relaxed G4, Bulged G4, Bipartite G4, Multimeric G4, Imperfect G4, G-Triplex, i-Motif, Hybrid<br>
                         <b>Helix/curvature:</b> Z-DNA, eGZ (Extruded-G), Curved DNA, AC-Motif<br>
                         <b>Repeat/junction:</b> Slipped DNA, Cruciform, Sticky DNA, Triplex DNA<br>
                         <b>Hybrid/cluster:</b> R-Loop, Non-B DNA Clusters
@@ -663,7 +663,7 @@ with tab_pages["Results"]:
                 def get_score_significance(score, motif_class):
                     try:
                         score_val = float(score)
-                        if motif_class in ['G4', 'Relaxed G4', 'Bulged G4', 'Bipartite G4', 'Multimeric G4']:
+                        if motif_class in ['Canonical G4', 'Relaxed G4', 'Bulged G4', 'Bipartite G4', 'Multimeric G4', 'Imperfect G4']:
                             if score_val >= 1.5: return "🟢 High confidence"
                             elif score_val >= 1.0: return "🟡 Moderate confidence" 
                             else: return "🟠 Low confidence"
@@ -846,7 +846,7 @@ with tab_pages["Download"]:
                     def get_score_significance(score, motif_class):
                         try:
                             score_val = float(score)
-                            if motif_class in ['G4', 'Relaxed G4', 'Bulged G4', 'Bipartite G4', 'Multimeric G4']:
+                            if motif_class in ['Canonical G4', 'Relaxed G4', 'Bulged G4', 'Bipartite G4', 'Multimeric G4', 'Imperfect G4']:
                                 min_score = 1.0
                                 if score_val >= 1.5: return "High confidence", min_score
                                 elif score_val >= 1.0: return "Moderate confidence", min_score
@@ -911,9 +911,9 @@ with tab_pages["Documentation"]:
         motif_data = {
             "Motif Class": [
                 "Curved DNA", "Z-DNA", "eGZ (Extruded-G)", "Slipped DNA", "R-Loop", 
-                "Cruciform", "Triplex DNA", "Sticky DNA", "G-Triplex", "G4 (G-Quadruplex)",
-                "Relaxed G4", "Bulged G4", "Bipartite G4", "Multimeric G4", "i-Motif",
-                "AC-Motif", "Hybrid Motif", "Non-B DNA Clusters"
+                "Cruciform", "Triplex DNA", "Sticky DNA", "G-Triplex", "Canonical G4",
+                "Relaxed G4", "Bulged G4", "Bipartite G4", "Multimeric G4", "Imperfect G4", 
+                "i-Motif", "AC-Motif", "Hybrid Motif", "Non-B DNA Clusters"
             ],
             "Structural Features": [
                 "Phased A/T tracts causing DNA curvature",
@@ -930,6 +930,7 @@ with tab_pages["Documentation"]:
                 "G4 with bulges in G-tracts",
                 "Two separate G4 units in proximity",
                 "Multiple G4 units in tandem",
+                "G4 with imperfect G-tract patterns",
                 "C-rich sequences forming intercalated motifs",
                 "Alternating A-rich and C-rich patterns",
                 "Overlapping regions of multiple motif types",
@@ -950,6 +951,7 @@ with tab_pages["Documentation"]:
                 "Genetic variation, disease susceptibility",
                 "Long-range gene regulation",
                 "Epigenetic regulation, chromatin loops",
+                "Alternative structures with regulatory potential",
                 "pH-dependent gene regulation",
                 "Transcriptional control elements",
                 "Multi-functional regulatory regions",
@@ -958,8 +960,8 @@ with tab_pages["Documentation"]:
             "Score Range": [
                 "15-200", "50-500", "10-100", "15-150", "20-300",
                 "25-200", "20-180", "10-80", "15-120", "1.0-3.0",
-                "1.0-2.5", "1.0-2.5", "20-100", "30-150", "15-100",
-                "10-50", "Variable", "10-200"
+                "1.0-2.5", "1.0-2.5", "20-100", "30-150", "1.0-2.0",
+                "15-100", "10-50", "Variable", "10-200"
             ]
         }
         
@@ -972,16 +974,17 @@ with tab_pages["Documentation"]:
         # Create methods table
         methods_data = {
             "Motif Type": [
-                "G-Quadruplex (G4)", "Z-DNA", "Curved DNA", "Cruciform", "R-Loop",
+                "Canonical G4", "Imperfect G4", "Z-DNA", "Curved DNA", "Cruciform", "R-Loop",
                 "Slipped DNA", "Triplex DNA", "i-Motif", "AC-Motif"
             ],
             "Primary Algorithm": [
-                "G4Hunter + Structural Factors", "Kadane's Maximum Subarray", "Curvature Prediction",
+                "G4Hunter + Structural Factors", "G4Hunter + Imperfect Pattern Matching", "Kadane's Maximum Subarray", "Curvature Prediction",
                 "Palindrome Detection", "RLFS + REZ Stability", "Direct Repeat Analysis",
                 "Mirror Repeat Detection", "C-Rich Pattern Matching", "Alternating Pattern Analysis"
             ],
             "Regular Expression": [
                 r"G{3,}\w{1,7}G{3,}\w{1,7}G{3,}\w{1,7}G{3,}",
+                r"G{2,3}\w{1,7}G{3,}\w{1,7}G{3,}\w{1,7}G{3,}|...",
                 r"(CG|GC|CA|TG|AC|GT){6,}",
                 r"A{4,}[\w]{0,10}T{4,}|T{4,}[\w]{0,10}A{4,}",
                 r"Palindromic sequences with spacers",
@@ -992,7 +995,7 @@ with tab_pages["Documentation"]:
                 r"[AC]{10,}|Alternating A/C rich"
             ],
             "Validation Method": [
-                "Structural factor calculation", "Windowed Z-score analysis", "Curvature angle prediction",
+                "Structural factor calculation", "Imperfect G-tract analysis", "Windowed Z-score analysis", "Curvature angle prediction",
                 "Reverse complement matching", "Thermodynamic stability", "Repeat unit validation",
                 "Purine-pyrimidine composition", "pH-dependent stability", "Composition analysis"
             ]

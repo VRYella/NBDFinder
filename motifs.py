@@ -835,7 +835,7 @@ def find_multimeric_gquadruplex(seq):
             score = g4h_mean * len(motif_seq) * structural_factor
             results.append({
                 "Sequence Name": "",
-                "Class": "G4",
+                "Class": "Multimeric G4",
                 "Subtype": "Multimeric_G4",
                 "Start": m.start()+1,
                 "End": m.end(),
@@ -865,7 +865,7 @@ def find_bipartite_gquadruplex(seq):
             score = g4h_mean * len(motif_seq) * structural_factor
             results.append({
                 "Sequence Name": "",
-                "Class": "G4",
+                "Class": "Bipartite G4",
                 "Subtype": "Bipartite_G4",
                 "Start": m.start()+1,
                 "End": m.end(),
@@ -886,13 +886,13 @@ def find_gquadruplex(seq):
     for m in overlapping_finditer(pattern, seq):
         motif_seq = m.group(1)
         g4h_mean = g4hunter_score(motif_seq)
-        if g4h_mean >= 0.8:  # Canonical threshold as per G4Hunter literature
+        if g4h_mean >= 0.5:  # Lowered threshold for better detection while maintaining specificity
             structural_factor = g4_structural_factor(motif_seq, "canonical")
             # Score = G4Hunter_mean × motif_length × structural_factor
             score = g4h_mean * len(motif_seq) * structural_factor
             results.append({
                 "Sequence Name": "",
-                "Class": "G4",
+                "Class": "Canonical G4",
                 "Subtype": "Canonical_G4",
                 "Start": m.start()+1,
                 "End": m.end(),
@@ -908,18 +908,18 @@ def find_gquadruplex(seq):
     return results
 
 def find_relaxed_gquadruplex(seq):
-    pattern = r"(G{3,}\w{8,12}G{3,}\w{8,12}G{3,}\w{8,12}G{3,})"
+    pattern = r"(G{3,}\w{8,15}G{3,}\w{8,15}G{3,}\w{8,15}G{3,})"
     results = []
     for m in overlapping_finditer(pattern, seq):
         motif_seq = m.group(1)
         g4h_mean = g4hunter_score(motif_seq)
-        if g4h_mean >= 0.5:  # Lower threshold for relaxed criteria
+        if g4h_mean >= 0.25:  # Even lower threshold for relaxed criteria with long loops
             structural_factor = g4_structural_factor(motif_seq, "relaxed")
             # Score = G4Hunter_mean × motif_length × structural_factor
             score = g4h_mean * len(motif_seq) * structural_factor
             results.append({
                 "Sequence Name": "",
-                "Class": "G4",
+                "Class": "Relaxed G4",
                 "Subtype": "Relaxed_G4",
                 "Start": m.start()+1,
                 "End": m.end(),
@@ -948,7 +948,7 @@ def find_bulged_gquadruplex(seq):
                 score = g4h_mean * len(motif_seq) * structural_factor
                 results.append({
                     "Sequence Name": "",
-                    "Class": "G4",
+                    "Class": "Bulged G4",
                     "Subtype": "Bulged_G4",
                     "Start": m.start()+1,
                     "End": m.end(),
@@ -972,13 +972,13 @@ def find_imperfect_gquadruplex(seq):
     for m in overlapping_finditer(pattern, seq):
         motif_seq = m.group(0)
         g4h_mean = g4hunter_score(motif_seq)
-        if g4h_mean >= 0.6:  # Slightly lower threshold for imperfect motifs
+        if g4h_mean >= 0.4:  # Lower threshold for imperfect motifs
             structural_factor = g4_structural_factor(motif_seq, "imperfect")
             # Score = G4Hunter_mean × motif_length × structural_factor
             score = g4h_mean * len(motif_seq) * structural_factor
             results.append({
                 "Sequence Name": "",
-                "Class": "G4",
+                "Class": "Imperfect G4",
                 "Subtype": "Imperfect_G4",
                 "Start": m.start()+1,
                 "End": m.end(),
@@ -1273,8 +1273,8 @@ def merge_hotspots(hotspots):
 def select_best_nonoverlapping_motifs(motifs: list, motif_priority: list = None) -> list:
     if motif_priority is None:
         motif_priority = [
-            'Multimeric_G4', 'Bipartite_G4', 'Dimeric_G4', 'Canonical_G4',
-            'Relaxed_G4', 'Non_canonical_G4', 'Bulged_G4', 'Three_G-Runs'
+            'Multimeric_G4', 'Bipartite_G4', 'Imperfect_G4', 'Canonical_G4',
+            'Relaxed_G4', 'Bulged_G4', 'Three_G-Runs'
         ]
     subtype_rank = {subtype: i for i, subtype in enumerate(motif_priority)}
     def motif_key(m):
@@ -1353,6 +1353,7 @@ def all_motifs(seq, nonoverlap=False, report_hotspots=False, sequence_name="Sequ
         find_bulged_gquadruplex(seq) +
         find_bipartite_gquadruplex(seq) +
         find_multimeric_gquadruplex(seq) +
+        find_imperfect_gquadruplex(seq) +
         find_imotif(seq) +
         find_ac_motifs(seq)
     )
