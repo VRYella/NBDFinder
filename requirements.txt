@@ -1,12 +1,29 @@
-streamlit
-pandas
-numpy
-matplotlib
-openpyxl
-seaborn
-plotly
-numba
-xlsxwriter
-biopython
-plotly
-scipy
+# NBDFinder - Advanced Non-B DNA Analysis Platform
+# Core Dependencies for Production Use
+
+# Web Framework
+streamlit>=1.28.0
+
+# Data Science & Analysis
+pandas>=2.0.0
+numpy>=1.24.0
+scipy>=1.10.0
+
+# Visualization
+matplotlib>=3.6.0
+plotly>=5.15.0
+seaborn>=0.12.0
+
+# File I/O & Data Export
+openpyxl>=3.1.0
+xlsxwriter>=3.0.0
+
+# Bioinformatics
+biopython>=1.81
+
+# Performance Optimization
+numba>=0.57.0
+
+# Scientific Computing Support
+# (Additional packages for enhanced functionality)
+requests>=2.28.0  # For NCBI API access
