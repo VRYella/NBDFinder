@@ -527,16 +527,14 @@ with tab_pages["Upload & Analyze"]:
                     st.markdown(f"GC %: {stats['GC %']} | AT %: {stats['AT %']} | A: {stats['A Count']} | T: {stats['T Count']} | G: {stats['G Count']} | C: {stats['C Count']}")
                 st.code(EXAMPLE_MULTI_FASTA, language="fasta")
     elif input_method == "NCBI Fetch":
-        db = st.selectbox("NCBI Database", ["nucleotide", "protein", "gene"])
+        db = st.selectbox("NCBI Database", ["nucleotide",  "gene"])
         query_type = st.radio("Query Type", ["Accession", "Gene Name", "Custom Query"], horizontal=True)
         motif_examples = {
             "G-quadruplex": "NR_003287.2 (human telomerase RNA)",
             "Z-DNA": "NM_001126112.2 (human ADAR1 gene)",
-            "R-loop": "NR_024540.1 (human SNRPN gene)",
-            "eGZ-motif": "CGG repeat region",
-            "AC-motif": "A-rich/C-rich consensus region"
+            "R-loop": "NR_024540.1 (human SNRPN gene)"
         }
-        with st.expander("Motif Example Queries"):
+        with st.expander("Example Queries"):
             for motif, example in motif_examples.items():
                 st.write(f"**{motif}**: `{example}`")
         query = st.text_input("Enter query (accession, gene, etc.):")
