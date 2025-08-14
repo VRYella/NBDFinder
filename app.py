@@ -117,6 +117,30 @@ st.markdown("""
         font-size: 1.05rem !important;
         font-family: 'Montserrat', Arial, sans-serif !important;
     }
+    /* Fix dropdown text overlap issues */
+    .stSelectbox > div > div {
+        min-width: 200px !important;
+        padding-right: 40px !important;
+    }
+    .stSelectbox > div > div > div {
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        padding-right: 30px !important;
+    }
+    /* Fix data table dropdown menus */
+    .stDataFrame div[data-testid="stTable"] button {
+        min-width: auto !important;
+        padding-right: 25px !important;
+    }
+    .stDataFrame .dropdown-menu {
+        min-width: 150px !important;
+    }
+    /* Fix selectbox arrow positioning */
+    .stSelectbox [data-baseweb="select"] > div:last-child {
+        padding-left: 8px !important;
+        min-width: 24px !important;
+    }
     /* Enhanced Motif Selection Styling */
     .stMultiSelect > div {
         background: linear-gradient(135deg, #f8fdff 0%, #eef8ff 100%) !important;
@@ -734,17 +758,28 @@ with tab_pages["Upload & Analyze"]:
         
         # Show famous examples
         with st.expander("▸ Famous genes/sequences with Non-B DNA motifs"):
-            st.markdown("**Click to copy accession numbers:**")
-            cols = st.columns(2)
-            with cols[0]:
-                for i, (gene, accession) in enumerate(list(FAMOUS_NCBI_EXAMPLES.items())[:4]):
-                    if st.button(f"📋 {gene}", key=f"copy_{i}"):
-                        st.session_state.ncbi_query = accession
-                        
-            with cols[1]:
-                for i, (gene, accession) in enumerate(list(FAMOUS_NCBI_EXAMPLES.items())[4:]):
-                    if st.button(f"📋 {gene}", key=f"copy_{i+4}"):
-                        st.session_state.ncbi_query = accession
+            st.markdown("**Select from famous examples:**")
+            
+            # Create a searchable selectbox for famous examples
+            example_options = [""] + [f"{gene} ({accession})" for gene, accession in FAMOUS_NCBI_EXAMPLES.items()]
+            selected_example = st.selectbox(
+                "Choose a famous gene/sequence:",
+                options=example_options,
+                help="Select a well-known gene or sequence with Non-B DNA motifs"
+            )
+            
+            if selected_example:
+                # Extract accession from the selected example
+                accession = selected_example.split("(")[1].rstrip(")")
+                st.session_state.ncbi_query = accession
+                st.success(f"✓ Selected: {selected_example}")
+            
+            # Alternative: Show examples as formatted text for easy reference
+            st.markdown("**Available examples:**")
+            examples_text = ""
+            for gene, accession in FAMOUS_NCBI_EXAMPLES.items():
+                examples_text += f"• **{gene}**: `{accession}`\n"
+            st.markdown(examples_text)
         
         # NCBI query input
         ncbi_query = st.text_input(
