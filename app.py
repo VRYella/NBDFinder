@@ -177,7 +177,7 @@ st.markdown("""
 st.set_page_config(
     page_title="Non-B DNA Motif Finder",
     layout="wide",
-    page_icon="🧬",
+    page_icon="⚛",
     menu_items={'About': "Non-B DNA Motif Finder | Developed by Dr. Venkata Rajesh Yella"}
 )
 
@@ -411,16 +411,16 @@ def create_progress_tracker():
                     minutes = int(elapsed // 60)
                     seconds = int(elapsed % 60)
                     time_str = f"{minutes:02d}:{seconds:02d}"
-                    st.write(f"⏱️ Analysis time: {time_str} | Status: {st.session_state.analysis_status}")
+                    st.write(f"⏱ Analysis time: {time_str} | Status: {st.session_state.analysis_status}")
             
             with col2:
-                if st.button("⏸️ Stop Analysis", key="stop_btn"):
+                if st.button("⏸ Stop Analysis", key="stop_btn"):
                     st.session_state.stop_analysis = True
                     st.session_state.is_analyzing = False
                     st.warning("Analysis stopped by user")
                     
             with col3:
-                st.write("🔄 Processing...")
+                st.write("↻ Processing...")
         
         return progress_container
     return None
@@ -614,7 +614,7 @@ with tab_pages["Upload & Analyze"]:
     # Enhanced input method selection
     st.markdown("""
     <div style='background: linear-gradient(135deg, #f0fdf4 0%, #f8fdff 100%); border-radius: 12px; padding: 20px; margin: 25px 0; border-left: 4px solid #059669;'>
-        <h3 style='color: #059669; margin-top: 0; margin-bottom: 15px;'>📊 Input Method Selection</h3>
+        <h3 style='color: #059669; margin-top: 0; margin-bottom: 15px;'>▊ Input Method Selection</h3>
         <p style='margin-bottom: 0; color: #555;'>Choose your preferred method for sequence input. All formats support both single sequences and batch processing.</p>
     </div>
     """, unsafe_allow_html=True)
@@ -706,11 +706,11 @@ with tab_pages["Upload & Analyze"]:
             st.text(f"Description: {example_data['description']}")
             st.code(wrap(example_data["sequence"], 80), language='text')
             
-            st.success(f"✅ Loaded: {example_data['name']} ({len(example_data['sequence'])} bp)")
+            st.success(f"✓ Loaded: {example_data['name']} ({len(example_data['sequence'])} bp)")
 
     # --- Enhanced NCBI Query with famous examples ---
     elif input_method == "NCBI Fetch":
-        st.markdown("**🔬 Fetch sequences from NCBI database:**")
+        st.markdown("**▪ Fetch sequences from NCBI database:**")
         
         # Show famous examples
         with st.expander("💡 Famous genes/sequences with Non-B DNA motifs"):
@@ -740,9 +740,9 @@ with tab_pages["Upload & Analyze"]:
                     try:
                         seqs, names = ncbi_fetch(ncbi_query)
                         if seqs:
-                            st.success(f"✅ Fetched {len(seqs)} sequence(s) from NCBI.")
+                            st.success(f"✓ Fetched {len(seqs)} sequence(s) from NCBI.")
                             # Show preview of fetched sequences
-                            with st.expander("📄 Preview Fetched Sequences"):
+                            with st.expander("▊ Preview Fetched Sequences"):
                                 for i, (seq, name) in enumerate(zip(seqs[:3], names[:3])):  # Show first 3
                                     st.text(f"{i+1}. {name} ({len(seq)} bp)")
                                     st.code(wrap(seq[:200], 80) + ("..." if len(seq) > 200 else ""), language='text')
@@ -811,7 +811,7 @@ with tab_pages["Results"]:
         st.info("No analysis results. Please run motif analysis first.")
     else:
         # Enhanced summary table with key metrics only
-        st.subheader("📊 Analysis Summary")
+        st.subheader("▊ Analysis Summary")
         summary_cols = ["Sequence Name", "Length (bp)", "GC %", "Motif Count", "Motif Coverage (%)", "Top Motifs"]
         st.dataframe(st.session_state.summary_df[summary_cols], use_container_width=True)
         
@@ -827,7 +827,7 @@ with tab_pages["Results"]:
             df = pd.DataFrame(motifs)
             
             # Enhanced motif table with essential columns only
-            st.markdown(f"<h3>🧬 Detailed Motifs for <b>{st.session_state.names[seq_idx]}</b></h3>", unsafe_allow_html=True)
+            st.markdown(f"<h3>▊ Detailed Motifs for <b>{st.session_state.names[seq_idx]}</b></h3>", unsafe_allow_html=True)
             
             # Check available columns and adapt
             available_columns = df.columns.tolist()
@@ -873,19 +873,19 @@ with tab_pages["Results"]:
                     try:
                         score_val = float(score)
                         if motif_class in ['Canonical G4', 'Relaxed G4', 'Bulged G4', 'Bipartite G4', 'Multimeric G4', 'Imperfect G4']:
-                            if score_val >= 1.5: return "🟢 High confidence"
-                            elif score_val >= 1.0: return "🟡 Moderate confidence" 
-                            else: return "🟠 Low confidence"
+                            if score_val >= 1.5: return "▓ High confidence"
+                            elif score_val >= 1.0: return "▒ Moderate confidence" 
+                            else: return "░ Low confidence"
                         elif motif_class in ['Z-DNA', 'R-Loop', 'Curved DNA']:
-                            if score_val >= 100: return "🟢 High confidence"
-                            elif score_val >= 50: return "🟡 Moderate confidence"
-                            else: return "🟠 Low confidence"
+                            if score_val >= 100: return "▓ High confidence"
+                            elif score_val >= 50: return "▒ Moderate confidence"
+                            else: return "░ Low confidence"
                         else:
-                            if score_val >= 25: return "🟢 High confidence"
-                            elif score_val >= 15: return "🟡 Moderate confidence"
-                            else: return "🟠 Low confidence"
+                            if score_val >= 25: return "▓ High confidence"
+                            elif score_val >= 15: return "▒ Moderate confidence"
+                            else: return "░ Low confidence"
                     except:
-                        return "⚪ Not assessed"
+                        return "◦ Not assessed"
                 
                 display_df['Prediction Confidence'] = display_df.apply(lambda row: get_score_significance(row.get('Score', 0), row.get('Class', '')), axis=1)
                 
@@ -895,7 +895,7 @@ with tab_pages["Results"]:
             col1, col2 = st.columns(2)
             
             with col1:
-                st.markdown('<h4>📈 Motif Type Distribution</h4>', unsafe_allow_html=True)
+                st.markdown('<h4>▊ Motif Type Distribution</h4>', unsafe_allow_html=True)
                 
                 # Create interactive bar chart
                 if 'Class' in df.columns and len(df) > 0:
@@ -937,7 +937,7 @@ with tab_pages["Results"]:
                     st.info("No motifs available for visualization.")
             
             with col2:
-                st.markdown('<h4>📊 Motif Coverage Analysis</h4>', unsafe_allow_html=True)
+                st.markdown('<h4>▊ Motif Coverage Analysis</h4>', unsafe_allow_html=True)
                 
                 # Calculate percent coverage for each motif type
                 if 'Class' in df.columns and len(df) > 0:
@@ -1003,7 +1003,7 @@ with tab_pages["Results"]:
                     st.info("No motifs available for coverage analysis.")
             
             # Enhanced interactive motif map
-            st.markdown('<h4>🗺️ Interactive Motif Map</h4>', unsafe_allow_html=True)
+            st.markdown('<h4>▣ Interactive Motif Map</h4>', unsafe_allow_html=True)
             
             # Create the enhanced visualization
             interactive_fig = create_enhanced_motif_visualization(motifs, st.session_state.names[seq_idx], len(st.session_state.seqs[seq_idx]))
@@ -1012,10 +1012,10 @@ with tab_pages["Results"]:
             
             # Motif density heatmap
             if len(motifs) > 0:
-                st.markdown('<h4>🌡️ Motif Density Heatmap</h4>', unsafe_allow_html=True)
+                st.markdown('<h4>▦ Motif Density Heatmap</h4>', unsafe_allow_html=True)
                 
                 # Create density array
-                seq_len = len(seq)
+                seq_len = len(st.session_state.seqs[seq_idx])
                 window_size = max(50, seq_len // 20)  # Adaptive window size
                 density = []
                 positions = []
@@ -1127,18 +1127,18 @@ with tab_pages["Download"]:
 
 # ---------- DOCUMENTATION ----------
 with tab_pages["Documentation"]:
-    st.header("📚 Scientific Documentation & References")
+    st.header("▎ Scientific Documentation & References")
     
     # Add tabbed sections for better organization
-    doc_tabs = st.tabs(["🧬 Motif Descriptions", "🔬 Detection Methods", "📊 Scoring Systems", "📖 References"])
+    doc_tabs = st.tabs(["▊ Motif Descriptions", "▪ Detection Methods", "▊ Scoring Systems", "▎ References"])
     
     with doc_tabs[0]:
-        st.subheader("🏆 Advanced Motif Classifications & Structural Biology")
+        st.subheader("▊ Advanced Motif Classifications & Structural Biology")
         
         # Add scientific context
         st.markdown("""
         <div style='background:linear-gradient(135deg, #f0f9ff 0%, #f0fdf4 100%); border-radius:12px; padding:20px; margin:15px 0; border-left:4px solid #059669;'>
-        <h4 style='color:#059669; margin-top:0;'>🧬 Structural Biology Context</h4>
+        <h4 style='color:#059669; margin-top:0;'>▊ Structural Biology Context</h4>
         <p style='margin-bottom:0;'>Non-B DNA structures represent alternative conformations beyond the Watson-Crick double helix, playing crucial roles in genome organization, gene regulation, and disease pathogenesis. This comprehensive classification system integrates structural features, thermodynamic stability, and biological function.</p>
         </div>
         """, unsafe_allow_html=True)
