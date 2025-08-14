@@ -951,16 +951,116 @@ with tab_pages["Results"]:
                 def get_score_significance(score, motif_class):
                     try:
                         score_val = float(score)
-                        if motif_class in ['Canonical G4', 'Relaxed G4', 'Bulged G4', 'Bipartite G4', 'Multimeric G4', 'Imperfect G4']:
+                        
+                        # Canonical G4 variants: 1.0-3.0 (Validated)
+                        if motif_class in ['Canonical G4']:
+                            if score_val >= 2.0: return "▓ High confidence (Validated)"
+                            elif score_val >= 1.0: return "▒ Moderate confidence (Validated)" 
+                            else: return "░ Low confidence"
+                        
+                        # Relaxed/Bulged G4: 1.0-2.5 (Validated)
+                        elif motif_class in ['Relaxed G4', 'Bulged G4']:
+                            if score_val >= 2.0: return "▓ High confidence (Validated)"
+                            elif score_val >= 1.0: return "▒ Moderate confidence (Validated)" 
+                            else: return "░ Low confidence"
+                        
+                        # Imperfect G4: 1.0-2.0 (Moderate)
+                        elif motif_class in ['Imperfect G4']:
                             if score_val >= 1.5: return "▓ High confidence"
                             elif score_val >= 1.0: return "▒ Moderate confidence" 
                             else: return "░ Low confidence"
-                        elif motif_class in ['Z-DNA', 'R-Loop', 'Curved DNA']:
-                            if score_val >= 100: return "▓ High confidence"
+                        
+                        # Bipartite G4: 20-100 (High)
+                        elif motif_class in ['Bipartite G4']:
+                            if score_val >= 60: return "▓ High confidence"
+                            elif score_val >= 20: return "▒ Moderate confidence"
+                            else: return "░ Low confidence"
+                        
+                        # Multimeric G4: 30-150 (High)
+                        elif motif_class in ['Multimeric G4']:
+                            if score_val >= 90: return "▓ High confidence"
+                            elif score_val >= 30: return "▒ Moderate confidence"
+                            else: return "░ Low confidence"
+                        
+                        # Z-DNA: 50-500 (High)
+                        elif motif_class in ['Z-DNA']:
+                            if score_val >= 200: return "▓ High confidence"
                             elif score_val >= 50: return "▒ Moderate confidence"
                             else: return "░ Low confidence"
+                        
+                        # Curved DNA: 15-200 (Moderate-High)
+                        elif motif_class in ['Curved DNA']:
+                            if score_val >= 100: return "▓ High confidence"
+                            elif score_val >= 15: return "▒ Moderate confidence"
+                            else: return "░ Low confidence"
+                        
+                        # eGZ (Extruded-G): 10-100 (Moderate)
+                        elif motif_class in ['eGZ', 'Extruded-G']:
+                            if score_val >= 55: return "▓ High confidence"
+                            elif score_val >= 10: return "▒ Moderate confidence"
+                            else: return "░ Low confidence"
+                        
+                        # Slipped DNA: 15-150 (Moderate-High)
+                        elif motif_class in ['Slipped_DNA', 'Slipped DNA']:
+                            if score_val >= 80: return "▓ High confidence"
+                            elif score_val >= 15: return "▒ Moderate confidence"
+                            else: return "░ Low confidence"
+                        
+                        # R-Loop: 20-300 (High)
+                        elif motif_class in ['R-Loop', 'RLFS']:
+                            if score_val >= 150: return "▓ High confidence"
+                            elif score_val >= 20: return "▒ Moderate confidence"
+                            else: return "░ Low confidence"
+                        
+                        # Cruciform: 25-200 (High)
+                        elif motif_class in ['Cruciform']:
+                            if score_val >= 100: return "▓ High confidence"
+                            elif score_val >= 25: return "▒ Moderate confidence"
+                            else: return "░ Low confidence"
+                        
+                        # Triplex DNA: 20-180 (Moderate-High)
+                        elif motif_class in ['Triplex', 'H-DNA']:
+                            if score_val >= 100: return "▓ High confidence"
+                            elif score_val >= 20: return "▒ Moderate confidence"
+                            else: return "░ Low confidence"
+                        
+                        # Sticky DNA: 10-80 (Low-Moderate)
+                        elif motif_class in ['Sticky_DNA', 'Sticky DNA']:
+                            if score_val >= 45: return "▓ High confidence"
+                            elif score_val >= 10: return "▒ Moderate confidence"
+                            else: return "░ Low confidence"
+                        
+                        # G-Triplex: 15-120 (Moderate)
+                        elif motif_class in ['G-Triplex']:
+                            if score_val >= 65: return "▓ High confidence"
+                            elif score_val >= 15: return "▒ Moderate confidence"
+                            else: return "░ Low confidence"
+                        
+                        # i-Motif: 15-100 (Moderate)
+                        elif motif_class in ['i-Motif']:
+                            if score_val >= 55: return "▓ High confidence"
+                            elif score_val >= 15: return "▒ Moderate confidence"
+                            else: return "░ Low confidence"
+                        
+                        # AC-Motif: 10-50 (Low-Moderate)
+                        elif motif_class in ['AC-Motif']:
+                            if score_val >= 30: return "▓ High confidence"
+                            elif score_val >= 10: return "▒ Moderate confidence"
+                            else: return "░ Low confidence"
+                        
+                        # Non-B DNA Clusters: 10-200 (Variable)
+                        elif motif_class in ['Non-B DNA Clusters']:
+                            if score_val >= 100: return "▓ High confidence"
+                            elif score_val >= 10: return "▒ Moderate confidence"
+                            else: return "░ Low confidence"
+                        
+                        # Hybrid Motif: Variable (Context-dependent)
+                        elif motif_class in ['Hybrid Motif']:
+                            return "◇ Context-dependent"
+                        
+                        # Default fallback for any other motif types
                         else:
-                            if score_val >= 25: return "▓ High confidence"
+                            if score_val >= 50: return "▓ High confidence"
                             elif score_val >= 15: return "▒ Moderate confidence"
                             else: return "░ Low confidence"
                     except:
@@ -1135,19 +1235,134 @@ with tab_pages["Download"]:
                     def get_score_significance(score, motif_class):
                         try:
                             score_val = float(score)
-                            if motif_class in ['Canonical G4', 'Relaxed G4', 'Bulged G4', 'Bipartite G4', 'Multimeric G4', 'Imperfect G4']:
+                            
+                            # Canonical G4 variants: 1.0-3.0 (Validated)
+                            if motif_class in ['Canonical G4']:
+                                min_score = 1.0
+                                if score_val >= 2.0: return "High confidence (Validated)", min_score
+                                elif score_val >= 1.0: return "Moderate confidence (Validated)", min_score
+                                else: return "Low confidence", min_score
+                            
+                            # Relaxed/Bulged G4: 1.0-2.5 (Validated)
+                            elif motif_class in ['Relaxed G4', 'Bulged G4']:
+                                min_score = 1.0
+                                if score_val >= 2.0: return "High confidence (Validated)", min_score
+                                elif score_val >= 1.0: return "Moderate confidence (Validated)", min_score
+                                else: return "Low confidence", min_score
+                            
+                            # Imperfect G4: 1.0-2.0 (Moderate)
+                            elif motif_class in ['Imperfect G4']:
                                 min_score = 1.0
                                 if score_val >= 1.5: return "High confidence", min_score
                                 elif score_val >= 1.0: return "Moderate confidence", min_score
                                 else: return "Low confidence", min_score
-                            elif motif_class in ['Z-DNA', 'R-Loop', 'Curved DNA']:
+                            
+                            # Bipartite G4: 20-100 (High)
+                            elif motif_class in ['Bipartite G4']:
+                                min_score = 20.0
+                                if score_val >= 60: return "High confidence", min_score
+                                elif score_val >= 20: return "Moderate confidence", min_score
+                                else: return "Low confidence", min_score
+                            
+                            # Multimeric G4: 30-150 (High)
+                            elif motif_class in ['Multimeric G4']:
+                                min_score = 30.0
+                                if score_val >= 90: return "High confidence", min_score
+                                elif score_val >= 30: return "Moderate confidence", min_score
+                                else: return "Low confidence", min_score
+                            
+                            # Z-DNA: 50-500 (High)
+                            elif motif_class in ['Z-DNA']:
                                 min_score = 50.0
-                                if score_val >= 100: return "High confidence", min_score
+                                if score_val >= 200: return "High confidence", min_score
                                 elif score_val >= 50: return "Moderate confidence", min_score
                                 else: return "Low confidence", min_score
+                            
+                            # Curved DNA: 15-200 (Moderate-High)
+                            elif motif_class in ['Curved DNA']:
+                                min_score = 15.0
+                                if score_val >= 100: return "High confidence", min_score
+                                elif score_val >= 15: return "Moderate confidence", min_score
+                                else: return "Low confidence", min_score
+                            
+                            # eGZ (Extruded-G): 10-100 (Moderate)
+                            elif motif_class in ['eGZ', 'Extruded-G', 'eGZ (Extruded-G)']:
+                                min_score = 10.0
+                                if score_val >= 55: return "High confidence", min_score
+                                elif score_val >= 10: return "Moderate confidence", min_score
+                                else: return "Low confidence", min_score
+                            
+                            # Slipped DNA: 15-150 (Moderate-High)
+                            elif motif_class in ['Slipped_DNA', 'Slipped DNA']:
+                                min_score = 15.0
+                                if score_val >= 80: return "High confidence", min_score
+                                elif score_val >= 15: return "Moderate confidence", min_score
+                                else: return "Low confidence", min_score
+                            
+                            # R-Loop: 20-300 (High)
+                            elif motif_class in ['R-Loop', 'RLFS']:
+                                min_score = 20.0
+                                if score_val >= 150: return "High confidence", min_score
+                                elif score_val >= 20: return "Moderate confidence", min_score
+                                else: return "Low confidence", min_score
+                            
+                            # Cruciform: 25-200 (High)
+                            elif motif_class in ['Cruciform']:
+                                min_score = 25.0
+                                if score_val >= 100: return "High confidence", min_score
+                                elif score_val >= 25: return "Moderate confidence", min_score
+                                else: return "Low confidence", min_score
+                            
+                            # Triplex DNA: 20-180 (Moderate-High)
+                            elif motif_class in ['Triplex', 'H-DNA']:
+                                min_score = 20.0
+                                if score_val >= 100: return "High confidence", min_score
+                                elif score_val >= 20: return "Moderate confidence", min_score
+                                else: return "Low confidence", min_score
+                            
+                            # Sticky DNA: 10-80 (Low-Moderate)
+                            elif motif_class in ['Sticky_DNA', 'Sticky DNA']:
+                                min_score = 10.0
+                                if score_val >= 45: return "High confidence", min_score
+                                elif score_val >= 10: return "Moderate confidence", min_score
+                                else: return "Low confidence", min_score
+                            
+                            # G-Triplex: 15-120 (Moderate)
+                            elif motif_class in ['G-Triplex']:
+                                min_score = 15.0
+                                if score_val >= 65: return "High confidence", min_score
+                                elif score_val >= 15: return "Moderate confidence", min_score
+                                else: return "Low confidence", min_score
+                            
+                            # i-Motif: 15-100 (Moderate)
+                            elif motif_class in ['i-Motif']:
+                                min_score = 15.0
+                                if score_val >= 55: return "High confidence", min_score
+                                elif score_val >= 15: return "Moderate confidence", min_score
+                                else: return "Low confidence", min_score
+                            
+                            # AC-Motif: 10-50 (Low-Moderate)
+                            elif motif_class in ['AC-Motif']:
+                                min_score = 10.0
+                                if score_val >= 30: return "High confidence", min_score
+                                elif score_val >= 10: return "Moderate confidence", min_score
+                                else: return "Low confidence", min_score
+                            
+                            # Non-B DNA Clusters: 10-200 (Variable)
+                            elif motif_class in ['Non-B DNA Clusters']:
+                                min_score = 10.0
+                                if score_val >= 100: return "High confidence", min_score
+                                elif score_val >= 10: return "Moderate confidence", min_score
+                                else: return "Low confidence", min_score
+                            
+                            # Hybrid Motif: Variable (Context-dependent)
+                            elif motif_class in ['Hybrid Motif']:
+                                return "Context-dependent", "Variable"
+                            
+                            # Default fallback for any other motif types
                             else:
                                 min_score = 15.0
-                                if score_val >= 25: return "High confidence", min_score
+                                if score_val >= 50: return "High confidence", min_score
                                 elif score_val >= 15: return "Moderate confidence", min_score
                                 else: return "Low confidence", min_score
                         except:
