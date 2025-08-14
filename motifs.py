@@ -46,55 +46,205 @@ def overlapping_finditer(pattern, seq):
         yield m
         pos = m.start() + 1
 
-def calculate_conservation_score(seq, motif_type="general"):
+def calculate_conservation_score(seq, motif_type="general", num_shuffles=100):
     """
-    Calculate evolutionary conservation score for DNA motifs.
+    Calculate motif-agnostic conservation score using composition-preserving shuffles.
     
-    Scientific Basis: Conservation scores reflect evolutionary pressure to maintain
-    functional DNA structures. Higher scores indicate greater functional importance.
+    Scientific Basis: This implements a precise, math-first recipe for conservation scoring
+    that can be attached to any non-B DNA motif. Uses k-mer analysis with empirical
+    null distribution from composition-preserving shuffles.
+    
+    Algorithm:
+    1. Choose k-mer length based on motif type and sequence
+    2. Identify motif-defining k-mers (core structural elements)
+    3. Count k-mer occurrences in original sequence
+    4. Generate composition-preserving shuffles for null distribution
+    5. Calculate log2 enrichment score and empirical p-value
     
     Parameters:
     seq (str): DNA sequence to score
-    motif_type (str): Type of motif for specific conservation patterns
+    motif_type (str): Motif type for k-mer selection strategy
+    num_shuffles (int): Number of composition-preserving shuffles (default: 100)
     
     Returns:
-    float: Conservation score (0.0-1.0)
+    dict: Conservation metrics with enrichment score, p-value, and significance
     """
-    if not seq:
-        return 0.0
+    if not seq or len(seq) < 4:
+        return {"enrichment_score": 0.0, "p_value": 1.0, "significance": "not significant"}
     
-    # Base conservation factors
-    gc_content = (seq.count('G') + seq.count('C')) / len(seq)
-    at_content = (seq.count('A') + seq.count('T')) / len(seq)
+    seq = seq.upper().replace('\n', '').replace(' ', '')
+    n = len(seq)
     
-    # Sequence complexity (Shannon entropy)
-    from collections import Counter
-    counts = Counter(seq)
-    entropy = -sum((count/len(seq)) * np.log2(count/len(seq)) for count in counts.values())
-    complexity_score = entropy / 2.0  # Normalize to 0-1
+    # Step 1: Choose k-mer length and define motif-specific k-mers
+    k, core_kmers = _get_motif_kmers(seq, motif_type)
     
-    # Motif-specific conservation patterns
-    if motif_type == "G4":
-        # G-quadruplexes: High conservation in G-rich regions, especially in regulatory regions
-        g_richness = seq.count('G') / len(seq)
-        conservation = 0.73 * g_richness + 0.2 * complexity_score  # 73% avg conservation from literature
-    elif motif_type == "Z-DNA":
-        # Z-DNA: 65% conservation in regulatory regions, favor CG dinucleotides
-        cg_dinuc = seq.count('CG') / max(1, len(seq)-1)
-        conservation = 0.65 * cg_dinuc + 0.3 * complexity_score
-    elif motif_type == "R-Loop":
-        # R-loops: 81% conservation in gene switch regions
-        purine_richness = (seq.count('G') + seq.count('A')) / len(seq)
-        conservation = 0.81 * purine_richness + 0.15 * complexity_score
-    elif motif_type == "Cruciform":
-        # Cruciforms: High conservation due to palindromic nature
-        palindrome_bonus = 0.1 if is_palindrome(seq) else 0.0
-        conservation = 0.60 + palindrome_bonus + 0.25 * complexity_score
+    if not core_kmers or k > n:
+        return {"enrichment_score": 0.0, "p_value": 1.0, "significance": "not significant"}
+    
+    # Step 2: Count observed k-mer occurrences
+    observed_count = _count_kmers(seq, core_kmers, k)
+    
+    # Step 3: Generate composition-preserving shuffles and count k-mers
+    import random
+    shuffle_counts = []
+    
+    for _ in range(num_shuffles):
+        # Create composition-preserving shuffle
+        shuffled_seq = ''.join(random.sample(seq, len(seq)))
+        shuffle_count = _count_kmers(shuffled_seq, core_kmers, k)
+        shuffle_counts.append(shuffle_count)
+    
+    # Step 4: Calculate empirical statistics
+    if not shuffle_counts:
+        return {"enrichment_score": 0.0, "p_value": 1.0, "significance": "not significant"}
+    
+    mu = np.mean(shuffle_counts)  # Null mean
+    sigma = np.std(shuffle_counts, ddof=1) if len(shuffle_counts) > 1 else 0.0  # Null std
+    
+    # Step 5: Calculate log2 enrichment score
+    epsilon = 1e-6  # Pseudocount to avoid division by zero
+    enrichment_score = np.log2((observed_count + epsilon) / (mu + epsilon))
+    
+    # Step 6: Calculate empirical p-value (right-tailed test for enrichment)
+    p_value = (1 + sum(1 for c in shuffle_counts if c >= observed_count)) / (num_shuffles + 1)
+    
+    # Step 7: Determine significance with effect size categories
+    if p_value > 0.05:
+        significance = "not significant"
+    elif enrichment_score >= 2.5:
+        significance = "high"
+    elif enrichment_score >= 1.5:
+        significance = "medium"
+    elif enrichment_score >= 0.5:
+        significance = "low"
     else:
-        # General motifs: Average conservation
-        conservation = 0.55 + 0.35 * complexity_score
+        significance = "not significant"
     
-    return min(1.0, max(0.0, conservation))
+    return {
+        "enrichment_score": float(enrichment_score),
+        "p_value": float(p_value),
+        "significance": significance,
+        "observed_count": int(observed_count),
+        "null_mean": float(mu),
+        "null_std": float(sigma)
+    }
+
+
+def _get_motif_kmers(seq, motif_type):
+    """
+    Define motif-specific k-mer selection strategy.
+    
+    Returns:
+    tuple: (k_length, set_of_core_kmers)
+    """
+    import re
+    
+    n = len(seq)
+    
+    # Choose k based on sequence length and motif type
+    if motif_type in ["G4", "Canonical G4", "Relaxed G4", "Bulged G4", "Bipartite G4", "Multimeric G4", "Imperfect G4"]:
+        # G-quadruplex: Focus on GGG k-mers and G-runs
+        k = min(8, max(4, n // 4))
+        core_kmers = set()
+        # Add all GGG-containing k-mers
+        for i in range(n - k + 1):
+            kmer = seq[i:i+k]
+            if 'GGG' in kmer:
+                core_kmers.add(kmer)
+        # If no GGG k-mers, use all G-rich k-mers
+        if not core_kmers:
+            for i in range(n - k + 1):
+                kmer = seq[i:i+k]
+                if kmer.count('G') >= k//2:
+                    core_kmers.add(kmer)
+    
+    elif motif_type in ["i-Motif", "Triplex"]:
+        # i-Motif: Focus on CCC k-mers and C-runs
+        k = min(8, max(4, n // 4))
+        core_kmers = set()
+        for i in range(n - k + 1):
+            kmer = seq[i:i+k]
+            if 'CCC' in kmer:
+                core_kmers.add(kmer)
+        if not core_kmers:
+            for i in range(n - k + 1):
+                kmer = seq[i:i+k]
+                if kmer.count('C') >= k//2:
+                    core_kmers.add(kmer)
+    
+    elif motif_type in ["Z-DNA", "eGZ"]:
+        # Z-DNA: Focus on alternating dinucleotides
+        k = min(6, max(3, n // 6))
+        core_kmers = set()
+        z_dinucs = ['GC', 'CG', 'GT', 'TG', 'AC', 'CA']
+        for i in range(n - k + 1):
+            kmer = seq[i:i+k]
+            # Count Z-favorable dinucleotides in k-mer
+            z_count = sum(kmer[j:j+2] in z_dinucs for j in range(len(kmer)-1))
+            if z_count >= (k-1) // 2:  # At least half are Z-favorable
+                core_kmers.add(kmer)
+    
+    elif motif_type in ["AC-Motif"]:
+        # AC-motif: Focus on alternating A/C patterns
+        k = min(6, max(4, n // 4))
+        core_kmers = set()
+        for i in range(n - k + 1):
+            kmer = seq[i:i+k]
+            ac_content = (kmer.count('A') + kmer.count('C')) / k
+            if ac_content >= 0.6:  # 60% A/C content
+                core_kmers.add(kmer)
+    
+    elif motif_type in ["Cruciform", "Slipped DNA"]:
+        # Cruciform/Slipped: Focus on palindromic/repeat patterns
+        k = min(8, max(4, n // 4))
+        core_kmers = set()
+        for i in range(n - k + 1):
+            kmer = seq[i:i+k]
+            # Add all k-mers for repeat analysis
+            core_kmers.add(kmer)
+    
+    elif motif_type in ["R-Loop", "RLFS"]:
+        # R-loop: Focus on G-rich regions (purine-rich)
+        k = min(8, max(4, n // 4))
+        core_kmers = set()
+        for i in range(n - k + 1):
+            kmer = seq[i:i+k]
+            g_content = kmer.count('G') / k
+            if g_content >= 0.4:  # 40% G content
+                core_kmers.add(kmer)
+    
+    elif motif_type in ["Curved DNA"]:
+        # Curved DNA: Focus on A/T tracts
+        k = min(6, max(4, n // 6))
+        core_kmers = set()
+        for i in range(n - k + 1):
+            kmer = seq[i:i+k]
+            if 'AAA' in kmer or 'TTT' in kmer:
+                core_kmers.add(kmer)
+    
+    else:
+        # General case: use all k-mers
+        k = min(8, max(4, n // 4))
+        core_kmers = set()
+        for i in range(n - k + 1):
+            core_kmers.add(seq[i:i+k])
+    
+    return k, core_kmers
+
+
+def _count_kmers(seq, core_kmers, k):
+    """
+    Count overlapping occurrences of core k-mers in sequence.
+    
+    Returns:
+    int: Total count of core k-mer occurrences
+    """
+    count = 0
+    for i in range(len(seq) - k + 1):
+        kmer = seq[i:i+k]
+        if kmer in core_kmers:
+            count += 1
+    return count
 
 def get_g4_formation_category(g4hunter_score):
     """
@@ -397,6 +547,10 @@ def find_zdna(seq, threshold=50, min_length=12, **kwargs):
             gc_cg_dinucs = sum(1 for i in range(len(motif_seq)-1) 
                               if motif_seq[i:i+2] in ['GC', 'CG'])
             
+            # Calculate conservation score
+            conservation_result = calculate_conservation_score(motif_seq, "Z-DNA")
+            conservation_score = conservation_result["enrichment_score"]
+            
             motifs.append({
                 "Sequence Name": "",
                 "Class": "Z-DNA",
@@ -409,6 +563,9 @@ def find_zdna(seq, threshold=50, min_length=12, **kwargs):
                 "Score": float(raw_score),
                 "GC_Content": round(gc_content, 3),
                 "GC_CG_Dinucleotides": gc_cg_dinucs,
+                "Conservation_Score": float(conservation_score),
+                "Conservation_P_Value": float(conservation_result["p_value"]),
+                "Conservation_Significance": conservation_result["significance"],
                 "Arms/Repeat Unit/Copies": "",
                 "Spacer": ""
             })
@@ -931,7 +1088,8 @@ def find_multimeric_gquadruplex(seq):
         g4h_mean = g4hunter_score(motif_seq)
         if g4h_mean >= 0.5:  # Threshold for detection
             structural_factor = g4_structural_factor(motif_seq, "multimeric")
-            conservation_score = calculate_conservation_score(motif_seq, "G4")
+            conservation_result = calculate_conservation_score(motif_seq, "G4")
+            conservation_score = conservation_result["enrichment_score"]
             g4_category = get_g4_formation_category(g4h_mean)
             
             # Score = G4Hunter_mean × motif_length × structural_factor
@@ -996,7 +1154,8 @@ def find_gquadruplex(seq):
         g4h_mean = g4hunter_score(motif_seq)
         if g4h_mean >= 0.5:  # Lowered threshold for better detection while maintaining specificity
             structural_factor = g4_structural_factor(motif_seq, "canonical")
-            conservation_score = calculate_conservation_score(motif_seq, "G4")
+            conservation_result = calculate_conservation_score(motif_seq, "G4")
+            conservation_score = conservation_result["enrichment_score"]
             g4_category = get_g4_formation_category(g4h_mean)
             
             # Score = G4Hunter_mean × motif_length × structural_factor
@@ -1198,6 +1357,10 @@ def find_imotif(seq):
             else:
                 subtype = "Other_iMotif"
             
+            # Calculate conservation score
+            conservation_result = calculate_conservation_score(motif_seq, "i-Motif")
+            conservation_score = conservation_result["enrichment_score"]
+            
             # Calculate composite score: iM_score × length (similar to G4Hunter approach)
             composite_score = im_score * len(motif_seq)
             
@@ -1219,6 +1382,9 @@ def find_imotif(seq):
                 "C_Run_Count": len(c_runs),
                 "C_Run_Sum": sum(c_runs) if c_runs else 0,
                 "C_Fraction": round(c_fraction, 3),
+                "Conservation_Score": float(conservation_score),
+                "Conservation_P_Value": float(conservation_result["p_value"]),
+                "Conservation_Significance": conservation_result["significance"],
                 "Loop_Lengths": loops if loops else [],
                 "Arms/Repeat Unit/Copies": "",
                 "Spacer": ""
@@ -1293,6 +1459,10 @@ def find_ac_motifs(seq):
         c3_runs = len(re.findall(r"C{3,}", motif_seq))
         ac_fraction = (motif_seq.count('A') + motif_seq.count('C')) / len(motif_seq)
         
+        # Calculate conservation score
+        conservation_result = calculate_conservation_score(motif_seq, "AC-Motif")
+        conservation_score = conservation_result["enrichment_score"]
+        
         # Determine subtype based on structure
         if motif_seq.startswith('AAA') and c3_runs >= 3:
             subtype = "A3-C3_Consensus"
@@ -1314,6 +1484,9 @@ def find_ac_motifs(seq):
             "AC_Fraction": round(ac_fraction, 3),
             "A3_Runs": a3_runs,
             "C3_Runs": c3_runs,
+            "Conservation_Score": float(conservation_score),
+            "Conservation_P_Value": float(conservation_result["p_value"]),
+            "Conservation_Significance": conservation_result["significance"],
             "Arms/Repeat Unit/Copies": f"A3={a3_runs};C3={c3_runs}",
             "Spacer": ""
         })
