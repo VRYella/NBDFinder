@@ -408,7 +408,10 @@ def create_progress_tracker():
                 progress_bar = st.progress(st.session_state.analysis_progress)
                 if st.session_state.analysis_start_time:
                     elapsed = time.time() - st.session_state.analysis_start_time
-                    st.write(f"⏱️ Analysis time: {elapsed:.1f}s | Status: {st.session_state.analysis_status}")
+                    minutes = int(elapsed // 60)
+                    seconds = int(elapsed % 60)
+                    time_str = f"{minutes:02d}:{seconds:02d}"
+                    st.write(f"⏱️ Analysis time: {time_str} | Status: {st.session_state.analysis_status}")
             
             with col2:
                 if st.button("⏸️ Stop Analysis", key="stop_btn"):
@@ -428,22 +431,23 @@ def analyze_sequence_with_progress(seq, seq_name, selected_motifs):
     
     # Initialize progress
     st.session_state.analysis_progress = 0
-    st.session_state.analysis_status = "Starting analysis..."
+    st.session_state.analysis_status = f"Analyzing {seq_name} ({len(seq):,} bp)..."
     
     # Check if we need to run all motifs
     run_all = any(m in selected_motifs for m in ["Hybrid", "Non-B DNA Clusters"])
     
     if run_all:
-        st.session_state.analysis_status = "Running comprehensive motif analysis..."
+        st.session_state.analysis_status = f"Running comprehensive motif detection on {seq_name}..."
         motifs = all_motifs(seq)
         st.session_state.analysis_progress = 0.8
     else:
+        st.session_state.analysis_status = f"Detecting selected motifs in {seq_name}..."
         motifs = all_motifs(seq)
         # Filter by selected motifs
         motifs = [m for m in motifs if m['Class'] in selected_motifs]
         st.session_state.analysis_progress = 0.7
     
-    st.session_state.analysis_status = "Processing results..."
+    st.session_state.analysis_status = f"Processing results for {seq_name}..."
     # PATCH: Ensure every motif has a 'Subtype'
     motifs = [ensure_subtype(m) for m in motifs]
     nonoverlapping = select_best_nonoverlapping_motifs(motifs)
@@ -520,14 +524,8 @@ with tab_pages["Home"]:
     st.markdown("""
     <div style='text-align: center; padding: 20px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0fdf4 100%); border-radius: 16px; margin-bottom: 30px; border: 2px solid #e3f2fd;'>
         <h1 style='color: #1565c0; font-family: Montserrat, Arial; font-weight: 800; margin-bottom: 10px; font-size: 2.5rem; text-shadow: 0 2px 4px rgba(21, 101, 192, 0.2);'>
-            🧬 NBDFinder: Advanced Non-B DNA Analysis Platform
+            NBDFinder:  Comprehensive Computational Framework for Non-B DNA Structure Detection
         </h1>
-        <p style='color: #2e7d32; font-size: 1.3rem; font-weight: 600; margin-bottom: 5px;'>
-            The Most Comprehensive Computational Framework for Non-B DNA Structure Detection
-        </p>
-        <p style='color: #666; font-size: 1.1rem; margin-bottom: 0;'>
-            Powered by Machine Learning | Validated by Experimental Data | Trusted by 500+ Research Groups Worldwide
-        </p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -538,26 +536,7 @@ with tab_pages["Home"]:
         # Enhanced image with caption
         st.image("nbdcircle.JPG", use_container_width=True, caption="Non-B DNA structural diversity: From canonical B-form to complex alternative conformations")
         
-        # Add basic tool information
-        st.markdown("""
-        <div style='background: linear-gradient(135deg, #f0fdf4 0%, #f0f9ff 100%); border-radius: 12px; padding: 20px; margin-top: 15px; border-left: 4px solid #059669;'>
-            <h4 style='color: #059669; margin-top: 0; text-align: center;'>Tool Information</h4>
-            <div style='display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: center;'>
-                <div>
-                    <div style='font-size: 1.8rem; font-weight: bold; color: #1565c0;'>19</div>
-                    <div style='font-size: 0.9rem; color: #666;'>Motif Types</div>
-                </div>
-                <div>
-                    <div style='font-size: 1.8rem; font-weight: bold; color: #1565c0;'>Web</div>
-                    <div style='font-size: 0.9rem; color: #666;'>Interface</div>
-                </div>
-                <div>
-                    <div style='font-size: 1.8rem; font-weight: bold; color: #1565c0;'>Free</div>
-                    <div style='font-size: 0.9rem; color: #666;'>Access</div>
-                </div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+
     
     with right:
         st.markdown("""
@@ -602,196 +581,32 @@ with tab_pages["Home"]:
         </div>
         """, unsafe_allow_html=True)
     
-    # Add feature highlights section
-    st.markdown("""
-    <div style='margin-top: 40px;'>
-        <h3 style='text-align: center; color: #1565c0; font-family: Montserrat, Arial; font-weight: 700; margin-bottom: 30px;'>
-            NBDFinder Key Features
-        </h3>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Feature grid
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.markdown("""
-        <div style='background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%); padding: 25px; border-radius: 15px; height: 280px; border: 2px solid #e1bee7; text-align: center;'>
-            <div style='font-size: 3rem; margin-bottom: 15px;'>🧠</div>
-            <h4 style='color: #1565c0; margin-bottom: 15px;'>Multiple Algorithms</h4>
-            <p style='color: #555; line-height: 1.6;'>Various detection algorithms implemented for different types of non-B DNA structures and motifs.</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown("""
-        <div style='background: linear-gradient(135deg, #f0fdf4 0%, #f0f9ff 100%); padding: 25px; border-radius: 15px; height: 280px; border: 2px solid #c8e6c9; text-align: center;'>
-            <div style='font-size: 3rem; margin-bottom: 15px;'>🚀</div>
-            <h4 style='color: #2e7d32; margin-bottom: 15px;'>Web-Based Interface</h4>
-            <p style='color: #555; line-height: 1.6;'>Easy-to-use browser-based platform with interactive visualizations and export options.</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col3:
-        st.markdown("""
-        <div style='background: linear-gradient(135deg, #fff3e0 0%, #fce4ec 100%); padding: 25px; border-radius: 15px; height: 280px; border: 2px solid #ffcc02; text-align: center;'>
-            <div style='font-size: 3rem; margin-bottom: 15px;'>📊</div>
-            <h4 style='color: #f57c00; margin-bottom: 15px;'>Flexible Input/Output</h4>
-            <p style='color: #555; line-height: 1.6;'>Supports various input formats including FASTA files and NCBI queries with CSV/Excel export options.</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    # Add tool description section
-    st.markdown("""
-    <div style='margin-top: 30px; background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%); padding: 25px; border-radius: 15px; border: 1px solid #e0e0e0;'>
-        <h4 style='color: #1565c0; text-align: center; margin-bottom: 20px;'>Algorithm Information</h4>
-        <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;'>
-            <div style='text-align: center;'>
-                <div style='font-weight: bold; color: #d32f2f;'>G-Quadruplex Detection</div>
-                <div style='font-size: 0.9rem; color: #666;'>G4Hunter algorithm with structural factor scoring</div>
-            </div>
-            <div style='text-align: center;'>
-                <div style='font-weight: bold; color: #d32f2f;'>Z-DNA Detection</div>
-                <div style='font-size: 0.9rem; color: #666;'>Kadane's algorithm with dinucleotide weighting</div>
-            </div>
-            <div style='text-align: center;'>
-                <div style='font-weight: bold; color: #d32f2f;'>R-Loop Prediction</div>
-                <div style='font-size: 0.9rem; color: #666;'>RLFS+REZ method for RNA-DNA hybrid detection</div>
-            </div>
-            <div style='text-align: center;'>
-                <div style='font-weight: bold; color: #d32f2f;'>Multiple Formats</div>
-                <div style='font-size: 0.9rem; color: #666;'>FASTA, NCBI queries, and text input support</div>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+
 
 # ---------- UPLOAD & ANALYZE ----------
 with tab_pages["Upload & Analyze"]:
-    # Enhanced header with scientific context
-    st.markdown("""
-    <div style='background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0fdf4 100%); border-radius: 16px; padding: 25px; margin-bottom: 30px; border: 2px solid #e3f2fd;'>
-        <h2 style='color: #1565c0; font-family: Montserrat, Arial; font-weight: 700; margin-bottom: 15px; font-size: 2rem;'>
-            Sequence Analysis & Motif Detection
-        </h2>
-        <p style='color: #2e7d32; font-size: 1.2rem; font-weight: 600; margin-bottom: 10px;'>
-            Non-B DNA Structure Analysis Platform
-        </p>
-        <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;'>
-            <div style='background: rgba(255,255,255,0.8); padding: 12px; border-radius: 8px; text-align: center;'>
-                <div style='font-weight: bold; color: #1565c0;'>Multi-Format Support</div>
-                <div style='font-size: 0.9rem; color: #666;'>FASTA, Multi-FASTA, Plain Text</div>
-            </div>
-            <div style='background: rgba(255,255,255,0.8); padding: 12px; border-radius: 8px; text-align: center;'>
-                <div style='font-weight: bold; color: #1565c0;'>NCBI Integration</div>
-                <div style='font-size: 0.9rem; color: #666;'>Direct GenBank Access</div>
-            </div>
-            <div style='background: rgba(255,255,255,0.8); padding: 12px; border-radius: 8px; text-align: center;'>
-                <div style='font-weight: bold; color: #1565c0;'>Batch Processing</div>
-                <div style='font-size: 0.9rem; color: #666;'>Up to 200MB Files</div>
-            </div>
-            <div style='background: rgba(255,255,255,0.8); padding: 12px; border-radius: 8px; text-align: center;'>
-                <div style='font-weight: bold; color: #1565c0;'>Real-Time Analysis</div>
-                <div style='font-size: 0.9rem; color: #666;'>Progress Tracking</div>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
     # Enhanced Motif class selection with scientific categorization
     st.markdown("""
     <div style='background: linear-gradient(135deg, #f8fdff 0%, #f0f9ff 100%); border-radius: 12px; padding: 20px; margin-bottom: 25px; border-left: 4px solid #1565c0;'>
-        <h3 style='color: #1565c0; margin-top: 0; margin-bottom: 15px;'>🔬 Motif Selection & Analysis Parameters</h3>
+        <h3 style='color: #1565c0; margin-top: 0; margin-bottom: 15px;'>Select specific motif classes for analysis:</h3>
         <p style='margin-bottom: 15px; color: #555;'>Select specific Non-B DNA motif classes for targeted analysis. Our comprehensive detection suite covers all major structural categories validated by experimental studies.</p>
     </div>
     """, unsafe_allow_html=True)
-    
-    # Advanced motif selection interface
-    col1, col2 = st.columns([2, 1])
-    
-    with col1:
-        # Quick selection buttons
-        st.markdown("**🚀 Quick Selection Presets:**")
-        preset_col1, preset_col2, preset_col3, preset_col4 = st.columns(4)
-        
-        with preset_col1:
-            if st.button("🔷 All G4 Structures", help="Select all G-quadruplex and related structures"):
-                st.session_state.quick_select = "g4"
-        with preset_col2:
-            if st.button("🧬 Disease-Associated", help="Select motifs associated with genetic diseases"):
-                st.session_state.quick_select = "disease"
-        with preset_col3:
-            if st.button("⚡ High-Confidence", help="Select motifs with highest experimental validation"):
-                st.session_state.quick_select = "validated"
-        with preset_col4:
-            if st.button("🌟 Complete Analysis", help="Analyze all available motif types"):
-                st.session_state.quick_select = "all"
-        
-        # Handle quick selections
-        quick_selection_mapping = {
-            "g4": ["Canonical G4", "Relaxed G4", "Bulged G4", "Bipartite G4", "Multimeric G4", "Imperfect G4", "G-Triplex", "i-Motif"],
-            "disease": ["Sticky DNA", "eGZ (Extruded-G)", "Slipped DNA", "R-Loop"],
-            "validated": ["Canonical G4", "Z-DNA", "Cruciform", "i-Motif", "Curved DNA"],
-            "all": MOTIF_ORDER
-        }
-        
-        default_motifs = MOTIF_ORDER
-        if hasattr(st.session_state, 'quick_select') and st.session_state.quick_select in quick_selection_mapping:
-            default_motifs = quick_selection_mapping[st.session_state.quick_select]
-    
-    with col2:
-        # Analysis complexity selector
-        st.markdown("**⚙️ Analysis Complexity:**")
-        analysis_mode = st.selectbox(
-            "Select analysis depth:",
-            ["Standard (Recommended)", "Comprehensive (All Motifs)", "Targeted (Custom Selection)", "High-Sensitivity (Research Grade)"],
-            help="Standard: Fast analysis with high-confidence motifs\nComprehensive: All motif types with extended parameters\nTargeted: Custom selection for specific research questions\nHigh-Sensitivity: Maximum detection with lower thresholds"
-        )
-    
-    # Display categories as organized sections
-    with st.expander("🧬 **Motif Categories & Selection** (Click to expand)", expanded=True):
-        cat_col1, cat_col2 = st.columns(2)
-        
-        with cat_col1:
-            st.markdown("""
-            **🔷 G-Quadruplex Family:**
-            - Canonical G4, Relaxed G4, Bulged G4
-            - Bipartite G4, Multimeric G4, Imperfect G4
-            
-            **🟣 Triplex Structures:**
-            - G-Triplex, Triplex DNA, i-Motif
-            
-            **🟠 Helix Deviations:**
-            - Z-DNA, eGZ (Extruded-G), Curved DNA, AC-Motif
-            """)
-            
-        with cat_col2:
-            st.markdown("""
-            **🟢 Repeat & Junction Structures:**
-            - Slipped DNA, Cruciform, Sticky DNA, R-Loop
-            
-            **🟤 Advanced Analysis:**
-            - Hybrid Motifs, Non-B DNA Clusters
-            
-            **🎯 Clinical Relevance:**
-            - Disease-associated expansions, therapeutic targets
-            """)
-    
     # Main multiselect with enhanced help
     selected_motifs = st.multiselect(
-        "📋 Select specific motif classes for analysis:", 
+        "Select specific motif classes for analysis:", 
         MOTIF_ORDER, 
-        default=default_motifs,
+        default=MOTIF_ORDER,
         help="""
         **Motif Categories & Clinical Significance:**
         
-        🔷 **G-quadruplex-related**: Therapeutic targets in cancer, telomere biology
-        🟣 **G-Triplex**: Immunoglobulin diversification, antibody engineering
-        🟠 **i-motif related**: pH-sensing, metabolic regulation
-        🔴 **Helix deviations**: Gene regulation, chromatin structure
-        🟢 **Repeat/junction**: Genetic instability, disease mechanisms
-        🟤 **Hybrid**: Complex regulatory networks
-        ⚫ **Non-B DNA Clusters**: Mutational hotspots, evolutionary breakpoints
+        G-quadruplex-related: Therapeutic targets in cancer, telomere biology
+        G-Triplex: Immunoglobulin diversification, antibody engineering
+        i-motif related: pH-sensing, metabolic regulation
+        Helix deviations: Gene regulation, chromatin structure
+        Repeat/junction: Genetic instability, disease mechanisms
+        Hybrid: Complex regulatory networks
+        Non-B DNA Clusters: Mutational hotspots, evolutionary breakpoints
         """
     )
     st.session_state.selected_motifs = selected_motifs if selected_motifs else MOTIF_ORDER
@@ -835,7 +650,7 @@ with tab_pages["Upload & Analyze"]:
     # --- Paste sequence ---
     elif input_method == "Paste Sequence(s)":
         # Show example format in an expandable section
-        with st.expander("💡 View Multi-FASTA Format Example"):
+        with st.expander("View Single FASTA or Multiple FASTA Format Example"):
             st.markdown("**Multi-FASTA Format Example:**")
             st.code(EXAMPLE_MULTI_FASTA, language='text')
             st.markdown("**Tips:**")
@@ -881,15 +696,15 @@ with tab_pages["Upload & Analyze"]:
             seqs = [example_data["sequence"]]
             names = [example_data["name"]]
             
-            # Add spacing before the expander to prevent overlap
+            # Add spacing before the preview to prevent overlap
             st.markdown("<br>", unsafe_allow_html=True)
             
-            # Show sequence preview with expanded by default to avoid overlap issues
-            with st.expander("Preview Selected Sequence", expanded=False):
-                st.text(f"Name: {example_data['name']}")
-                st.text(f"Length: {len(example_data['sequence'])} bp")
-                st.text(f"Description: {example_data['description']}")
-                st.code(wrap(example_data["sequence"], 80), language='text')
+            # Show sequence preview directly (not in expander)
+            st.markdown("**Preview Selected Sequence:**")
+            st.text(f"Name: {example_data['name']}")
+            st.text(f"Length: {len(example_data['sequence'])} bp")
+            st.text(f"Description: {example_data['description']}")
+            st.code(wrap(example_data["sequence"], 80), language='text')
             
             st.success(f"✅ Loaded: {example_data['name']} ({len(example_data['sequence'])} bp)")
 
@@ -941,38 +756,53 @@ with tab_pages["Upload & Analyze"]:
 
     # --- Analysis trigger ---
     if seqs and st.button("Analyze Sequences"):
-        st.session_state.is_analyzing = True
-        results = []
-        progress_container = create_progress_tracker()
+        # Check sequence length restrictions
+        invalid_seqs = []
+        for i, (seq, name) in enumerate(zip(seqs, names)):
+            if len(seq) > 100000:
+                invalid_seqs.append(f"{name} ({len(seq):,} bp)")
         
-        for seq, name in zip(seqs, names):
-            motifs = analyze_sequence_with_progress(seq, name, st.session_state.selected_motifs)
-            results.append((name, motifs))
+        if invalid_seqs:
+            st.error("Sequence length restriction exceeded!")
+            st.warning(f"Maximum allowed length: 100,000 nucleotides")
+            st.info("For longer sequences, please use the standalone version of NBDFinder")
+            st.write("**Sequences exceeding limit:**")
+            for seq_info in invalid_seqs:
+                st.write(f"- {seq_info}")
+        else:
+            st.session_state.is_analyzing = True
+            st.session_state.analysis_start_time = time.time()  # Initialize start time
+            results = []
+            progress_container = create_progress_tracker()
             
-        st.session_state.seqs = seqs
-        st.session_state.names = names
-        st.session_state.results = results
-        st.session_state.is_analyzing = False
-        
-        # Create summary dataframe
-        summary_data = []
-        for i, (name, motifs) in enumerate(results):
-            seq = seqs[i]
-            stats = get_basic_stats(seq, motifs)
-            motif_classes = [m['Class'] for m in motifs]
-            top_motifs = ', '.join(list(set(motif_classes))[:3]) if motif_classes else "None"
+            for seq, name in zip(seqs, names):
+                motifs = analyze_sequence_with_progress(seq, name, st.session_state.selected_motifs)
+                results.append((name, motifs))
+                
+            st.session_state.seqs = seqs
+            st.session_state.names = names
+            st.session_state.results = results
+            st.session_state.is_analyzing = False
             
-            summary_data.append({
-                "Sequence Name": name,
-                "Length (bp)": stats["Length (bp)"],
-                "GC %": stats["GC %"],
-                "Motif Count": len(motifs),
-                "Motif Coverage (%)": stats.get("Motif Coverage (%)", 0),
-                "Top Motifs": top_motifs
-            })
-        
-        st.session_state.summary_df = pd.DataFrame(summary_data)
-        st.success("Analysis complete. See Results tab for visualization and tables.")
+            # Create summary dataframe
+            summary_data = []
+            for i, (name, motifs) in enumerate(results):
+                seq = seqs[i]
+                stats = get_basic_stats(seq, motifs)
+                motif_classes = [m['Class'] for m in motifs]
+                top_motifs = ', '.join(list(set(motif_classes))[:3]) if motif_classes else "None"
+                
+                summary_data.append({
+                    "Sequence Name": name,
+                    "Length (bp)": stats["Length (bp)"],
+                    "GC %": stats["GC %"],
+                    "Motif Count": len(motifs),
+                    "Motif Coverage (%)": stats.get("Motif Coverage (%)", 0),
+                    "Top Motifs": top_motifs
+                })
+            
+            st.session_state.summary_df = pd.DataFrame(summary_data)
+            st.success("Analysis complete. See Results tab for visualization and tables.")
 
 # ---------- RESULTS ----------
 with tab_pages["Results"]:
@@ -1107,54 +937,70 @@ with tab_pages["Results"]:
                     st.info("No motifs available for visualization.")
             
             with col2:
-                st.markdown('<h4>📊 Motif Length Distribution</h4>', unsafe_allow_html=True)
+                st.markdown('<h4>📊 Motif Coverage Analysis</h4>', unsafe_allow_html=True)
                 
-                # Create motif length histogram
-                if 'Length' in df.columns and len(df) > 0:
-                    color_col = 'Class' if 'Class' in df.columns else None
-                    fig_hist = px.histogram(
-                        df, 
-                        x='Length', 
-                        color=color_col,
-                        color_discrete_map=MOTIF_COLORS if color_col else None,
-                        title="<b>Distribution of Motif Lengths</b>",
-                        nbins=20
+                # Calculate percent coverage for each motif type
+                if 'Class' in df.columns and len(df) > 0:
+                    seq_len = len(st.session_state.seqs[seq_idx])
+                    coverage_data = {}
+                    
+                    for motif_class in df['Class'].unique():
+                        class_motifs = df[df['Class'] == motif_class]
+                        total_covered = 0
+                        
+                        # Calculate coverage avoiding overlaps within same class
+                        positions = []
+                        for _, motif in class_motifs.iterrows():
+                            start = motif['Start']
+                            end = motif['End']
+                            positions.append((start, end))
+                        
+                        # Merge overlapping regions
+                        if positions:
+                            positions.sort()
+                            merged = [positions[0]]
+                            for start, end in positions[1:]:
+                                if start <= merged[-1][1]:
+                                    merged[-1] = (merged[-1][0], max(merged[-1][1], end))
+                                else:
+                                    merged.append((start, end))
+                            
+                            total_covered = sum(end - start for start, end in merged)
+                        
+                        coverage_percent = (total_covered / seq_len) * 100
+                        coverage_data[motif_class] = coverage_percent
+                    
+                    # Create bar chart for coverage
+                    fig_coverage = px.bar(
+                        x=list(coverage_data.values()), 
+                        y=list(coverage_data.keys()),
+                        orientation='h',
+                        color=list(coverage_data.keys()),
+                        color_discrete_map=MOTIF_COLORS,
+                        title="<b>Sequence Coverage by Motif Type (%)</b>"
                     )
-                    fig_hist.update_layout(
-                        height=400,
+                    fig_coverage.update_layout(
+                        height=400, 
+                        showlegend=False,
                         xaxis=dict(
-                            title="<b>Motif Length (base pairs)</b>",
+                            title="<b>Coverage Percentage (%)</b>",
                             title_font=dict(size=14, color='#1565c0'),
                             tickfont=dict(size=12, color='#424242'),
                             gridcolor='#e0e0e0',
                             gridwidth=1
                         ),
                         yaxis=dict(
-                            title="<b>Frequency</b>",
+                            title="<b>Motif Classes</b>",
                             title_font=dict(size=14, color='#1565c0'),
-                            tickfont=dict(size=12, color='#424242'),
-                            gridcolor='#e0e0e0',
-                            gridwidth=1
+                            tickfont=dict(size=12, color='#424242')
                         ),
                         title_font=dict(size=16, color='#1565c0'),
                         plot_bgcolor='rgba(248,253,255,0.7)',
-                        paper_bgcolor='white',
-                        bargap=0.1
+                        paper_bgcolor='white'
                     )
-                    # Add annotation for interpretation
-                    fig_hist.add_annotation(
-                        text="<i>Shorter motifs (10-50 bp): Higher occurrence<br>Longer motifs (>100 bp): Rare but significant</i>",
-                        xref="paper", yref="paper",
-                        x=0.02, y=0.98,
-                        showarrow=False,
-                        font=dict(size=10, color='#666666'),
-                        bgcolor="rgba(255,255,255,0.8)",
-                        bordercolor="#cccccc",
-                        borderwidth=1
-                    )
-                    st.plotly_chart(fig_hist, use_container_width=True)
+                    st.plotly_chart(fig_coverage, use_container_width=True)
                 else:
-                    st.info("No length data available for visualization.")
+                    st.info("No motifs available for coverage analysis.")
             
             # Enhanced interactive motif map
             st.markdown('<h4>🗺️ Interactive Motif Map</h4>', unsafe_allow_html=True)
@@ -1164,21 +1010,6 @@ with tab_pages["Results"]:
             if interactive_fig:
                 st.plotly_chart(interactive_fig, use_container_width=True)
             
-            # Additional sequence composition analysis
-            st.markdown('<h4>🔬 Sequence Composition Analysis</h4>', unsafe_allow_html=True)
-            seq = st.session_state.seqs[seq_idx]
-            stats = get_basic_stats(seq, motifs)
-            
-            col1, col2, col3, col4 = st.columns(4)
-            with col1:
-                st.metric("GC Content", f"{stats['GC %']}%")
-            with col2:
-                st.metric("AT Content", f"{stats['AT %']}%")
-            with col3:
-                st.metric("Motif Coverage", f"{stats['Motif Coverage (%)']}%")
-            with col4:
-                st.metric("Total Motifs", len(motifs))
-                
             # Motif density heatmap
             if len(motifs) > 0:
                 st.markdown('<h4>🌡️ Motif Density Heatmap</h4>', unsafe_allow_html=True)
@@ -1615,142 +1446,42 @@ with tab_pages["Documentation"]:
         """, unsafe_allow_html=True)
         
     with doc_tabs[3]:
-        st.subheader("🏆 Comprehensive Scientific References & Citations")
+        st.subheader("Scientific References")
         
-        # Add citation metrics
         st.markdown("""
-        <div style='background:linear-gradient(135deg, #f0f9ff 0%, #f0fdf4 100%); border-radius:12px; padding:16px; margin:10px 0; border-left:4px solid #059669;'>
-        <b>📊 Citation Impact:</b> This platform implements algorithms cited in <b>2,000+ peer-reviewed publications</b> across genomics, structural biology, and bioinformatics research.
-        </div>
-        """, unsafe_allow_html=True)
+        <div style='background:#f8fdff; border-radius:12px; padding:20px; font-size:1.08rem; font-family:Montserrat,Arial;'>
         
-        # Create expandable sections for references
-        with st.expander("🔬 **Core Algorithm References** (Click to expand)", expanded=True):
-            st.markdown("""
-            <div style='background:#f8fdff; border-radius:12px; padding:20px; font-size:1.08rem; font-family:Montserrat,Arial;'>
+        <ol style='line-height:1.8;'>
+            <li>Watson, J. D. & Crick, F. H. Molecular structure of nucleic acids; a structure for deoxyribose nucleic acid. Nature 171, 737-738 (1953).</li>
             
-            <ol style='line-height:2.0;'>
-                <li><b>Bedrat, A., Lacroix, L., & Mergny, J.L. (2016)</b><br>
-                "Re-evaluation of G-quadruplex propensity with G4Hunter."<br>
-                <i>Nucleic Acids Research</i> <b>44</b>(4): 1746-1759.<br>
-                <a href='https://doi.org/10.1093/nar/gkw006' target='_blank' style='color:#1565c0;'>📎 DOI: 10.1093/nar/gkw006</a><br>
-                <small style='color:#059669;'><b>Primary G4 detection algorithm - 1,200+ citations</b></small></li>
-                
-                <li><b>Choi, J. & Majima, T. (2011)</b><br>
-                "Conformational changes of non-B DNA."<br>
-                <i>Chemical Society Reviews</i> <b>40</b>(12): 5893-5909.<br>
-                <a href='https://doi.org/10.1039/C1CS15153C' target='_blank' style='color:#1565c0;'>📎 DOI: 10.1039/C1CS15153C</a><br>
-                <small style='color:#059669;'><b>Z-DNA detection methodology - 800+ citations</b></small></li>
-                
-                <li><b>Schroth, G.P., Chou, P.J., & Ho, P.S. (1992)</b><br>
-                "Mapping Z-DNA in the human genome."<br>
-                <i>Journal of Biological Chemistry</i> <b>267</b>(17): 11846-11855.<br>
-                <a href='https://doi.org/10.1016/S0021-9258(19)49773-7' target='_blank' style='color:#1565c0;'>📎 DOI: 10.1016/S0021-9258(19)49773-7</a><br>
-                <small style='color:#059669;'><b>Foundational Z-DNA scoring system - 650+ citations</b></small></li>
-                
-                <li><b>Santos-Pereira, J.M. & Aguilera, A. (2015)</b><br>
-                "R loops: new modulators of genome dynamics and function."<br>
-                <i>Nature Reviews Genetics</i> <b>16</b>(10): 583-597.<br>
-                <a href='https://doi.org/10.1038/nrg3961' target='_blank' style='color:#1565c0;'>📎 DOI: 10.1038/nrg3961</a><br>
-                <small style='color:#059669;'><b>R-loop detection framework - 1,500+ citations</b></small></li>
-            </ol>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        with st.expander("🧬 **Structural Validation & Experimental Evidence**"):
-            st.markdown("""
-            <div style='background:#f8fdff; border-radius:12px; padding:20px; font-size:1.08rem; font-family:Montserrat,Arial;'>
+            <li>Mirkin, S. M. Discovery of alternative DNA structures: a heroic decade (1979-1989). Front Biosci 13, 1064-1071 (2008).</li>
             
-            <ol start='5' style='line-height:2.0;'>
-                <li><b>Zeraati, M. et al. (2018)</b><br>
-                "I-motif DNA structures are formed in the nuclei of human cells."<br>
-                <i>Nature Chemistry</i> <b>10</b>: 631-637.<br>
-                <a href='https://doi.org/10.1038/s41557-018-0046-3' target='_blank' style='color:#1565c0;'>📎 DOI: 10.1038/s41557-018-0046-3</a><br>
-                <small style='color:#059669;'><b>In vivo i-motif validation - Nature publication</b></small></li>
-                
-                <li><b>Hänsel-Hertsch, R. et al. (2017)</b><br>
-                "G-quadruplex structures mark human regulatory chromatin."<br>
-                <i>Nature Genetics</i> <b>49</b>: 1212-1221.<br>
-                <a href='https://doi.org/10.1038/ng.3917' target='_blank' style='color:#1565c0;'>📎 DOI: 10.1038/ng.3917</a><br>
-                <small style='color:#059669;'><b>Genome-wide G4 experimental validation - 900+ citations</b></small></li>
-                
-                <li><b>Bacolla, A. & Wells, R.D. (2006)</b><br>
-                "Non-B DNA conformations, genomic rearrangements, and human disease."<br>
-                <i>Nucleic Acids Research</i> <b>34</b>(6): 1803-1820.<br>
-                <a href='https://doi.org/10.1093/nar/gkl004' target='_blank' style='color:#1565c0;'>📎 DOI: 10.1093/nar/gkl004</a><br>
-                <small style='color:#059669;'><b>Comprehensive non-B DNA review - 1,100+ citations</b></small></li>
-                
-                <li><b>Rich, A. & Zhang, S. (2003)</b><br>
-                "Z-DNA: the long road to biological function."<br>
-                <i>Nature Reviews Genetics</i> <b>4</b>: 566-572.<br>
-                <a href='https://doi.org/10.1038/nrg1115' target='_blank' style='color:#1565c0;'>📎 DOI: 10.1038/nrg1115</a><br>
-                <small style='color:#059669;'><b>Z-DNA biological significance - 700+ citations</b></small></li>
-            </ol>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        with st.expander("🏥 **Clinical & Disease Association Studies**"):
-            st.markdown("""
-            <div style='background:#f8fdff; border-radius:12px; padding:20px; font-size:1.08rem; font-family:Montserrat,Arial;'>
+            <li>Wang, G. & Vasquez, K. M. Dynamic alternative DNA structures in biology and disease. Nat Rev Genet 24, 211-234 (2023).</li>
             
-            <ol start='9' style='line-height:2.0;'>
-                <li><b>Usdin, K., House, N.C., & Freudenreich, C.H. (2015)</b><br>
-                "Repeat instability during DNA repair: Insights from model systems."<br>
-                <i>Critical Reviews in Biochemistry</i> <b>50</b>(2): 142-167.<br>
-                <a href='https://doi.org/10.3109/10409238.2014.999192' target='_blank' style='color:#1565c0;'>📎 DOI: 10.3109/10409238.2014.999192</a><br>
-                <small style='color:#059669;'><b>Repeat expansion diseases - Clinical relevance</b></small></li>
-                
-                <li><b>Brooks, T.A. & Hurley, L.H. (2010)</b><br>
-                "Targeting MYC Expression through G-Quadruplexes."<br>
-                <i>Genes & Cancer</i> <b>1</b>(6): 641-649.<br>
-                <a href='https://doi.org/10.1177/1947601910377493' target='_blank' style='color:#1565c0;'>📎 DOI: 10.1177/1947601910377493</a><br>
-                <small style='color:#059669;'><b>Therapeutic targeting via G4 structures</b></small></li>
-                
-                <li><b>McMurray, C.T. (2010)</b><br>
-                "Mechanisms of trinucleotide repeat instability during human development."<br>
-                <i>Nature Reviews Genetics</i> <b>11</b>: 786-799.<br>
-                <a href='https://doi.org/10.1038/nrg2828' target='_blank' style='color:#1565c0;'>📎 DOI: 10.1038/nrg2828</a><br>
-                <small style='color:#059669;'><b>Neurological disease mechanisms - 950+ citations</b></small></li>
-            </ol>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        with st.expander("📈 **Recent Advances & Computational Methods**"):
-            st.markdown("""
-            <div style='background:#f8fdff; border-radius:12px; padding:20px; font-size:1.08rem; font-family:Montserrat,Arial;'>
+            <li>Mellor, C., Perez, C. & Sale, J. E. Creation and resolution of non-B-DNA structural impediments during replication. Crit Rev Biochem Mol Biol 57, 412-442 (2022).</li>
             
-            <ol start='12' style='line-height:2.0;'>
-                <li><b>Marsico, G. et al. (2019)</b><br>
-                "Whole genome experimental maps of DNA G-quadruplexes in multiple species."<br>
-                <i>Nucleic Acids Research</i> <b>47</b>(8): 3862-3874.<br>
-                <a href='https://doi.org/10.1093/nar/gkz179' target='_blank' style='color:#1565c0;'>📎 DOI: 10.1093/nar/gkz179</a><br>
-                <small style='color:#059669;'><b>Large-scale G4 mapping - Evolutionary conservation</b></small></li>
-                
-                <li><b>Cer, R.Z. et al. (2013)</b><br>
-                "Non-B DB v2.0: a database of predicted non-B DNA-forming motifs."<br>
-                <i>Nucleic Acids Research</i> <b>41</b>(D1): D94-D100.<br>
-                <a href='https://doi.org/10.1093/nar/gks955' target='_blank' style='color:#1565c0;'>📎 DOI: 10.1093/nar/gks955</a><br>
-                <small style='color:#059669;'><b>Benchmark database for algorithm validation</b></small></li>
-                
-                <li><b>Varizhuk, A. et al. (2017)</b><br>
-                "The expanding repertoire of G4 DNA structures."<br>
-                <i>Biochimie</i> <b>135</b>: 54-62.<br>
-                <a href='https://doi.org/10.1016/j.biochi.2017.01.003' target='_blank' style='color:#1565c0;'>📎 DOI: 10.1016/j.biochi.2017.01.003</a><br>
-                <small style='color:#059669;'><b>Advanced G4 topology classification</b></small></li>
-            </ol>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        # Add methodology information section
-        st.markdown("""
-        <div style='background:linear-gradient(135deg, #f0f9ff 0%, #fef3c7 100%); border-radius:12px; padding:20px; margin:20px 0; border-left:4px solid #f59e0b;'>
-        <h4 style='color:#f59e0b; margin-top:0;'>Algorithm Information</h4>
-        <ul style='line-height:1.8;'>
-            <li><b>G4Hunter Algorithm:</b> Implements the published G4Hunter method for G-quadruplex detection</li>
-            <li><b>Z-DNA Detection:</b> Uses Kadane's algorithm with dinucleotide scoring</li>
-            <li><b>R-loop Prediction:</b> RLFS+REZ method for RNA-DNA hybrid detection</li>
-            <li><b>Implementation:</b> Python-based algorithms with web interface</li>
-        </ul>
+            <li>Matos-Rodrigues, G., Hisey, J. A., Nussenzweig, A. & Mirkin, S. M. Detection of alternative DNA structures and its implications for human disease. Mol Cell 83, 3622-3641 (2023).</li>
+            
+            <li>Wang, A. H. et al. Molecular structure of a left-handed double helical DNA fragment at atomic resolution. Nature 282, 680-686 (1979).</li>
+            
+            <li>Sen, D. & Gilbert, W. Formation of parallel four-stranded complexes by guanine-rich motifs in DNA and its implications for meiosis. Nature 334, 364-366 (1988).</li>
+            
+            <li>Williamson, J. R., Raghuraman, M. K. & Cech, T. R. Monovalent cation-induced structure of telomeric DNA: the G-quartet model. Cell 59, 871-880 (1989).</li>
+            
+            <li>Gehring, K., Leroy, J. L. & Guéron, M. A tetrameric DNA structure with protonated cytosine.cytosine base pairs. Nature 363, 561-565 (1993).</li>
+            
+            <li>Zeraati, M. et al. I-motif DNA structures are formed in the nuclei of human cells. Nat Chem 10, 631-637 (2018).</li>
+            
+            <li>Ginno, P. A., Lott, P. L., Christensen, H. C., Korf, I. & Chédin, F. R-loop formation is a distinctive characteristic of unmethylated human CpG island promoters. Mol Cell 45, 814-825 (2012).</li>
+            
+            <li>Brázda, V. et al. G4Hunter web application: a web server for G-quadruplex prediction. Bioinformatics 35, 3493-3495 (2019).</li>
+            
+            <li>Ho, P. S., Ellison, M. J., Quigley, G. J. & Rich, A. A computer aided thermodynamic approach for predicting the formation of Z-DNA in naturally occurring sequences. Embo j 5, 2737-2744 (1986).</li>
+            
+            <li>Buske, F. A., Bauer, D. C., Mattick, J. S. & Bailey, T. L. Triplexator: detecting nucleic acid triple helices in genomic and transcriptomic data. Genome Res 22, 1372-1381 (2012).</li>
+            
+            <li>Yella, V. R. & Vanaja, A. Computational analysis on the dissemination of non-B DNA structural motifs in promoter regions of 1180 cellular genomes. Biochimie 214, 101-111 (2023).</li>
+        </ol>
         </div>
         """, unsafe_allow_html=True)
 
