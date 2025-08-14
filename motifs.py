@@ -360,6 +360,10 @@ def find_global_curved_polyA_polyT(seq: str, min_tract_len: int = 3, min_repeats
             motif_seq = seq[group[0][0]:group[-1][1]+1]
             score = curvature_score(motif_seq)
             if score >= min_score:
+                # Calculate conservation score
+                conservation_result = calculate_conservation_score(motif_seq, "Curved DNA")
+                conservation_score = conservation_result["enrichment_score"]
+                
                 motif = {
                     "Sequence Name": "",
                     "Class": "Curved_DNA",
@@ -369,6 +373,9 @@ def find_global_curved_polyA_polyT(seq: str, min_tract_len: int = 3, min_repeats
                     "Length": group[-1][1] - group[0][0] + 1,
                     "Sequence": wrap(motif_seq),
                     "Score": float(score),
+                    "Conservation_Score": float(conservation_score),
+                    "Conservation_P_Value": float(conservation_result["p_value"]),
+                    "Conservation_Significance": conservation_result["significance"],
                     "Arms/Repeat Unit/Copies": "",
                     "Spacer": ""
                 }
@@ -382,6 +389,10 @@ def find_local_curved_polyA_polyT(seq: str, apr_regions: list, min_len: int = 7)
     for start, end, tract_seq in tracts:
         s, e = start + 1, end + 1
         if not any(r_start <= s <= r_end or r_start <= e <= r_end for r_start, r_end in apr_regions):
+            # Calculate conservation score
+            conservation_result = calculate_conservation_score(tract_seq, "Curved DNA")
+            conservation_score = conservation_result["enrichment_score"]
+            
             results.append({
                 "Sequence Name": "",
                 "Class": "Curved_DNA",
@@ -391,6 +402,9 @@ def find_local_curved_polyA_polyT(seq: str, apr_regions: list, min_len: int = 7)
                 "Length": len(tract_seq),
                 "Sequence": wrap(tract_seq),
                 "Score": float(curvature_score(tract_seq)),
+                "Conservation_Score": float(conservation_score),
+                "Conservation_P_Value": float(conservation_result["p_value"]),
+                "Conservation_Significance": conservation_result["significance"],
                 "Arms/Repeat Unit/Copies": "",
                 "Spacer": ""
             })
@@ -592,6 +606,10 @@ def find_egz_motif(seq):
         g_frac = motif_seq.count('G') / len(motif_seq)
         score = n_repeats * 3 * (1.0 + 2.0*g_frac)
         
+        # Calculate conservation score
+        conservation_result = calculate_conservation_score(motif_seq, "eGZ")
+        conservation_score = conservation_result["enrichment_score"]
+        
         results.append({
             "Sequence Name": "",
             "Family": "Double-stranded",
@@ -605,6 +623,9 @@ def find_egz_motif(seq):
             "Score": float(score),
             "CGG_Repeats": n_repeats,
             "G_Fraction": round(g_frac, 3),
+            "Conservation_Score": float(conservation_score),
+            "Conservation_P_Value": float(conservation_result["p_value"]),
+            "Conservation_Significance": conservation_result["significance"],
             "Arms/Repeat Unit/Copies": f"Unit=CGG;Copies={n_repeats}",
             "Spacer": ""
         })
@@ -644,6 +665,10 @@ def find_slipped_dna(seq):
                     overlap_ratio = len(current_positions.intersection(used_positions)) / len(current_positions)
                     
                     if overlap_ratio < 0.3:  # Allow some overlap but not excessive
+                        # Calculate conservation score
+                        conservation_result = calculate_conservation_score(repeat+repeat, "Slipped DNA")
+                        conservation_score = conservation_result["enrichment_score"]
+                        
                         results.append({
                             "Sequence Name": "",
                             "Class": "Slipped_DNA",
@@ -655,6 +680,9 @@ def find_slipped_dna(seq):
                             "ScoreMethod": "DR_Composition_raw",
                             "Score": float(score),
                             "AT_Fraction": round(at_frac, 3),
+                            "Conservation_Score": float(conservation_score),
+                            "Conservation_P_Value": float(conservation_result["p_value"]),
+                            "Conservation_Significance": conservation_result["significance"],
                             "Arms/Repeat Unit/Copies": f"UnitLen={l};Copies=2",
                             "Spacer": ""
                         })
@@ -690,6 +718,12 @@ def find_slipped_dna(seq):
                 full_len = reps*unit + remainder
                 gc_frac = (repeat_unit.count('G') + repeat_unit.count('C')) / max(1, len(repeat_unit))
                 score = full_len * (1.0 + 0.3*gc_frac) * (reps ** 0.5)
+                
+                # Calculate conservation score
+                str_seq = seq[i:i + full_len]
+                conservation_result = calculate_conservation_score(str_seq, "Slipped DNA")
+                conservation_score = conservation_result["enrichment_score"]
+                
                 results.append({
                     "Sequence Name": "",
                     "Class": "Slipped_DNA",
@@ -699,10 +733,13 @@ def find_slipped_dna(seq):
                     "Length": full_len,
                     "Unit": repeat_unit,
                     "Copies": reps,
-                    "Sequence": wrap(seq[i:i + full_len]),
+                    "Sequence": wrap(str_seq),
                     "ScoreMethod": "STR_Enhanced_raw",
                     "Score": float(score),
                     "GC_Fraction": round(gc_frac, 3),
+                    "Conservation_Score": float(conservation_score),
+                    "Conservation_P_Value": float(conservation_result["p_value"]),
+                    "Conservation_Significance": conservation_result["significance"],
                     "Arms/Repeat Unit/Copies": f"Unit={repeat_unit};Copies={reps}",
                     "Spacer": ""
                 })
@@ -831,6 +868,11 @@ def find_rlfs(seq, models=("m1", "m2"), min_total_length=100):
                 
                 # Only report high-quality R-loops
                 if score >= 10.0 and total_length >= min_total_length:
+                    # Calculate conservation score
+                    full_seq = riz_seq + rez_seq
+                    conservation_result = calculate_conservation_score(full_seq, "R-Loop")
+                    conservation_score = conservation_result["enrichment_score"]
+                    
                     results.append({
                         "Sequence Name": "",
                         "Class": "R-Loop",
@@ -838,7 +880,7 @@ def find_rlfs(seq, models=("m1", "m2"), min_total_length=100):
                         "Start": m.start() + 1,
                         "End": m.end() + rez['length'],
                         "Length": total_length,
-                        "Sequence": wrap(riz_seq + rez_seq),
+                        "Sequence": wrap(full_seq),
                         "ScoreMethod": "RLFS_REZ_Stability_raw",
                         "Score": float(score),
                         "RIZ_Length": len(riz_seq),
@@ -847,6 +889,9 @@ def find_rlfs(seq, models=("m1", "m2"), min_total_length=100):
                         "G_Run_Count": total_g_runs,
                         "RIZ_GC": round(riz_gc, 2),
                         "REZ_GC": round(rez['gc_content'], 2),
+                        "Conservation_Score": float(conservation_score),
+                        "Conservation_P_Value": float(conservation_result["p_value"]),
+                        "Conservation_Significance": conservation_result["significance"],
                         "Arms/Repeat Unit/Copies": f"RIZ={len(riz_seq)}bp;REZ={len(rez_seq)}bp",
                         "Spacer": ""
                     })
@@ -880,6 +925,10 @@ def find_cruciform(seq):
                     at_frac = (arm.count('A') + arm.count('T')) / arm_len
                     score = arm_len * (1.0 + 0.5*at_frac) - 2.0*spacer_len
                     
+                    # Calculate conservation score
+                    conservation_result = calculate_conservation_score(full, "Cruciform")
+                    conservation_score = conservation_result["enrichment_score"]
+                    
                     results.append({
                         "Sequence Name": "",
                         "Class": "Cruciform",
@@ -892,6 +941,9 @@ def find_cruciform(seq):
                         "Score": float(score),
                         "Arm_Length": arm_len,
                         "AT_Fraction": round(at_frac, 3),
+                        "Conservation_Score": float(conservation_score),
+                        "Conservation_P_Value": float(conservation_result["p_value"]),
+                        "Conservation_Significance": conservation_result["significance"],
                         "Arms/Repeat Unit/Copies": f"Arms={arm_len}",
                         "Spacer": str(spacer_len)
                     })
@@ -941,6 +993,10 @@ def find_hdna(seq):
                 
                 # Only keep high-scoring matches to avoid excessive low-quality results
                 if score >= min_score_threshold:
+                    # Calculate conservation score
+                    conservation_result = calculate_conservation_score(full_seq, "Triplex")
+                    conservation_score = conservation_result["enrichment_score"]
+                    
                     results.append({
                         "Sequence Name": "",
                         "Class": "Triplex_DNA" if is_triplex else "Mirror_Repeat",
@@ -955,6 +1011,9 @@ def find_hdna(seq):
                         "PurineFrac": round(pur_frac, 3),
                         "PyrimidineFrac": round(pyr_frac, 3),
                         "Homogeneity": round(homogeneity, 3),
+                        "Conservation_Score": float(conservation_score),
+                        "Conservation_P_Value": float(conservation_result["p_value"]),
+                        "Conservation_Significance": conservation_result["significance"],
                         "Arms/Repeat Unit/Copies": f"Arms={rep_len}",
                         "Spacer": str(spacer)
                     })
@@ -990,6 +1049,10 @@ def find_sticky_dna(seq):
         pathogenic = repeat_count >= 59
         subtype = "GAA_TTC_Pathogenic" if pathogenic else "GAA_TTC_Repeat"
         
+        # Calculate conservation score
+        conservation_result = calculate_conservation_score(m.group(), "Sticky DNA")
+        conservation_score = conservation_result["enrichment_score"]
+        
         motifs.append({
             "Sequence Name": "",
             "Class": "Sticky_DNA",
@@ -1003,6 +1066,9 @@ def find_sticky_dna(seq):
             "Score": float(score),
             "AT_Fraction": round(at_frac, 3),
             "Pathogenic": pathogenic,
+            "Conservation_Score": float(conservation_score),
+            "Conservation_P_Value": float(conservation_result["p_value"]),
+            "Conservation_Significance": conservation_result["significance"],
             "Arms/Repeat Unit/Copies": f"Unit={'GAA' if 'GAA' in m.group() else 'TTC'};Copies={repeat_count}",
             "Spacer": ""
         })
@@ -1129,6 +1195,11 @@ def find_bipartite_gquadruplex(seq):
             structural_factor = g4_structural_factor(motif_seq, "bipartite")
             # Score = G4Hunter_mean × motif_length × structural_factor
             score = g4h_mean * len(motif_seq) * structural_factor
+            
+            # Calculate conservation score
+            conservation_result = calculate_conservation_score(motif_seq, "G4")
+            conservation_score = conservation_result["enrichment_score"]
+            
             results.append({
                 "Sequence Name": "",
                 "Class": "Bipartite G4",
@@ -1141,6 +1212,9 @@ def find_bipartite_gquadruplex(seq):
                 "Score": float(score),
                 "G4Hunter_Mean": float(g4h_mean),
                 "Structural_Factor": float(structural_factor),
+                "Conservation_Score": float(conservation_score),
+                "Conservation_P_Value": float(conservation_result["p_value"]),
+                "Conservation_Significance": conservation_result["significance"],
                 "Arms/Repeat Unit/Copies": "",
                 "Spacer": ""
             })
@@ -1192,6 +1266,11 @@ def find_relaxed_gquadruplex(seq):
             structural_factor = g4_structural_factor(motif_seq, "relaxed")
             # Score = G4Hunter_mean × motif_length × structural_factor
             score = g4h_mean * len(motif_seq) * structural_factor
+            
+            # Calculate conservation score
+            conservation_result = calculate_conservation_score(motif_seq, "G4")
+            conservation_score = conservation_result["enrichment_score"]
+            
             results.append({
                 "Sequence Name": "",
                 "Class": "Relaxed G4",
@@ -1204,6 +1283,9 @@ def find_relaxed_gquadruplex(seq):
                 "Score": float(score),
                 "G4Hunter_Mean": float(g4h_mean),
                 "Structural_Factor": float(structural_factor),
+                "Conservation_Score": float(conservation_score),
+                "Conservation_P_Value": float(conservation_result["p_value"]),
+                "Conservation_Significance": conservation_result["significance"],
                 "Arms/Repeat Unit/Copies": "",
                 "Spacer": ""
             })
@@ -1221,6 +1303,11 @@ def find_bulged_gquadruplex(seq):
                 structural_factor = g4_structural_factor(motif_seq, "bulged")
                 # Score = G4Hunter_mean × motif_length × structural_factor
                 score = g4h_mean * len(motif_seq) * structural_factor
+                
+                # Calculate conservation score
+                conservation_result = calculate_conservation_score(motif_seq, "G4")
+                conservation_score = conservation_result["enrichment_score"]
+                
                 results.append({
                     "Sequence Name": "",
                     "Class": "Bulged G4",
@@ -1233,6 +1320,9 @@ def find_bulged_gquadruplex(seq):
                     "Score": float(score),
                     "G4Hunter_Mean": float(g4h_mean),
                     "Structural_Factor": float(structural_factor),
+                    "Conservation_Score": float(conservation_score),
+                    "Conservation_P_Value": float(conservation_result["p_value"]),
+                    "Conservation_Significance": conservation_result["significance"],
                     "Arms/Repeat Unit/Copies": "",
                     "Spacer": ""
                 })
@@ -1251,6 +1341,11 @@ def find_imperfect_gquadruplex(seq):
             structural_factor = g4_structural_factor(motif_seq, "imperfect")
             # Score = G4Hunter_mean × motif_length × structural_factor
             score = g4h_mean * len(motif_seq) * structural_factor
+            
+            # Calculate conservation score
+            conservation_result = calculate_conservation_score(motif_seq, "G4")
+            conservation_score = conservation_result["enrichment_score"]
+            
             results.append({
                 "Sequence Name": "",
                 "Class": "Imperfect G4",
@@ -1263,6 +1358,9 @@ def find_imperfect_gquadruplex(seq):
                 "Score": float(score),
                 "G4Hunter_Mean": float(g4h_mean),
                 "Structural_Factor": float(structural_factor),
+                "Conservation_Score": float(conservation_score),
+                "Conservation_P_Value": float(conservation_result["p_value"]),
+                "Conservation_Significance": conservation_result["significance"],
                 "Arms/Repeat Unit/Copies": "",
                 "Spacer": ""
             })
@@ -1287,6 +1385,11 @@ def find_gtriplex(seq):
         loops = [len(l) for l in re.findall(r"G{3,}(\w{1,7})G{3,}", motif_seq)]
         loop_term = sum(1/l if l > 0 else 0.5 for l in loops)
         score = (sum(g_runs) * 2.0) + (loop_term * 5.0)
+        
+        # Calculate conservation score
+        conservation_result = calculate_conservation_score(motif_seq, "G-Triplex")
+        conservation_score = conservation_result["enrichment_score"]
+        
         results.append({
             "Sequence Name": "",
             "Class": "G-Triplex",
@@ -1297,6 +1400,9 @@ def find_gtriplex(seq):
             "Sequence": wrap(motif_seq),
             "ScoreMethod": "G3_raw",
             "Score": float(score),
+            "Conservation_Score": float(conservation_score),
+            "Conservation_P_Value": float(conservation_result["p_value"]),
+            "Conservation_Significance": conservation_result["significance"],
             "Arms/Repeat Unit/Copies": "",
             "Spacer": ""
         })
