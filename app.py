@@ -621,6 +621,16 @@ with tab_pages["Upload & Analyze"]:
     st.markdown('<p class="input-method-title">Input Method:</p>', unsafe_allow_html=True)
     input_method = st.radio("", ["Upload FASTA / Multi-FASTA File", "Paste Sequence(s)", "Example Sequence", "NCBI Fetch"], horizontal=True)
 
+    # Clear session state sequences when switching input methods (except on first load)
+    if 'last_input_method' not in st.session_state:
+        st.session_state.last_input_method = input_method
+    elif st.session_state.last_input_method != input_method:
+        st.session_state.seqs = []
+        st.session_state.names = []
+        st.session_state.results = []
+        st.session_state.last_input_method = input_method
+
+    # Initialize empty sequences - will be updated by input methods
     seqs, names = [], []
 
     # --- File upload ---
@@ -642,6 +652,9 @@ with tab_pages["Upload & Analyze"]:
                 seqs.append(parse_fasta(cur_seq))
                 names.append(cur_name if cur_name else f"Seq{len(seqs)}")
             if seqs:
+                # Store in session state for persistence
+                st.session_state.seqs = seqs
+                st.session_state.names = names
                 st.success(f"Loaded {len(seqs)} sequences.")
                 for i, seq in enumerate(seqs[:3]):
                     stats = get_basic_stats(seq)
@@ -675,6 +688,9 @@ with tab_pages["Upload & Analyze"]:
                 seqs.append(parse_fasta(cur_seq))
                 names.append(cur_name if cur_name else f"Seq{len(seqs)}")
             if seqs:
+                # Store in session state for persistence
+                st.session_state.seqs = seqs
+                st.session_state.names = names
                 st.success(f"Pasted {len(seqs)} sequences.")
 
     # --- Example input ---
@@ -695,6 +711,10 @@ with tab_pages["Upload & Analyze"]:
             example_data = EXAMPLE_SEQUENCES[selected_example]
             seqs = [example_data["sequence"]]
             names = [example_data["name"]]
+            
+            # Store in session state for persistence
+            st.session_state.seqs = seqs
+            st.session_state.names = names
             
             # Add spacing before the preview to prevent overlap
             st.markdown("<br>", unsafe_allow_html=True)
@@ -740,6 +760,9 @@ with tab_pages["Upload & Analyze"]:
                     try:
                         seqs, names = ncbi_fetch(ncbi_query)
                         if seqs:
+                            # Store in session state for persistence
+                            st.session_state.seqs = seqs
+                            st.session_state.names = names
                             st.success(f"✓ Fetched {len(seqs)} sequence(s) from NCBI.")
                             # Show preview of fetched sequences
                             with st.expander("▊ Preview Fetched Sequences"):
@@ -755,7 +778,28 @@ with tab_pages["Upload & Analyze"]:
                         st.info("Try a different query or check your internet connection.")
 
     # --- Analysis trigger ---
-    if seqs and st.button("Analyze Sequences"):
+    # Show currently loaded sequences status
+    if st.session_state.seqs:
+        st.markdown("---")
+        st.markdown("### 🧬 Loaded Sequences")
+        seq_count = len(st.session_state.seqs)
+        total_length = sum(len(seq) for seq in st.session_state.seqs)
+        st.info(f"**{seq_count} sequence(s) ready for analysis** | Total length: {total_length:,} bp")
+        
+        if seq_count <= 3:
+            for i, (seq, name) in enumerate(zip(st.session_state.seqs, st.session_state.names)):
+                st.text(f"{i+1}. {name} ({len(seq):,} bp)")
+        else:
+            for i in range(3):
+                seq, name = st.session_state.seqs[i], st.session_state.names[i]
+                st.text(f"{i+1}. {name} ({len(seq):,} bp)")
+            st.text(f"... and {seq_count-3} more sequences")
+    
+    # Use session state sequences for analysis (ensures persistence across input methods)
+    if st.session_state.seqs and st.button("Analyze Sequences"):
+        seqs = st.session_state.seqs
+        names = st.session_state.names
+        
         # Check sequence length restrictions
         invalid_seqs = []
         for i, (seq, name) in enumerate(zip(seqs, names)):
