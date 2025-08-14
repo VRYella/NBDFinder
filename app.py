@@ -713,7 +713,7 @@ with tab_pages["Upload & Analyze"]:
         st.markdown("**▪ Fetch sequences from NCBI database:**")
         
         # Show famous examples
-        with st.expander("💡 Famous genes/sequences with Non-B DNA motifs"):
+        with st.expander("▸ Famous genes/sequences with Non-B DNA motifs"):
             st.markdown("**Click to copy accession numbers:**")
             cols = st.columns(2)
             with cols[0]:
@@ -1090,7 +1090,7 @@ with tab_pages["Download"]:
         st.markdown("### 📥 Complete Results Table with Scientific Scoring Information")
         st.markdown("""
         <div style='background:#f8fffe; padding:15px; border-radius:10px; margin-bottom:20px; border-left:5px solid #2e7d32;'>
-        <h4 style='color:#2e7d32; margin-top:0;'>🔬 Scientific Scoring Methodology</h4>
+        <h4 style='color:#2e7d32; margin-top:0;'>▪ Scientific Scoring Methodology</h4>
         
         <p><b>NBDFinder employs established scoring systems for accurate Non-B DNA prediction:</b></p>
         
@@ -1146,17 +1146,17 @@ with tab_pages["Documentation"]:
         # Enhanced motif search functionality
         col1, col2 = st.columns([2, 1])
         with col1:
-            search_term = st.text_input("🔍 Search motifs by name, structure, or biological function:", placeholder="e.g., G4, transcription, disease")
+            search_term = st.text_input("▫ Search motifs by name, structure, or biological function:", placeholder="e.g., G4, transcription, disease")
         with col2:
-            sort_option = st.selectbox("📊 Sort by:", ["Motif Class", "Clinical Relevance", "Score Range", "Discovery Date"])
+            sort_option = st.selectbox("▊ Sort by:", ["Motif Class", "Clinical Relevance", "Score Range", "Discovery Date"])
         
         # Create enhanced motif table with additional scientific details
         motif_data = {
             "Motif Class": [
-                "🌀 Curved DNA", "🧬 Z-DNA", "🔄 eGZ (Extruded-G)", "📐 Slipped DNA", "🔗 R-Loop", 
-                "⚔️ Cruciform", "🏗️ Triplex DNA", "🩺 Sticky DNA", "🔺 G-Triplex", "⭐ Canonical G4",
-                "📏 Relaxed G4", "🔸 Bulged G4", "⚡ Bipartite G4", "🔗 Multimeric G4", "🔄 Imperfect G4", 
-                "🧪 i-Motif", "🎯 AC-Motif", "🌈 Hybrid Motif", "🎪 Non-B DNA Clusters"
+                "∩ Curved DNA", "⇋ Z-DNA", "↻ eGZ (Extruded-G)", "∿ Slipped DNA", "⤑ R-Loop", 
+                "† Cruciform", "⟨⟩ Triplex DNA", "∷ Sticky DNA", "△ G-Triplex", "★ Canonical G4",
+                "▫ Relaxed G4", "◇ Bulged G4", "⚹ Bipartite G4", "⇌ Multimeric G4", "○ Imperfect G4", 
+                "◎ i-Motif", "◦ AC-Motif", "◈ Hybrid Motif", "⬢ Non-B DNA Clusters"
             ],
             "Structural Features": [
                 "Intrinsic DNA curvature from phased A/T tracts (10.5° bend per helical turn)",
@@ -1239,7 +1239,7 @@ with tab_pages["Documentation"]:
         col1, col2, col3 = st.columns([1, 1, 2])
         with col1:
             csv_motifs = df_motifs.to_csv(index=False).encode('utf-8')
-            st.download_button("📊 Download Motif Data (CSV)", csv_motifs, "NBDFinder_Motif_Classifications.csv", "text/csv")
+            st.download_button("▦ Download Motif Data (CSV)", csv_motifs, "NBDFinder_Motif_Classifications.csv", "text/csv")
         with col2:
             excel_motifs = io.BytesIO()
             with pd.ExcelWriter(excel_motifs, engine='xlsxwriter') as writer:
@@ -1334,10 +1334,10 @@ with tab_pages["Documentation"]:
         # Apply filters
         if algorithm_filter != "All":
             filter_mapping = {
-                "G-Quadruplex Family": ["🌟 Canonical G4", "🔄 Imperfect G4", "🔺 G-Triplex", "⭐ Bipartite G4", "🔗 Multimeric G4", "🧪 i-Motif"],
-                "Repeat-Based": ["📐 Slipped DNA", "🩺 Sticky DNA", "🔗 R-Loop"],
-                "Helix-Based": ["🧬 Z-DNA", "🌀 Curved DNA", "🎯 AC-Motif"],
-                "Junction-Based": ["⚔️ Cruciform", "🏗️ Triplex DNA", "🌈 Non-B Clusters"]
+                "G-Quadruplex Family": ["✧ Canonical G4", "○ Imperfect G4", "△ G-Triplex", "★ Bipartite G4", "⇌ Multimeric G4", "◎ i-Motif"],
+                "Repeat-Based": ["∿ Slipped DNA", "∷ Sticky DNA", "⤑ R-Loop"],
+                "Helix-Based": ["⇋ Z-DNA", "∩ Curved DNA", "◦ AC-Motif"],
+                "Junction-Based": ["† Cruciform", "⟨⟩ Triplex DNA", "◈ Non-B Clusters"]
             }
             filtered_motifs = filter_mapping.get(algorithm_filter, [])
             mask = df_methods["Motif Type"].isin(filtered_motifs)
@@ -1437,7 +1437,7 @@ with tab_pages["Documentation"]:
         
         st.markdown("""
         <div style='background:linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%); border-radius:12px; padding:16px; margin:15px 0; border-left:4px solid #1565c0;'>
-        <b>🎯 Interpretation Guidelines:</b><br>
+        <b>▸ Interpretation Guidelines:</b><br>
         • <b>High confidence:</b> Strong experimental support, likely to form in vivo<br>
         • <b>Moderate confidence:</b> Reasonable formation potential under specific conditions<br>
         • <b>Low confidence:</b> Possible formation, requires experimental validation<br>
