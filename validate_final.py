@@ -58,15 +58,15 @@ def validate_problem_statement_requirements():
     print(f"Test sequence length: {len(test_sequence)} bp")
     print("\nRunning comprehensive motif detection...")
     
-    # Run the analysis
-    all_results = motifs.all_motifs(test_sequence)
+    # Run the analysis (include hotspots to test Non-B DNA Clusters)
+    all_results = motifs.all_motifs(test_sequence, report_hotspots=True)
     
-    # Organize by categories from problem statement
+    # Organize by categories from problem statement (using actual class names)
     categories = {
         "G-quadruplex-related": ["Canonical G4", "Relaxed G4", "Bulged G4", "Bipartite G4", 
                                 "Multimeric G4", "Imperfect G4", "G-Triplex", "i-Motif", "Hybrid"],
-        "Helix/curvature": ["Z-DNA", "eGZ (Extruded-G)", "Curved DNA", "AC-Motif"],
-        "Repeat/junction": ["Slipped DNA", "Cruciform", "Sticky DNA", "Triplex DNA"],
+        "Helix/curvature": ["Z-DNA", "eGZ (Extruded-G)", "Curved_DNA", "AC-Motif"],
+        "Repeat/junction": ["Slipped_DNA", "Cruciform", "Sticky_DNA", "Triplex_DNA"],
         "Hybrid/cluster": ["R-Loop", "Non-B DNA Clusters", "Hybrid"]
     }
     
