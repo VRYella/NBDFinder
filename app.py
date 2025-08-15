@@ -50,14 +50,27 @@ def ensure_subtype(motif):
         return {'Subtype': 'Other', 'Motif': motif}
 
 
-# ---------- PROFESSIONAL CSS FOR BALANCED DESIGN ----------
+# ---------- PROFESSIONAL CSS FOR ENHANCED TYPOGRAPHY ----------
 st.markdown("""
     <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Montserrat:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700;800;900&display=swap');
+    
+    :root {
+        --primary-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+        --heading-font: 'Montserrat', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+        --display-font: 'Playfair Display', 'Georgia', 'Times New Roman', serif;
+        --mono-font: 'JetBrains Mono', 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'Droid Sans Mono', 'Consolas', 'Roboto Mono', monospace;
+    }
+    
     body, [data-testid="stAppViewContainer"], .main {
         background: linear-gradient(135deg, #f7fafd 0%, #f0f9ff 50%, #f8fdff 100%) !important;
-        font-family: 'Montserrat', Arial, sans-serif !important;
+        font-family: var(--primary-font) !important;
+        font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
     }
-    /* Tabs: enhanced bold, large, highly appealing with vibrant colors */
+    /* Tabs: enhanced with professional typography and spacing */
     .stTabs [data-baseweb="tab-list"] {
         width: 100vw !important;
         justify-content: stretch !important;
@@ -68,128 +81,190 @@ st.markdown("""
         border-radius: 16px 16px 0 0;
     }
     .stTabs [data-baseweb="tab"] {
-        font-size: 1.85rem !important;
-        font-weight: 900 !important;
+        font-family: var(--heading-font) !important;
+        font-size: 1.75rem !important;
+        font-weight: 700 !important;
         flex: 1 1 0%;
         min-width: 0 !important;
-        padding: 22px 15px 22px 15px !important;
+        padding: 24px 18px 24px 18px !important;
         text-align: center;
         color: #0d47a1 !important;
         background: linear-gradient(135deg, #ffffff 0%, #f8fdff 50%, #f0f9ff 100%) !important;
         border-right: 3px solid #e3f2fd !important;
-        letter-spacing: 0.08em;
+        letter-spacing: 0.025em;
         text-shadow: 0 2px 4px rgba(13, 71, 161, 0.15);
         border-radius: 12px 12px 0 0;
         margin: 6px 3px 0 3px;
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        font-feature-settings: "kern" 1, "liga" 1;
     }
     .stTabs [data-baseweb="tab"]:hover {
         background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 50%, #e8f5e8 100%) !important;
         color: #0d47a1 !important;
-        transform: translateY(-4px);
+        transform: translateY(-3px);
         box-shadow: 0 8px 32px rgba(13, 71, 161, 0.3);
-        font-size: 1.9rem !important;
+        font-size: 1.8rem !important;
+        font-weight: 800 !important;
     }
     .stTabs [aria-selected="true"] {
+        font-family: var(--heading-font) !important;
         color: #ffffff !important;
         border-bottom: 8px solid #ff6f00 !important;
         background: linear-gradient(135deg, #0d47a1 0%, #1565c0 30%, #1976d2 60%, #42a5f5 100%) !important;
         box-shadow: 0 12px 40px rgba(13, 71, 161, 0.4);
         transform: translateY(-6px);
-        font-size: 2.0rem !important;
+        font-size: 1.9rem !important;
+        font-weight: 800 !important;
         text-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
         border-left: 4px solid #ff6f00 !important;
         border-right: 4px solid #ff6f00 !important;
+        letter-spacing: 0.01em;
     }
     .stTabs [data-baseweb="tab"]:last-child {
         border-right: none !important;
     }
-    /* Headings: dramatically enhanced with larger, more impactful sizes */
-    h1, h2, h3, h4 {
-        font-family: 'Montserrat', Arial, sans-serif !important;
+    /* Headings: professional typography hierarchy with optimal readability */
+    h1, h2, h3, h4, h5, h6 {
+        font-family: var(--heading-font) !important;
         color: #0d47a1 !important;
-        font-weight: 900 !important;
-        margin-top: 1.0em;
-        margin-bottom: 1.0em;
-        text-shadow: 0 2px 4px rgba(13, 71, 161, 0.2);
+        margin-top: 1.2em;
+        margin-bottom: 0.8em;
+        text-shadow: 0 2px 4px rgba(13, 71, 161, 0.15);
+        font-feature-settings: "kern" 1, "liga" 1;
+        line-height: 1.3;
     }
     h1 { 
-        font-size: 2.8rem !important; 
+        font-family: var(--display-font) !important;
+        font-size: 3.2rem !important;
+        font-weight: 700 !important;
         background: linear-gradient(135deg, #0d47a1, #1565c0, #42a5f5) !important;
         -webkit-background-clip: text !important;
         -webkit-text-fill-color: transparent !important;
         background-clip: text !important;
+        letter-spacing: -0.02em;
+        line-height: 1.2;
     }
     h2 { 
-        font-size: 2.2rem !important; 
+        font-size: 2.4rem !important; 
+        font-weight: 600 !important;
         color: #1565c0 !important;
+        letter-spacing: -0.015em;
     }
     h3 { 
-        font-size: 1.6rem !important; 
+        font-size: 1.8rem !important; 
         color: #1976d2 !important;
-        font-weight: 800 !important;
+        font-weight: 600 !important;
+        letter-spacing: -0.01em;
     }
     h4 { 
-        font-size: 1.35rem !important; 
+        font-size: 1.5rem !important; 
         color: #42a5f5 !important;
-        font-weight: 700 !important;
+        font-weight: 600 !important;
+        letter-spacing: 0;
     }
-    /* Markdown/text: enhanced size for better readability */
-    .stMarkdown, .markdown-text-container, .stText, p, span, label, input, .stTextInput>div>div>input, .stSelectbox>div>div>div, .stMultiSelect>div>div>div, .stRadio>div>div>label>div {
-        font-size: 1.15rem !important;
-        font-family: 'Montserrat', Arial, sans-serif !important;
+    h5 {
+        font-size: 1.25rem !important;
+        color: #1976d2 !important;
+        font-weight: 600 !important;
+    }
+    h6 {
+        font-size: 1.1rem !important;
+        color: #1976d2 !important;
+        font-weight: 600 !important;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    /* Body text and UI elements: enhanced readability and modern typography */
+    .stMarkdown, .markdown-text-container, .stText, p, span, label, div[data-testid="stMarkdownContainer"] {
+        font-family: var(--primary-font) !important;
+        font-size: 1.125rem !important;
+        line-height: 1.65 !important;
+        color: #374151 !important;
+        font-weight: 400 !important;
+        font-feature-settings: "kern" 1, "liga" 1;
+    }
+    
+    /* Input elements with consistent typography */
+    input, .stTextInput>div>div>input, .stSelectbox>div>div>div, .stMultiSelect>div>div>div, .stRadio>div>div>label>div {
+        font-family: var(--primary-font) !important;
+        font-size: 1.1rem !important;
         line-height: 1.6 !important;
+        font-weight: 400 !important;
     }
-    /* Buttons: modern, larger, more engaging */
+    
+    /* Strong and emphasis elements */
+    strong, b {
+        font-weight: 600 !important;
+        color: #1f2937 !important;
+    }
+    
+    em, i {
+        font-style: italic !important;
+        color: #4b5563 !important;
+    }
+    /* Buttons: modern design with enhanced typography */
     .stButton>button {
-        font-size: 1.2rem !important;
-        font-family: 'Montserrat', Arial, sans-serif !important;
-        padding: 0.6em 1.5em !important;
+        font-family: var(--primary-font) !important;
+        font-size: 1.125rem !important;
+        font-weight: 600 !important;
+        padding: 0.75em 2em !important;
         background: linear-gradient(135deg, #0d47a1 0%, #1565c0 50%, #42a5f5 100%) !important;
         color: #fff !important;
         border-radius: 12px !important;
         border: none !important;
-        font-weight: 700 !important;
         box-shadow: 0 4px 16px rgba(13, 71, 161, 0.3);
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        text-transform: none;
+        letter-spacing: 0.01em;
+        font-feature-settings: "kern" 1;
     }
     .stButton>button:hover {
         background: linear-gradient(135deg, #42a5f5 0%, #1565c0 50%, #0d47a1 100%) !important;
         transform: translateY(-2px);
         box-shadow: 0 8px 24px rgba(13, 71, 161, 0.4);
-        font-size: 1.25rem !important;
+        font-size: 1.15rem !important;
+        font-weight: 600 !important;
     }
-    /* Enhanced DataFrame styling for outstanding data presentation */
+    /* Enhanced DataFrame styling with professional typography */
     .stDataFrame, .stTable {
-        font-size: 1.12rem !important;
-        font-family: 'Montserrat', Arial, sans-serif !important;
+        font-family: var(--primary-font) !important;
+        font-size: 1.05rem !important;
         border-radius: 16px !important;
         box-shadow: 0 6px 24px rgba(13, 71, 161, 0.15) !important;
         border: 2px solid #e3f2fd !important;
         overflow: hidden !important;
     }
     
-    /* Enhanced table headers with vibrant gradients */
+    /* Enhanced table headers with professional typography */
     .stDataFrame th {
+        font-family: var(--heading-font) !important;
         background: linear-gradient(135deg, #0d47a1 0%, #1565c0 30%, #1976d2 60%, #42a5f5 100%) !important;
         color: white !important;
-        font-weight: 800 !important;
+        font-weight: 600 !important;
         text-align: center !important;
         border: none !important;
-        font-size: 1.18rem !important;
-        padding: 12px 16px !important;
+        font-size: 1.1rem !important;
+        padding: 14px 18px !important;
         text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        letter-spacing: 0.01em;
     }
     
     /* Enhanced table cell styling */
     .stDataFrame td {
+        font-family: var(--primary-font) !important;
         text-align: center !important;
         padding: 12px 16px !important;
         border-bottom: 2px solid #f0f8ff !important;
-        font-size: 1.1rem !important;
-        font-weight: 500 !important;
+        font-size: 1.05rem !important;
+        font-weight: 400 !important;
+        line-height: 1.5;
+    }
+    
+    /* Monospace for data that should be monospaced */
+    .stDataFrame .data-cell {
+        font-family: var(--mono-font) !important;
+        font-size: 0.95rem !important;
+        letter-spacing: 0;
     }
     
     /* Enhanced alternating row colors */
@@ -285,9 +360,11 @@ st.markdown("""
         margin: 8px 0 !important;
     }
     .stRadio > div > label {
-        font-weight: 700 !important;
+        font-family: var(--primary-font) !important;
+        font-weight: 600 !important;
         color: #0d47a1 !important;
-        font-size: 1.2rem !important;
+        font-size: 1.15rem !important;
+        line-height: 1.5;
     }
     .stRadio > div > label > div:first-child {
         background: linear-gradient(135deg, #0d47a1, #1565c0, #42a5f5) !important;
@@ -296,36 +373,186 @@ st.markdown("""
         width: 24px !important;
         height: 24px !important;
     }
-    /* Enhanced Text Styling with superior visual hierarchy */
+    /* Enhanced Text Styling with modern typography hierarchy */
     .input-method-title {
-        font-weight: 900 !important;
-        font-size: 1.4rem !important;
+        font-family: var(--heading-font) !important;
+        font-weight: 700 !important;
+        font-size: 1.5rem !important;
         color: #0d47a1 !important;
         text-shadow: 0 2px 4px rgba(13, 71, 161, 0.25) !important;
-        margin-bottom: 8px !important;
+        margin-bottom: 12px !important;
+        letter-spacing: -0.01em;
     }
     .input-method-subtitle {
-        font-weight: 700 !important;
+        font-family: var(--primary-font) !important;
+        font-weight: 600 !important;
         font-style: italic !important;
         color: #2e7d32 !important;
-        font-size: 1.2rem !important;
+        font-size: 1.25rem !important;
         text-shadow: 0 1px 2px rgba(46, 125, 50, 0.2) !important;
+        line-height: 1.4;
     }
     .input-method-regular {
-        font-weight: 500 !important;
-        color: #424242 !important;
-        font-size: 1.15rem !important;
-        line-height: 1.6 !important;
+        font-family: var(--primary-font) !important;
+        font-weight: 400 !important;
+        color: #4b5563 !important;
+        font-size: 1.125rem !important;
+        line-height: 1.65 !important;
     }
     .sequence-preview-title {
-        font-weight: 800 !important;
+        font-family: var(--mono-font) !important;
+        font-weight: 600 !important;
         color: #d32f2f !important;
-        font-size: 1.35rem !important;
+        font-size: 1.2rem !important;
         text-shadow: 0 2px 4px rgba(211, 47, 47, 0.25) !important;
         background: linear-gradient(135deg, #d32f2f, #f44336, #ef5350) !important;
         -webkit-background-clip: text !important;
         -webkit-text-fill-color: transparent !important;
         background-clip: text !important;
+        letter-spacing: 0.02em;
+    }
+    
+    /* Code and preformatted text styling */
+    code, pre, .stCode {
+        font-family: var(--mono-font) !important;
+        font-size: 0.95rem !important;
+        font-weight: 500 !important;
+        letter-spacing: 0;
+        line-height: 1.5;
+    }
+    
+    /* Lists and structured content */
+    ul, ol {
+        font-family: var(--primary-font) !important;
+        line-height: 1.65;
+    }
+    
+    li {
+        font-size: 1.1rem !important;
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Links with improved typography */
+    a, .stMarkdown a {
+        font-family: var(--primary-font) !important;
+        font-weight: 500 !important;
+        text-decoration: none !important;
+        color: #1565c0 !important;
+        transition: color 0.2s ease;
+    }
+    
+    a:hover, .stMarkdown a:hover {
+        color: #0d47a1 !important;
+        text-decoration: underline !important;
+    }
+    
+    /* Sidebar styling */
+    .css-1d391kg, .stSidebar {
+        font-family: var(--primary-font) !important;
+    }
+    
+    .stSidebar .stMarkdown {
+        font-size: 1.05rem !important;
+        line-height: 1.6;
+    }
+    
+    /* Metrics and statistics text */
+    .metric-value, .stMetric {
+        font-family: var(--mono-font) !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.02em;
+    }
+    
+    /* Tooltips and help text */
+    .tooltip, [data-testid="stTooltip"] {
+        font-family: var(--primary-font) !important;
+        font-size: 0.95rem !important;
+        line-height: 1.5;
+    }
+    
+    /* Streamlit native components enhancement */
+    .stSelectbox label, .stMultiSelect label, .stTextInput label {
+        font-family: var(--primary-font) !important;
+        font-weight: 600 !important;
+        font-size: 1.1rem !important;
+        color: #374151 !important;
+    }
+    
+    /* Status messages */
+    .stSuccess, .stInfo, .stWarning, .stError {
+        font-family: var(--primary-font) !important;
+        font-size: 1.05rem !important;
+        line-height: 1.5;
+    }
+    
+    /* Progressive enhancement for supported browsers */
+    @supports (font-variation-settings: normal) {
+        body, [data-testid="stAppViewContainer"], .main {
+            font-variation-settings: 'wght' 400, 'slnt' 0;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            font-variation-settings: 'wght' 600, 'slnt' 0;
+        }
+    }
+    
+    /* Enhanced file uploader styling */
+    .stFileUploader > div {
+        font-family: var(--primary-font) !important;
+        font-size: 1.05rem !important;
+    }
+    
+    .stFileUploader label {
+        font-family: var(--primary-font) !important;
+        font-weight: 600 !important;
+        font-size: 1.1rem !important;
+        color: #374151 !important;
+    }
+    
+    /* Enhanced expander styling */
+    .streamlit-expanderHeader {
+        font-family: var(--heading-font) !important;
+        font-weight: 600 !important;
+        font-size: 1.2rem !important;
+    }
+    
+    /* Enhanced columns and containers */
+    .stColumn > div {
+        font-family: var(--primary-font) !important;
+    }
+    
+    /* Better text area styling */
+    .stTextArea textarea {
+        font-family: var(--mono-font) !important;
+        font-size: 1rem !important;
+        line-height: 1.5;
+    }
+    
+    .stTextArea label {
+        font-family: var(--primary-font) !important;
+        font-weight: 600 !important;
+        font-size: 1.1rem !important;
+    }
+    
+    /* Enhanced number input */
+    .stNumberInput label {
+        font-family: var(--primary-font) !important;
+        font-weight: 600 !important;
+        font-size: 1.1rem !important;
+    }
+    
+    /* Enhanced slider */
+    .stSlider label {
+        font-family: var(--primary-font) !important;
+        font-weight: 600 !important;
+        font-size: 1.1rem !important;
+    }
+    
+    /* Enhanced checkbox */
+    .stCheckbox label {
+        font-family: var(--primary-font) !important;
+        font-weight: 500 !important;
+        font-size: 1.05rem !important;
     }
     </style>
 """, unsafe_allow_html=True)
