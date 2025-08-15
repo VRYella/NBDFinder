@@ -1115,7 +1115,7 @@ def find_sticky_dna(seq):
 
 def g4hunter_score(seq):
     """
-    G4Hunter mean bias calculation - DEFAULT G4Hunter algorithm implementation.
+    G4Hunter scoring function: assign scores based on G/C runs and average.
     
     Scientific Basis: G4Hunter computes G vs C bias to predict G-quadruplex
     formation potential. Positive scores indicate G-quadruplex propensity.
@@ -1125,17 +1125,33 @@ def g4hunter_score(seq):
     seq (str): DNA sequence to score
     
     Returns:
-    float: G4Hunter mean score (G vs C bias)
+    float: G4Hunter mean score (run-based G vs C bias)
     """
+    seq = seq.upper()
     scores = []
-    for c in seq.upper():
-        if c == 'G':
-            scores.append(1)
-        elif c == 'C':
-            scores.append(-1)
+    i = 0
+    while i < len(seq):
+        # G-run: assign +score for each G in the run
+        if seq[i] == 'G':
+            run = 1
+            while i + run < len(seq) and seq[i + run] == 'G':
+                run += 1
+            s = min(run, 4)
+            scores += [s] * run
+            i += run
+        # C-run: assign -score for each C in the run
+        elif seq[i] == 'C':
+            run = 1
+            while i + run < len(seq) and seq[i + run] == 'C':
+                run += 1
+            s = -min(run, 4)
+            scores += [s] * run
+            i += run
+        # A/T: assign 0
         else:
             scores.append(0)
-    return np.mean(scores) if scores else 0.0
+            i += 1
+    return sum(scores) / len(scores) if scores else 0.0
 
 def g4_structural_factor(motif_seq, motif_type="canonical"):
     """
@@ -1449,27 +1465,43 @@ def find_gtriplex(seq):
 
 def imotif_score(seq):
     """
-    G4Hunter-style scoring for i-Motifs: C vs G bias calculation similar to G4Hunter.
+    G4Hunter-style scoring for i-Motifs: C vs G bias calculation with reverse logic.
     
     Scientific Basis: i-Motifs are C-rich structures complementary to G-quadruplexes.
-    This scoring system mirrors G4Hunter but for C-rich sequences.
+    This scoring system uses G4Hunter run-based logic but with reversed polarity.
     Reference: Zeraati et al. (2018) Nat Chem; G4Hunter methodology adapted for i-motifs
     
     Parameters:
     seq (str): DNA sequence to score
     
     Returns:
-    float: i-Motif Hunter mean score (C vs G bias, negative values indicate i-motif propensity)
+    float: i-Motif Hunter mean score (run-based C vs G bias, positive values indicate i-motif propensity)
     """
+    seq = seq.upper()
     scores = []
-    for c in seq.upper():
-        if c == 'C':
-            scores.append(1)  # C contributes positively to i-motif formation
-        elif c == 'G':
-            scores.append(-1)  # G opposes i-motif formation
+    i = 0
+    while i < len(seq):
+        # C-run: assign +score for each C in the run (reverse of G4Hunter)
+        if seq[i] == 'C':
+            run = 1
+            while i + run < len(seq) and seq[i + run] == 'C':
+                run += 1
+            s = min(run, 4)
+            scores += [s] * run
+            i += run
+        # G-run: assign -score for each G in the run (reverse of G4Hunter)
+        elif seq[i] == 'G':
+            run = 1
+            while i + run < len(seq) and seq[i + run] == 'G':
+                run += 1
+            s = -min(run, 4)
+            scores += [s] * run
+            i += run
+        # A/T: assign 0
         else:
-            scores.append(0)  # A and T are neutral
-    return np.mean(scores) if scores else 0.0
+            scores.append(0)
+            i += 1
+    return sum(scores) / len(scores) if scores else 0.0
 
 def find_imotif(seq):
     results = []
