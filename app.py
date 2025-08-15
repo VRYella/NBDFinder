@@ -53,11 +53,13 @@ def ensure_subtype(motif):
 # ---------- PROFESSIONAL CSS FOR ENHANCED TYPOGRAPHY ----------
 st.markdown("""
     <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Montserrat:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700;800;900&display=swap');
+    
     :root {
-        --primary-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-        --heading-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-        --display-font: 'Georgia', 'Times New Roman', 'Playfair Display', serif;
-        --mono-font: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'Droid Sans Mono', 'Consolas', 'Roboto Mono', monospace;
+        --primary-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+        --heading-font: 'Montserrat', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+        --display-font: 'Playfair Display', 'Georgia', 'Times New Roman', serif;
+        --mono-font: 'JetBrains Mono', 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'Droid Sans Mono', 'Consolas', 'Roboto Mono', monospace;
     }
     
     body, [data-testid="stAppViewContainer"], .main {
@@ -452,6 +454,105 @@ st.markdown("""
     .stSidebar .stMarkdown {
         font-size: 1.05rem !important;
         line-height: 1.6;
+    }
+    
+    /* Metrics and statistics text */
+    .metric-value, .stMetric {
+        font-family: var(--mono-font) !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.02em;
+    }
+    
+    /* Tooltips and help text */
+    .tooltip, [data-testid="stTooltip"] {
+        font-family: var(--primary-font) !important;
+        font-size: 0.95rem !important;
+        line-height: 1.5;
+    }
+    
+    /* Streamlit native components enhancement */
+    .stSelectbox label, .stMultiSelect label, .stTextInput label {
+        font-family: var(--primary-font) !important;
+        font-weight: 600 !important;
+        font-size: 1.1rem !important;
+        color: #374151 !important;
+    }
+    
+    /* Status messages */
+    .stSuccess, .stInfo, .stWarning, .stError {
+        font-family: var(--primary-font) !important;
+        font-size: 1.05rem !important;
+        line-height: 1.5;
+    }
+    
+    /* Progressive enhancement for supported browsers */
+    @supports (font-variation-settings: normal) {
+        body, [data-testid="stAppViewContainer"], .main {
+            font-variation-settings: 'wght' 400, 'slnt' 0;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            font-variation-settings: 'wght' 600, 'slnt' 0;
+        }
+    }
+    
+    /* Enhanced file uploader styling */
+    .stFileUploader > div {
+        font-family: var(--primary-font) !important;
+        font-size: 1.05rem !important;
+    }
+    
+    .stFileUploader label {
+        font-family: var(--primary-font) !important;
+        font-weight: 600 !important;
+        font-size: 1.1rem !important;
+        color: #374151 !important;
+    }
+    
+    /* Enhanced expander styling */
+    .streamlit-expanderHeader {
+        font-family: var(--heading-font) !important;
+        font-weight: 600 !important;
+        font-size: 1.2rem !important;
+    }
+    
+    /* Enhanced columns and containers */
+    .stColumn > div {
+        font-family: var(--primary-font) !important;
+    }
+    
+    /* Better text area styling */
+    .stTextArea textarea {
+        font-family: var(--mono-font) !important;
+        font-size: 1rem !important;
+        line-height: 1.5;
+    }
+    
+    .stTextArea label {
+        font-family: var(--primary-font) !important;
+        font-weight: 600 !important;
+        font-size: 1.1rem !important;
+    }
+    
+    /* Enhanced number input */
+    .stNumberInput label {
+        font-family: var(--primary-font) !important;
+        font-weight: 600 !important;
+        font-size: 1.1rem !important;
+    }
+    
+    /* Enhanced slider */
+    .stSlider label {
+        font-family: var(--primary-font) !important;
+        font-weight: 600 !important;
+        font-size: 1.1rem !important;
+    }
+    
+    /* Enhanced checkbox */
+    .stCheckbox label {
+        font-family: var(--primary-font) !important;
+        font-weight: 500 !important;
+        font-size: 1.05rem !important;
     }
     </style>
 """, unsafe_allow_html=True)
