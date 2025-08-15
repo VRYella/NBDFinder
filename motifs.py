@@ -1,5 +1,8 @@
 import re
 import numpy as np
+from disease_motifs import find_disease_associated_motifs
+from ml_predictor import enhance_motif_with_ml
+from advanced_clustering import find_advanced_clusters, find_hybrid_structures
 
 """
 Non-B DNA Motif Detection Module - Enhanced with Latest Scientific Methods
@@ -1879,7 +1882,8 @@ def all_motifs(seq, nonoverlap=False, report_hotspots=False, sequence_name="Sequ
         find_multimeric_gquadruplex(seq) +
         find_imperfect_gquadruplex(seq) +
         find_imotif(seq) +
-        find_ac_motifs(seq)
+        find_ac_motifs(seq) +
+        find_disease_associated_motifs(seq)
     )
     # Validate and standardize fields
     motif_list = [m for m in motif_list if validate_motif(m, len(seq))]
@@ -1891,6 +1895,9 @@ def all_motifs(seq, nonoverlap=False, report_hotspots=False, sequence_name="Sequ
     # Hotspots appended if asked
     if report_hotspots:
         motif_list += find_hotspots(motif_list, len(seq))
+        # Add advanced clusters and hybrid structures
+        motif_list += find_advanced_clusters(motif_list, len(seq))
+        motif_list += find_hybrid_structures(motif_list)
     # Add Sequence Name and ensure ordered keys exist
     for m in motif_list:
         m["Sequence Name"] = sequence_name
@@ -1904,6 +1911,9 @@ def all_motifs(seq, nonoverlap=False, report_hotspots=False, sequence_name="Sequ
                 m["Score"] = float(m["Score"])
             except Exception:
                 pass
+        
+        # Enhance with machine learning predictions
+        m = enhance_motif_with_ml(m, seq)
     return motif_list
 
 # =========================
