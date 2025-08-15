@@ -32,147 +32,191 @@ def ensure_subtype(motif):
 st.markdown("""
     <style>
     body, [data-testid="stAppViewContainer"], .main {
-        background: #f7fafd !important;
+        background: linear-gradient(135deg, #f7fafd 0%, #f0f9ff 50%, #f8fdff 100%) !important;
         font-family: 'Montserrat', Arial, sans-serif !important;
     }
-    /* Tabs: enhanced bold, large, appealing */
+    /* Tabs: enhanced bold, large, highly appealing with vibrant colors */
     .stTabs [data-baseweb="tab-list"] {
         width: 100vw !important;
         justify-content: stretch !important;
-        border-bottom: 3px solid #1565c0;
-        background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 30%, #e8f5e8 60%, #fff3e0 100%) !important;
-        box-shadow: 0 4px 16px rgba(21, 101, 192, 0.15);
+        border-bottom: 4px solid #0d47a1;
+        background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 25%, #e8f5e8 50%, #fff3e0 75%, #fce4ec 100%) !important;
+        box-shadow: 0 6px 24px rgba(13, 71, 161, 0.25);
         margin-bottom: 0;
-        border-radius: 12px 12px 0 0;
+        border-radius: 16px 16px 0 0;
     }
     .stTabs [data-baseweb="tab"] {
-        font-size: 1.65rem !important;
-        font-weight: 800 !important;
+        font-size: 1.85rem !important;
+        font-weight: 900 !important;
         flex: 1 1 0%;
         min-width: 0 !important;
-        padding: 18px 12px 18px 12px !important;
+        padding: 22px 15px 22px 15px !important;
         text-align: center;
-        color: #1565c0 !important;
-        background: linear-gradient(135deg, #f8fdff 0%, #f0f7ff 100%) !important;
-        border-right: 2px solid #e3f2fd !important;
-        letter-spacing: 0.05em;
-        text-shadow: 0 1px 2px rgba(21, 101, 192, 0.1);
-        border-radius: 8px 8px 0 0;
-        margin: 4px 2px 0 2px;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        color: #0d47a1 !important;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fdff 50%, #f0f9ff 100%) !important;
+        border-right: 3px solid #e3f2fd !important;
+        letter-spacing: 0.08em;
+        text-shadow: 0 2px 4px rgba(13, 71, 161, 0.15);
+        border-radius: 12px 12px 0 0;
+        margin: 6px 3px 0 3px;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .stTabs [data-baseweb="tab"]:hover {
-        background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%) !important;
+        background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 50%, #e8f5e8 100%) !important;
         color: #0d47a1 !important;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(21, 101, 192, 0.2);
+        transform: translateY(-4px);
+        box-shadow: 0 8px 32px rgba(13, 71, 161, 0.3);
+        font-size: 1.9rem !important;
     }
     .stTabs [aria-selected="true"] {
         color: #ffffff !important;
-        border-bottom: 6px solid #d32f2f !important;
-        background: linear-gradient(135deg, #1565c0 0%, #1976d2 50%, #2196f3 100%) !important;
-        box-shadow: 0 8px 24px rgba(21, 101, 192, 0.3);
-        transform: translateY(-3px);
-        font-size: 1.7rem !important;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        border-bottom: 8px solid #ff6f00 !important;
+        background: linear-gradient(135deg, #0d47a1 0%, #1565c0 30%, #1976d2 60%, #42a5f5 100%) !important;
+        box-shadow: 0 12px 40px rgba(13, 71, 161, 0.4);
+        transform: translateY(-6px);
+        font-size: 2.0rem !important;
+        text-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+        border-left: 4px solid #ff6f00 !important;
+        border-right: 4px solid #ff6f00 !important;
     }
     .stTabs [data-baseweb="tab"]:last-child {
         border-right: none !important;
     }
-    /* Headings: harmonized medium size */
+    /* Headings: dramatically enhanced with larger, more impactful sizes */
     h1, h2, h3, h4 {
         font-family: 'Montserrat', Arial, sans-serif !important;
+        color: #0d47a1 !important;
+        font-weight: 900 !important;
+        margin-top: 1.0em;
+        margin-bottom: 1.0em;
+        text-shadow: 0 2px 4px rgba(13, 71, 161, 0.2);
+    }
+    h1 { 
+        font-size: 2.8rem !important; 
+        background: linear-gradient(135deg, #0d47a1, #1565c0, #42a5f5) !important;
+        -webkit-background-clip: text !important;
+        -webkit-text-fill-color: transparent !important;
+        background-clip: text !important;
+    }
+    h2 { 
+        font-size: 2.2rem !important; 
         color: #1565c0 !important;
+    }
+    h3 { 
+        font-size: 1.6rem !important; 
+        color: #1976d2 !important;
         font-weight: 800 !important;
-        margin-top: 0.8em;
-        margin-bottom: 0.8em;
     }
-    h1 { font-size:2.05rem !important; }
-    h2 { font-size:1.55rem !important; }
-    h3 { font-size:1.19rem !important; }
-    h4 { font-size:1.09rem !important; }
-    /* Markdown/text: medium size, easy reading */
+    h4 { 
+        font-size: 1.35rem !important; 
+        color: #42a5f5 !important;
+        font-weight: 700 !important;
+    }
+    /* Markdown/text: enhanced size for better readability */
     .stMarkdown, .markdown-text-container, .stText, p, span, label, input, .stTextInput>div>div>input, .stSelectbox>div>div>div, .stMultiSelect>div>div>div, .stRadio>div>div>label>div {
-        font-size: 1.08rem !important;
+        font-size: 1.15rem !important;
         font-family: 'Montserrat', Arial, sans-serif !important;
+        line-height: 1.6 !important;
     }
-    /* Buttons: modern, medium */
+    /* Buttons: modern, larger, more engaging */
     .stButton>button {
-        font-size: 1.08rem !important;
+        font-size: 1.2rem !important;
         font-family: 'Montserrat', Arial, sans-serif !important;
-        padding: 0.45em 1.2em !important;
-        background: linear-gradient(90deg,#1565c0 0%,#2e8bda 100%) !important;
+        padding: 0.6em 1.5em !important;
+        background: linear-gradient(135deg, #0d47a1 0%, #1565c0 50%, #42a5f5 100%) !important;
         color: #fff !important;
-        border-radius: 7px !important;
+        border-radius: 12px !important;
         border: none !important;
-        font-weight: 600 !important;
-        box-shadow: 0 2px 8px #b5cbe6;
-        transition: background 0.2s;
+        font-weight: 700 !important;
+        box-shadow: 0 4px 16px rgba(13, 71, 161, 0.3);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
     .stButton>button:hover {
-        background: linear-gradient(90deg,#2e8bda 0%,#1565c0 100%) !important;
+        background: linear-gradient(135deg, #42a5f5 0%, #1565c0 50%, #0d47a1 100%) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(13, 71, 161, 0.4);
+        font-size: 1.25rem !important;
     }
-    /* Enhanced DataFrame styling for better readability */
+    /* Enhanced DataFrame styling for outstanding data presentation */
     .stDataFrame, .stTable {
-        font-size: 1.05rem !important;
+        font-size: 1.12rem !important;
         font-family: 'Montserrat', Arial, sans-serif !important;
-        border-radius: 12px !important;
-        box-shadow: 0 4px 12px rgba(21, 101, 192, 0.1) !important;
-        border: 1px solid #e3f2fd !important;
+        border-radius: 16px !important;
+        box-shadow: 0 6px 24px rgba(13, 71, 161, 0.15) !important;
+        border: 2px solid #e3f2fd !important;
+        overflow: hidden !important;
     }
     
-    /* Enhanced table headers */
+    /* Enhanced table headers with vibrant gradients */
     .stDataFrame th {
-        background: linear-gradient(135deg, #1565c0 0%, #2e8bda 100%) !important;
+        background: linear-gradient(135deg, #0d47a1 0%, #1565c0 30%, #1976d2 60%, #42a5f5 100%) !important;
         color: white !important;
-        font-weight: 700 !important;
+        font-weight: 800 !important;
         text-align: center !important;
         border: none !important;
+        font-size: 1.18rem !important;
+        padding: 12px 16px !important;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     }
     
-    /* Table cell styling */
+    /* Enhanced table cell styling */
     .stDataFrame td {
         text-align: center !important;
-        padding: 8px 12px !important;
-        border-bottom: 1px solid #f0f8ff !important;
+        padding: 12px 16px !important;
+        border-bottom: 2px solid #f0f8ff !important;
+        font-size: 1.1rem !important;
+        font-weight: 500 !important;
     }
     
-    /* Alternating row colors for better readability */
+    /* Enhanced alternating row colors */
     .stDataFrame tr:nth-child(even) {
-        background-color: rgba(240, 248, 255, 0.5) !important;
+        background: linear-gradient(135deg, rgba(240, 248, 255, 0.7) 0%, rgba(227, 242, 253, 0.5) 100%) !important;
+    }
+    .stDataFrame tr:nth-child(odd) {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 253, 255, 0.7) 100%) !important;
     }
     
-    /* Confidence level styling with color coding */
+    /* Enhanced confidence level styling with vibrant color coding */
     .stDataFrame .confidence-optimal {
-        background: linear-gradient(90deg, #22c55e, #16a34a) !important;
+        background: linear-gradient(135deg, #2e7d32, #43a047, #66bb6a) !important;
         color: white !important;
-        font-weight: bold !important;
-        border-radius: 6px !important;
-        padding: 4px 8px !important;
+        font-weight: 800 !important;
+        border-radius: 8px !important;
+        padding: 6px 12px !important;
+        box-shadow: 0 3px 8px rgba(46, 125, 50, 0.4);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
     
     .stDataFrame .confidence-high {
-        background: linear-gradient(90deg, #3b82f6, #2563eb) !important;
+        background: linear-gradient(135deg, #1565c0, #1976d2, #42a5f5) !important;
         color: white !important;
-        font-weight: bold !important;
-        border-radius: 6px !important;
-        padding: 4px 8px !important;
+        font-weight: 800 !important;
+        border-radius: 8px !important;
+        padding: 6px 12px !important;
+        box-shadow: 0 3px 8px rgba(21, 101, 192, 0.4);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
     
     .stDataFrame .confidence-moderate {
-        background: linear-gradient(90deg, #eab308, #d97706) !important;
+        background: linear-gradient(135deg, #f57f17, #ffa726, #ffcc02) !important;
         color: white !important;
-        font-weight: bold !important;
-        border-radius: 6px !important;
-        padding: 4px 8px !important;
+        font-weight: 800 !important;
+        border-radius: 8px !important;
+        padding: 6px 12px !important;
+        box-shadow: 0 3px 8px rgba(245, 127, 23, 0.4);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
     
     .stDataFrame .confidence-low {
-        background: linear-gradient(90deg, #ef4444, #dc2626) !important;
+        background: linear-gradient(135deg, #d32f2f, #f44336, #ef5350) !important;
         color: white !important;
-        font-weight: bold !important;
-        border-radius: 6px !important;
-        padding: 4px 8px !important;
+        font-weight: 800 !important;
+        border-radius: 8px !important;
+        padding: 6px 12px !important;
+        box-shadow: 0 3px 8px rgba(211, 47, 47, 0.4);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
     /* Fix dropdown text overlap issues */
     .stSelectbox > div > div {
@@ -198,58 +242,68 @@ st.markdown("""
         padding-left: 8px !important;
         min-width: 24px !important;
     }
-    /* Enhanced Motif Selection Styling */
+    /* Enhanced Motif Selection with more engaging styling */
     .stMultiSelect > div {
-        background: linear-gradient(135deg, #f8fdff 0%, #eef8ff 100%) !important;
-        border: 2px solid #1565c0 !important;
-        border-radius: 12px !important;
-        box-shadow: 0 4px 12px rgba(21, 101, 192, 0.15) !important;
+        background: linear-gradient(135deg, #e3f2fd 0%, #f0f9ff 50%, #e8f5e8 100%) !important;
+        border: 3px solid #1565c0 !important;
+        border-radius: 16px !important;
+        box-shadow: 0 6px 20px rgba(21, 101, 192, 0.2) !important;
     }
     .stMultiSelect > div > div {
         background: linear-gradient(135deg, #ffffff 0%, #f8fdff 100%) !important;
-        border-radius: 10px !important;
+        border-radius: 12px !important;
     }
     /* Enhanced Input Method Radio Buttons */
     .stRadio > div {
-        background: linear-gradient(135deg, #f8fdff 0%, #f0f7ff 100%) !important;
-        border-radius: 12px !important;
-        padding: 16px !important;
-        border: 2px solid #e3f2fd !important;
-        box-shadow: 0 2px 8px rgba(21, 101, 192, 0.1) !important;
+        background: linear-gradient(135deg, #f0f9ff 0%, #e3f2fd 50%, #f8fdff 100%) !important;
+        border-radius: 16px !important;
+        padding: 20px !important;
+        border: 3px solid #e3f2fd !important;
+        box-shadow: 0 4px 16px rgba(21, 101, 192, 0.15) !important;
+        margin: 8px 0 !important;
     }
     .stRadio > div > label {
-        font-weight: 600 !important;
-        color: #1565c0 !important;
-        font-size: 1.12rem !important;
+        font-weight: 700 !important;
+        color: #0d47a1 !important;
+        font-size: 1.2rem !important;
     }
     .stRadio > div > label > div:first-child {
-        background: linear-gradient(45deg, #1565c0, #2196f3) !important;
-        border: 2px solid #ffffff !important;
-        box-shadow: 0 2px 6px rgba(21, 101, 192, 0.3) !important;
+        background: linear-gradient(135deg, #0d47a1, #1565c0, #42a5f5) !important;
+        border: 3px solid #ffffff !important;
+        box-shadow: 0 3px 10px rgba(13, 71, 161, 0.4) !important;
+        width: 24px !important;
+        height: 24px !important;
     }
-    /* Enhanced Text Styling for Input Method */
+    /* Enhanced Text Styling with superior visual hierarchy */
     .input-method-title {
-        font-weight: 800 !important;
-        font-size: 1.25rem !important;
-        color: #1565c0 !important;
-        text-shadow: 0 1px 2px rgba(21, 101, 192, 0.2) !important;
+        font-weight: 900 !important;
+        font-size: 1.4rem !important;
+        color: #0d47a1 !important;
+        text-shadow: 0 2px 4px rgba(13, 71, 161, 0.25) !important;
+        margin-bottom: 8px !important;
     }
     .input-method-subtitle {
-        font-weight: 600 !important;
+        font-weight: 700 !important;
         font-style: italic !important;
         color: #2e7d32 !important;
-        font-size: 1.1rem !important;
+        font-size: 1.2rem !important;
+        text-shadow: 0 1px 2px rgba(46, 125, 50, 0.2) !important;
     }
     .input-method-regular {
-        font-weight: 400 !important;
+        font-weight: 500 !important;
         color: #424242 !important;
-        font-size: 1.08rem !important;
+        font-size: 1.15rem !important;
+        line-height: 1.6 !important;
     }
     .sequence-preview-title {
-        font-weight: 700 !important;
+        font-weight: 800 !important;
         color: #d32f2f !important;
-        font-size: 1.2rem !important;
-        text-shadow: 0 1px 2px rgba(211, 47, 47, 0.2) !important;
+        font-size: 1.35rem !important;
+        text-shadow: 0 2px 4px rgba(211, 47, 47, 0.25) !important;
+        background: linear-gradient(135deg, #d32f2f, #f44336, #ef5350) !important;
+        -webkit-background-clip: text !important;
+        -webkit-text-fill-color: transparent !important;
+        background-clip: text !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -707,12 +761,15 @@ tab_pages = dict(zip(PAGES.keys(), tabs))
 
 # ---------- HOME ----------
 with tab_pages["Home"]:
-    # Enhanced header with scientific branding
+    # Enhanced header with dramatic scientific branding
     st.markdown("""
-    <div style='text-align: center; padding: 20px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0fdf4 100%); border-radius: 16px; margin-bottom: 30px; border: 2px solid #e3f2fd;'>
-        <h1 style='color: #1565c0; font-family: Montserrat, Arial; font-weight: 800; margin-bottom: 10px; font-size: 2.5rem; text-shadow: 0 2px 4px rgba(21, 101, 192, 0.2);'>
-            NBDFinder:  Comprehensive Computational Framework for Non-B DNA Structure Detection
+    <div style='text-align: center; padding: 30px; background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 30%, #90caf9 60%, #64b5f6 100%); border-radius: 20px; margin-bottom: 35px; border: 3px solid #1565c0; box-shadow: 0 8px 32px rgba(21, 101, 192, 0.25);'>
+        <h1 style='background: linear-gradient(135deg, #0d47a1, #1565c0, #1976d2, #42a5f5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-family: Montserrat, Arial; font-weight: 900; margin-bottom: 15px; font-size: 3.2rem; text-shadow: 0 4px 8px rgba(13, 71, 161, 0.3);'>
+            🧬 NBDFinder: Advanced Non-B DNA Structure Detection Platform
         </h1>
+        <p style='color: #1565c0; font-size: 1.4rem; font-weight: 600; margin-top: 10px; text-shadow: 0 2px 4px rgba(21, 101, 192, 0.2);'>
+            Comprehensive Computational Framework for Genome-Wide Motif Analysis
+        </p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -727,41 +784,41 @@ with tab_pages["Home"]:
     
     with right:
         st.markdown("""
-        <div style='font-family:Montserrat, Arial; font-size:1.16rem; color:#222; line-height:1.8; padding:25px; background:linear-gradient(135deg, #f8fdff 0%, #eaf6ff 100%); border-radius:16px; box-shadow:0 6px 20px rgba(21, 101, 192, 0.15); border:2px solid #e3f2fd;'>
+        <div style='font-family:Montserrat, Arial; font-size:1.2rem; color:#222; line-height:1.8; padding:30px; background:linear-gradient(135deg, #f8fdff 0%, #eaf6ff 50%, #f0f9ff 100%); border-radius:20px; box-shadow:0 8px 32px rgba(21, 101, 192, 0.2); border:3px solid #e3f2fd;'>
         
-        <div style='margin-bottom:30px;'>
-            <h3 style='color:#1565c0; margin-top:0; margin-bottom:15px; font-size:1.4rem;'>Non-B DNA Detection Platform</h3>
-            <p style='margin-bottom:20px;'><strong>Non-canonical DNA structures</strong> are important for genome organization, gene regulation, and disease pathogenesis. This platform provides computational tools for analyzing these structures.</p>
+        <div style='margin-bottom:35px;'>
+            <h3 style='color:#0d47a1; margin-top:0; margin-bottom:18px; font-size:1.65rem; font-weight:800;'>🔬 Non-B DNA Detection Platform</h3>
+            <p style='margin-bottom:25px; font-size:1.18rem;'><strong style='color:#1565c0;'>Non-canonical DNA structures</strong> are important for genome organization, gene regulation, and disease pathogenesis. This platform provides computational tools for analyzing these structures.</p>
         </div>
         
-        <div style='margin-bottom:30px;'>
-            <h4 style='color:#d32f2f; margin-bottom:15px; font-size:1.2rem;'>Comprehensive Motif Detection Suite</h4>
-            <div style='background:#f1f8ff; padding:15px; border-radius:10px; border-left:4px solid #1565c0;'>
-                <div style='margin-bottom:10px;'>
-                    <span style='color:#1565c0; font-weight:700;'>G-Quadruplex Family:</span> Canonical G4, Relaxed G4, Bulged G4, Bipartite G4, Multimeric G4, Imperfect G4
+        <div style='margin-bottom:35px;'>
+            <h4 style='color:#d32f2f; margin-bottom:18px; font-size:1.4rem; font-weight:700;'>🧬 Comprehensive Motif Detection Suite</h4>
+            <div style='background:linear-gradient(135deg, #f1f8ff 0%, #e8f4ff 100%); padding:20px; border-radius:15px; border-left:6px solid #1565c0; box-shadow:0 4px 16px rgba(21, 101, 192, 0.1);'>
+                <div style='margin-bottom:12px;'>
+                    <span style='color:#0d47a1; font-weight:800; font-size:1.1rem;'>🔵 G-Quadruplex Family:</span> <span style='font-size:1.05rem;'>Canonical G4, Relaxed G4, Bulged G4, Bipartite G4, Multimeric G4, Imperfect G4</span>
                 </div>
-                <div style='margin-bottom:10px;'>
-                    <span style='color:#9c27b0; font-weight:700;'>Triplex Structures:</span> G-Triplex, Triplex DNA, i-Motif
+                <div style='margin-bottom:12px;'>
+                    <span style='color:#0d47a1; font-weight:800; font-size:1.1rem;'>🔶 Triplex Structures:</span> <span style='font-size:1.05rem;'>G-Triplex, Triplex DNA, i-Motif</span>
                 </div>
-                <div style='margin-bottom:10px;'>
-                    <span style='color:#f57c00; font-weight:700;'>Helix Deviations:</span> Z-DNA, eGZ (Extruded-G), Curved DNA, AC-Motif
+                <div style='margin-bottom:12px;'>
+                    <span style='color:#0d47a1; font-weight:800; font-size:1.1rem;'>🔸 Helix Deviations:</span> <span style='font-size:1.05rem;'>Z-DNA, eGZ (Extruded-G), Curved DNA, AC-Motif</span>
                 </div>
-                <div style='margin-bottom:10px;'>
-                    <span style='color:#388e3c; font-weight:700;'>Junction/Repeat:</span> Slipped DNA, Cruciform, Sticky DNA, R-Loop
+                <div style='margin-bottom:12px;'>
+                    <span style='color:#0d47a1; font-weight:800; font-size:1.1rem;'>🔀 Junction/Repeat:</span> <span style='font-size:1.05rem;'>Slipped DNA, Cruciform, Sticky DNA, R-Loop</span>
                 </div>
-                <div>
-                    <span style='color:#795548; font-weight:700;'>Advanced Analysis:</span> Hybrid Motifs, Non-B DNA Clusters
+                <div style='margin-bottom:0px;'>
+                    <span style='color:#0d47a1; font-weight:800; font-size:1.1rem;'>⚡ Advanced Analysis:</span> <span style='font-size:1.05rem;'>Hybrid Motifs, Non-B DNA Clusters</span>
                 </div>
             </div>
         </div>
         
-        <div style='margin-bottom:25px;'>
-            <h4 style='color:#2e7d32; margin-bottom:15px; font-size:1.2rem;'>Key Features</h4>
-            <ul style='padding-left:20px; margin-bottom:0;'>
-                <li><strong>Multiple Algorithms:</strong> Various detection methods for different motif types</li>
-                <li><strong>Web Interface:</strong> Easy-to-use browser-based platform</li>
-                <li><strong>Interactive Output:</strong> Visualizations and basic statistical analysis</li>
-                <li><strong>Flexible Input:</strong> Supports individual sequences and FASTA files</li>
+        <div>
+            <h4 style='color:#2e7d32; margin-bottom:18px; font-size:1.3rem; font-weight:700;'>✨ Key Features</h4>
+            <ul style='padding-left:25px; margin-bottom:0;'>
+                <li style='margin-bottom:8px; font-size:1.1rem;'><strong style='color:#1565c0;'>Multiple Algorithms:</strong> Various detection methods for different motif types</li>
+                <li style='margin-bottom:8px; font-size:1.1rem;'><strong style='color:#1565c0;'>Web Interface:</strong> Easy-to-use browser-based platform</li>
+                <li style='margin-bottom:8px; font-size:1.1rem;'><strong style='color:#1565c0;'>Interactive Output:</strong> Visualizations and basic statistical analysis</li>
+                <li style='margin-bottom:0px; font-size:1.1rem;'><strong style='color:#1565c0;'>Flexible Input:</strong> Supports individual sequences and FASTA files</li>
             </ul>
         </div>
         
@@ -772,11 +829,23 @@ with tab_pages["Home"]:
 
 # ---------- UPLOAD & ANALYZE ----------
 with tab_pages["Upload & Analyze"]:
+    # Enhanced page header for Upload & Analyze
+    st.markdown("""
+    <div style='text-align: center; padding: 25px; background: linear-gradient(135deg, #e8f5e8 0%, #f0f9ff 50%, #fff3e0 100%); border-radius: 18px; margin-bottom: 30px; border: 3px solid #2e7d32; box-shadow: 0 6px 24px rgba(46, 125, 50, 0.2);'>
+        <h2 style='background: linear-gradient(135deg, #2e7d32, #388e3c, #4caf50); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-family: Montserrat, Arial; font-weight: 900; margin-bottom: 10px; font-size: 2.5rem;'>
+            🔬 Sequence Analysis & Motif Detection
+        </h2>
+        <p style='color: #2e7d32; font-size: 1.25rem; font-weight: 600; margin-top: 8px;'>
+            Advanced Non-B DNA Structure Analysis Pipeline
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
     # Enhanced Motif class selection with scientific categorization
     st.markdown("""
-    <div style='background: linear-gradient(135deg, #f8fdff 0%, #f0f9ff 100%); border-radius: 12px; padding: 20px; margin-bottom: 25px; border-left: 4px solid #1565c0;'>
-        <h3 style='color: #1565c0; margin-top: 0; margin-bottom: 15px;'>Select specific motif classes for analysis:</h3>
-        <p style='margin-bottom: 15px; color: #555;'>Select specific Non-B DNA motif classes for targeted analysis. Our comprehensive detection suite covers all major structural categories validated by experimental studies.</p>
+    <div style='background: linear-gradient(135deg, #f0f9ff 0%, #e3f2fd 50%, #f8fdff 100%); border-radius: 16px; padding: 25px; margin-bottom: 30px; border: 3px solid #1565c0; box-shadow: 0 6px 20px rgba(21, 101, 192, 0.15);'>
+        <h3 style='color: #0d47a1; margin-top: 0; margin-bottom: 18px; font-size: 1.5rem; font-weight: 800;'>🎯 Select Motif Classes for Analysis</h3>
+        <p style='margin-bottom: 15px; color: #555; font-size: 1.15rem; line-height: 1.6;'>Select specific Non-B DNA motif classes for targeted analysis. Our comprehensive detection suite covers all major structural categories validated by experimental studies.</p>
     </div>
     """, unsafe_allow_html=True)
     # Main multiselect with enhanced help
@@ -800,9 +869,9 @@ with tab_pages["Upload & Analyze"]:
 
     # Enhanced input method selection
     st.markdown("""
-    <div style='background: linear-gradient(135deg, #f0fdf4 0%, #f8fdff 100%); border-radius: 12px; padding: 20px; margin: 25px 0; border-left: 4px solid #059669;'>
-        <h3 style='color: #059669; margin-top: 0; margin-bottom: 15px;'>▊ Input Method Selection</h3>
-        <p style='margin-bottom: 0; color: #555;'>Choose your preferred method for sequence input. All formats support both single sequences and batch processing.</p>
+    <div style='background: linear-gradient(135deg, #f0fdf4 0%, #f8fdff 50%, #f0f9ff 100%); border-radius: 16px; padding: 25px; margin: 30px 0; border: 3px solid #059669; box-shadow: 0 6px 20px rgba(5, 150, 105, 0.15);'>
+        <h3 style='color: #059669; margin-top: 0; margin-bottom: 18px; font-size: 1.5rem; font-weight: 800;'>📄 Input Method Selection</h3>
+        <p style='margin-bottom: 0; color: #555; font-size: 1.15rem; line-height: 1.6;'>Choose your preferred method for sequence input. All formats support both single sequences and batch processing.</p>
     </div>
     """, unsafe_allow_html=True)
     st.markdown('<p class="input-method-title">Input Method:</p>', unsafe_allow_html=True)
