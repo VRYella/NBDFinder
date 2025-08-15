@@ -765,9 +765,9 @@ with tab_pages["Home"]:
     st.markdown("""
     <div style='text-align: center; padding: 30px; background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 30%, #90caf9 60%, #64b5f6 100%); border-radius: 20px; margin-bottom: 35px; border: 3px solid #1565c0; box-shadow: 0 8px 32px rgba(21, 101, 192, 0.25);'>
         <h1 style='background: linear-gradient(135deg, #0d47a1, #1565c0, #1976d2, #42a5f5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-family: Montserrat, Arial; font-weight: 900; margin-bottom: 15px; font-size: 3.2rem; text-shadow: 0 4px 8px rgba(13, 71, 161, 0.3);'>
-            🧬 NBDFinder: Advanced Non-B DNA Structure Detection Platform
+            NBDFinder: Advanced Non-B DNA Structure Detection Platform
         </h1>
-        <p style='color: #1565c0; font-size: 1.4rem; font-weight: 600; margin-top: 10px; text-shadow: 0 2px 4px rgba(21, 101, 192, 0.2);'>
+        <p style='color: #1565c0; font-size: 1.4rem; font-weight: 500; margin-top: 10px; text-shadow: 0 2px 4px rgba(21, 101, 192, 0.2);'>
             Comprehensive Computational Framework for Genome-Wide Motif Analysis
         </p>
     </div>
