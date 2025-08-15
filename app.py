@@ -112,10 +112,67 @@ st.markdown("""
     .stButton>button:hover {
         background: linear-gradient(90deg,#2e8bda 0%,#1565c0 100%) !important;
     }
-    /* DataFrame font */
+    /* Enhanced DataFrame styling for better readability */
     .stDataFrame, .stTable {
         font-size: 1.05rem !important;
         font-family: 'Montserrat', Arial, sans-serif !important;
+        border-radius: 12px !important;
+        box-shadow: 0 4px 12px rgba(21, 101, 192, 0.1) !important;
+        border: 1px solid #e3f2fd !important;
+    }
+    
+    /* Enhanced table headers */
+    .stDataFrame th {
+        background: linear-gradient(135deg, #1565c0 0%, #2e8bda 100%) !important;
+        color: white !important;
+        font-weight: 700 !important;
+        text-align: center !important;
+        border: none !important;
+    }
+    
+    /* Table cell styling */
+    .stDataFrame td {
+        text-align: center !important;
+        padding: 8px 12px !important;
+        border-bottom: 1px solid #f0f8ff !important;
+    }
+    
+    /* Alternating row colors for better readability */
+    .stDataFrame tr:nth-child(even) {
+        background-color: rgba(240, 248, 255, 0.5) !important;
+    }
+    
+    /* Confidence level styling with color coding */
+    .stDataFrame .confidence-optimal {
+        background: linear-gradient(90deg, #22c55e, #16a34a) !important;
+        color: white !important;
+        font-weight: bold !important;
+        border-radius: 6px !important;
+        padding: 4px 8px !important;
+    }
+    
+    .stDataFrame .confidence-high {
+        background: linear-gradient(90deg, #3b82f6, #2563eb) !important;
+        color: white !important;
+        font-weight: bold !important;
+        border-radius: 6px !important;
+        padding: 4px 8px !important;
+    }
+    
+    .stDataFrame .confidence-moderate {
+        background: linear-gradient(90deg, #eab308, #d97706) !important;
+        color: white !important;
+        font-weight: bold !important;
+        border-radius: 6px !important;
+        padding: 4px 8px !important;
+    }
+    
+    .stDataFrame .confidence-low {
+        background: linear-gradient(90deg, #ef4444, #dc2626) !important;
+        color: white !important;
+        font-weight: bold !important;
+        border-radius: 6px !important;
+        padding: 4px 8px !important;
     }
     /* Fix dropdown text overlap issues */
     .stSelectbox > div > div {
@@ -237,14 +294,58 @@ for category, motifs in MOTIF_CATEGORIES.items():
     MOTIF_ORDER.extend(sorted(motifs))
 
 # Enhanced color scheme from the reference implementation
+# Enhanced color schemes for optimal visualization and accessibility
 MOTIF_COLORS = {
-    "Curved DNA": "#FF9AA2", "Z-DNA": "#FFB7B2", "eGZ (Extruded-G)": "#6A4C93",
-    "Slipped DNA": "#FFDAC1", "R-Loop": "#FFD3B6", "Cruciform": "#E2F0CB",
-    "Triplex DNA": "#B5EAD7", "Sticky DNA": "#DCB8CB", "G-Triplex": "#C7CEEA",
-    "Canonical G4": "#A2D7D8", "Relaxed G4": "#A2D7B8", "Bulged G4": "#A2A7D8",
-    "Bipartite G4": "#A2D788", "Multimeric G4": "#A2A7B8", "Imperfect G4": "#A2D7C8", 
-    "i-Motif": "#B0C4DE", "Hybrid": "#C1A192", "Non-B DNA Clusters": "#A2C8CC", 
-    "AC-Motif": "#F5B041"
+    # G4 Family - Blues and Blue-greens (High visibility)
+    "Canonical G4": "#0066CC", "Relaxed G4": "#3399FF", "Bulged G4": "#66B2FF", 
+    "Bipartite G4": "#0099CC", "Multimeric G4": "#00CCFF", "Imperfect G4": "#99E6FF",
+    
+    # Alternative Structures - Reds and Oranges  
+    "Z-DNA": "#FF4444", "eGZ (Extruded-G)": "#FF6633", "Curved DNA": "#FF8C42",
+    
+    # Repeats - Greens (Nature-inspired)
+    "Slipped DNA": "#228B22", "R-Loop": "#32CD32", "Sticky DNA": "#90EE90",
+    
+    # Junctions - Purples and Magentas
+    "Cruciform": "#9932CC", "Triplex DNA": "#BA55D3", "G-Triplex": "#DDA0DD",
+    
+    # Special Motifs - Distinct colors
+    "i-Motif": "#FF69B4", "AC-Motif": "#FFD700", "Hybrid": "#40E0D0", 
+    "Non-B DNA Clusters": "#FF7F50"
+}
+
+# Publication-quality color scheme for scientific figures
+PUBLICATION_COLORS = {
+    # G4 Family - Professional blues with strong contrast
+    'Canonical G4': '#1E3A8A',      # Deep blue (validated motifs)
+    'Relaxed G4': '#3B82F6',        # Medium blue
+    'Bulged G4': '#60A5FA',         # Light blue  
+    'Bipartite G4': '#1E40AF',      # Royal blue
+    'Multimeric G4': '#1D4ED8',     # Vibrant blue
+    'Imperfect G4': '#93C5FD',      # Sky blue
+    
+    # G-related structures - Blue variants
+    'G-Triplex': '#BE123C',         # Deep red (distinct from G4s)
+    'i-Motif': '#EC4899',           # Bright pink (C-rich, opposite of G4)
+    
+    # Z-DNA Family - Purples (left-handed helix)
+    'Z-DNA': '#7C2D92',             # Deep purple
+    'eGZ (Extruded-G)': '#A855F7',  # Medium purple
+    
+    # Structural variants - Warm colors
+    'Curved_DNA': '#DC2626',        # Strong red
+    'Slipped_DNA': '#EA580C',       # Orange-red
+    'Cruciform': '#D97706',         # Amber
+    
+    # Complex structures - Earth tones
+    'Triplex_DNA': '#059669',       # Emerald green
+    'Sticky_DNA': '#0891B2',        # Cyan blue
+    'R-Loop': '#7C3AED',            # Violet
+    
+    # Specialized motifs - Distinctive colors
+    'AC-Motif': '#EAB308',          # Golden yellow
+    'Hybrid': '#6366F1',            # Indigo
+    'Non-B DNA Clusters': '#DB2777' # Deep pink
 }
 PAGES = {
     "Home": "Overview",
@@ -503,27 +604,8 @@ def create_enhanced_motif_visualization(motifs, seq_name, seq_length):
     fig = go.Figure()
     
     # Enhanced color mapping optimized for publication and accessibility
-    PUBLICATION_COLORS = {
-        'Canonical G4': '#1f77b4',      # Professional blue
-        'Relaxed G4': '#aec7e8',        # Light blue  
-        'Bulged G4': '#ff7f0e',         # Orange
-        'Bipartite G4': '#ffbb78',      # Light orange
-        'Multimeric G4': '#2ca02c',     # Green
-        'Imperfect G4': '#98df8a',      # Light green
-        'G-Triplex': '#d62728',         # Red
-        'i-Motif': '#ff9896',           # Light red
-        'Z-DNA': '#9467bd',             # Purple
-        'eGZ (Extruded-G)': '#c5b0d5',  # Light purple
-        'Curved_DNA': '#8c564b',        # Brown
-        'AC-Motif': '#c49c94',          # Light brown
-        'Slipped_DNA': '#e377c2',       # Pink
-        'Cruciform': '#f7b6d3',         # Light pink
-        'Sticky_DNA': '#7f7f7f',        # Gray
-        'Triplex_DNA': '#c7c7c7',       # Light gray
-        'R-Loop': '#bcbd22',            # Olive
-        'Hybrid': '#dbdb8d',            # Light olive
-        'Non-B DNA Clusters': '#17becf' # Cyan
-    }
+    # Use the enhanced publication colors defined above
+    # (Colors already defined in global PUBLICATION_COLORS variable)
     
     # Enhanced y-axis positioning with biological grouping
     y_positions = {}
@@ -1027,129 +1109,110 @@ with tab_pages["Results"]:
             if 'Score' in display_df.columns:
                 display_df['Score'] = display_df['Score'].apply(lambda x: f"{x:.2f}" if isinstance(x, (int, float)) else str(x))
             
-            # Add scoring significance column
+            # Add normalized confidence scoring and significance
             if 'Score' in display_df.columns:
-                def get_score_significance(score, motif_class):
+                def get_normalized_confidence_score(score, motif_class):
+                    """
+                    Normalize scores to a unified 1.0-3.0 scale where:
+                    1.0 = Minimum viable threshold (Moderate confidence)
+                    2.0 = High confidence threshold 
+                    3.0 = Optimal/Validated confidence
+                    """
                     try:
                         score_val = float(score)
                         
-                        # Canonical G4 variants: 1.0-3.0 (Validated)
-                        if motif_class in ['Canonical G4']:
-                            if score_val >= 2.0: return "▓ High confidence (Validated)"
-                            elif score_val >= 1.0: return "▒ Moderate confidence (Validated)" 
-                            else: return "░ Low confidence"
+                        # Define motif-specific thresholds and normalizations
+                        thresholds = {
+                            # G4 Family (already normalized 1.0-3.0)
+                            'Canonical G4': {'min': 1.0, 'high': 2.0, 'optimal': 3.0},
+                            'Relaxed G4': {'min': 1.0, 'high': 2.0, 'optimal': 2.5},
+                            'Bulged G4': {'min': 1.0, 'high': 2.0, 'optimal': 2.5},
+                            'Imperfect G4': {'min': 1.0, 'high': 1.5, 'optimal': 2.0},
+                            'Bipartite G4': {'min': 20.0, 'high': 60.0, 'optimal': 100.0},
+                            'Multimeric G4': {'min': 30.0, 'high': 90.0, 'optimal': 150.0},
+                            
+                            # Alternative DNA Structures
+                            'Z-DNA': {'min': 50.0, 'high': 200.0, 'optimal': 500.0},
+                            'Curved DNA': {'min': 15.0, 'high': 100.0, 'optimal': 200.0},
+                            'eGZ': {'min': 10.0, 'high': 55.0, 'optimal': 100.0},
+                            'Extruded-G': {'min': 10.0, 'high': 55.0, 'optimal': 100.0},
+                            'eGZ (Extruded-G)': {'min': 10.0, 'high': 55.0, 'optimal': 100.0},
+                            
+                            # Repeat-based Structures
+                            'Slipped_DNA': {'min': 15.0, 'high': 80.0, 'optimal': 150.0},
+                            'Slipped DNA': {'min': 15.0, 'high': 80.0, 'optimal': 150.0},
+                            'R-Loop': {'min': 20.0, 'high': 150.0, 'optimal': 300.0},
+                            'RLFS': {'min': 20.0, 'high': 150.0, 'optimal': 300.0},
+                            
+                            # Junction Structures
+                            'Cruciform': {'min': 25.0, 'high': 100.0, 'optimal': 200.0},
+                            'Triplex': {'min': 20.0, 'high': 100.0, 'optimal': 180.0},
+                            'H-DNA': {'min': 20.0, 'high': 100.0, 'optimal': 180.0},
+                            'Triplex_DNA': {'min': 20.0, 'high': 100.0, 'optimal': 180.0},
+                            
+                            # Other Structures
+                            'Sticky_DNA': {'min': 10.0, 'high': 45.0, 'optimal': 80.0},
+                            'Sticky DNA': {'min': 10.0, 'high': 45.0, 'optimal': 80.0},
+                            'G-Triplex': {'min': 15.0, 'high': 65.0, 'optimal': 120.0},
+                            'i-Motif': {'min': 15.0, 'high': 55.0, 'optimal': 100.0},
+                        }
                         
-                        # Relaxed/Bulged G4: 1.0-2.5 (Validated)
-                        elif motif_class in ['Relaxed G4', 'Bulged G4']:
-                            if score_val >= 2.0: return "▓ High confidence (Validated)"
-                            elif score_val >= 1.0: return "▒ Moderate confidence (Validated)" 
-                            else: return "░ Low confidence"
-                        
-                        # Imperfect G4: 1.0-2.0 (Moderate)
-                        elif motif_class in ['Imperfect G4']:
-                            if score_val >= 1.5: return "▓ High confidence"
-                            elif score_val >= 1.0: return "▒ Moderate confidence" 
-                            else: return "░ Low confidence"
-                        
-                        # Bipartite G4: 20-100 (High)
-                        elif motif_class in ['Bipartite G4']:
-                            if score_val >= 60: return "▓ High confidence"
-                            elif score_val >= 20: return "▒ Moderate confidence"
-                            else: return "░ Low confidence"
-                        
-                        # Multimeric G4: 30-150 (High)
-                        elif motif_class in ['Multimeric G4']:
-                            if score_val >= 90: return "▓ High confidence"
-                            elif score_val >= 30: return "▒ Moderate confidence"
-                            else: return "░ Low confidence"
-                        
-                        # Z-DNA: 50-500 (High)
-                        elif motif_class in ['Z-DNA']:
-                            if score_val >= 200: return "▓ High confidence"
-                            elif score_val >= 50: return "▒ Moderate confidence"
-                            else: return "░ Low confidence"
-                        
-                        # Curved DNA: 15-200 (Moderate-High)
-                        elif motif_class in ['Curved DNA']:
-                            if score_val >= 100: return "▓ High confidence"
-                            elif score_val >= 15: return "▒ Moderate confidence"
-                            else: return "░ Low confidence"
-                        
-                        # eGZ (Extruded-G): 10-100 (Moderate)
-                        elif motif_class in ['eGZ', 'Extruded-G']:
-                            if score_val >= 55: return "▓ High confidence"
-                            elif score_val >= 10: return "▒ Moderate confidence"
-                            else: return "░ Low confidence"
-                        
-                        # Slipped DNA: 15-150 (Moderate-High)
-                        elif motif_class in ['Slipped_DNA', 'Slipped DNA']:
-                            if score_val >= 80: return "▓ High confidence"
-                            elif score_val >= 15: return "▒ Moderate confidence"
-                            else: return "░ Low confidence"
-                        
-                        # R-Loop: 20-300 (High)
-                        elif motif_class in ['R-Loop', 'RLFS']:
-                            if score_val >= 150: return "▓ High confidence"
-                            elif score_val >= 20: return "▒ Moderate confidence"
-                            else: return "░ Low confidence"
-                        
-                        # Cruciform: 25-200 (High)
-                        elif motif_class in ['Cruciform']:
-                            if score_val >= 100: return "▓ High confidence"
-                            elif score_val >= 25: return "▒ Moderate confidence"
-                            else: return "░ Low confidence"
-                        
-                        # Triplex DNA: 20-180 (Moderate-High)
-                        elif motif_class in ['Triplex', 'H-DNA']:
-                            if score_val >= 100: return "▓ High confidence"
-                            elif score_val >= 20: return "▒ Moderate confidence"
-                            else: return "░ Low confidence"
-                        
-                        # Sticky DNA: 10-80 (Low-Moderate)
-                        elif motif_class in ['Sticky_DNA', 'Sticky DNA']:
-                            if score_val >= 45: return "▓ High confidence"
-                            elif score_val >= 10: return "▒ Moderate confidence"
-                            else: return "░ Low confidence"
-                        
-                        # G-Triplex: 15-120 (Moderate)
-                        elif motif_class in ['G-Triplex']:
-                            if score_val >= 65: return "▓ High confidence"
-                            elif score_val >= 15: return "▒ Moderate confidence"
-                            else: return "░ Low confidence"
-                        
-                        # i-Motif: 15-100 (Moderate)
-                        elif motif_class in ['i-Motif']:
-                            if score_val >= 55: return "▓ High confidence"
-                            elif score_val >= 15: return "▒ Moderate confidence"
-                            else: return "░ Low confidence"
-                        
-                        # AC-Motif: 10-50 (Low-Moderate)
-                        elif motif_class in ['AC-Motif']:
-                            if score_val >= 30: return "▓ High confidence"
-                            elif score_val >= 10: return "▒ Moderate confidence"
-                            else: return "░ Low confidence"
-                        
-                        # Non-B DNA Clusters: 10-200 (Variable)
-                        elif motif_class in ['Non-B DNA Clusters']:
-                            if score_val >= 100: return "▓ High confidence"
-                            elif score_val >= 10: return "▒ Moderate confidence"
-                            else: return "░ Low confidence"
-                        
-                        # Hybrid Motif: Variable (Context-dependent)
-                        elif motif_class in ['Hybrid Motif']:
-                            return "◇ Context-dependent"
-                        
-                        # Default fallback for any other motif types
+                        # Get thresholds for this motif class
+                        if motif_class in thresholds:
+                            thresh = thresholds[motif_class]
+                            
+                            # Normalize to 1.0-3.0 scale
+                            if score_val >= thresh['optimal']:
+                                normalized_score = 3.0
+                            elif score_val >= thresh['high']:
+                                # Linear interpolation between high and optimal
+                                normalized_score = 2.0 + (score_val - thresh['high']) / (thresh['optimal'] - thresh['high'])
+                            elif score_val >= thresh['min']:
+                                # Linear interpolation between min and high  
+                                normalized_score = 1.0 + (score_val - thresh['min']) / (thresh['high'] - thresh['min'])
+                            else:
+                                # Below minimum threshold
+                                normalized_score = max(0.1, score_val / thresh['min'])
+                            
+                            return min(3.0, max(0.1, normalized_score))
                         else:
-                            if score_val >= 50: return "▓ High confidence"
-                            elif score_val >= 15: return "▒ Moderate confidence"
-                            else: return "░ Low confidence"
-                    except:
-                        return "◦ Not assessed"
+                            # Default handling for unknown motif types
+                            return 1.0
+                            
+                    except (ValueError, TypeError):
+                        return 1.0
                 
-                display_df['Prediction Confidence'] = display_df.apply(lambda row: get_score_significance(row.get('Score', 0), row.get('Class', '')), axis=1)
+                def get_confidence_label(normalized_score):
+                    """Convert normalized score to confidence label with enhanced styling"""
+                    if normalized_score >= 2.5:
+                        return "🟢 Optimal (≥2.5)"
+                    elif normalized_score >= 2.0:
+                        return "🔵 High (≥2.0)"
+                    elif normalized_score >= 1.0:
+                        return "🟡 Moderate (≥1.0)"
+                    else:
+                        return "🔴 Low (<1.0)"
                 
-            st.dataframe(display_df, use_container_width=True, height=400)
+                # Add normalized confidence columns
+                display_df['Normalized Score'] = display_df.apply(
+                    lambda row: f"{get_normalized_confidence_score(row.get('Score', 0), row.get('Class', '')):.2f}",
+                    axis=1
+                )
+                
+                display_df['Confidence Level'] = display_df.apply(
+                    lambda row: get_confidence_label(
+                        get_normalized_confidence_score(row.get('Score', 0), row.get('Class', ''))
+                    ),
+                    axis=1
+                )
+                
+            # Enhanced dataframe styling and display
+            st.dataframe(
+                display_df, 
+                use_container_width=True, 
+                height=400,
+                hide_index=True  # Hide the default pandas index to avoid confusion
+            )
             
             # Enhanced visualizations
             col1, col2 = st.columns(2)
@@ -1312,146 +1375,88 @@ with tab_pages["Download"]:
                     if m.get('Class') == "Z-DNA" and m.get("Subclass", "") == "eGZ (Extruded-G)":
                         m['Class'] = "eGZ (Extruded-G)"
                     
-                    # Add scoring significance
-                    def get_score_significance(score, motif_class):
+                    # Add normalized confidence scoring (consistent with Results tab)
+                    def get_normalized_confidence_score(score, motif_class):
+                        """Normalize scores to unified 1.0-3.0 scale for consistency"""
                         try:
                             score_val = float(score)
                             
-                            # Canonical G4 variants: 1.0-3.0 (Validated)
-                            if motif_class in ['Canonical G4']:
-                                min_score = 1.0
-                                if score_val >= 2.0: return "High confidence (Validated)", min_score
-                                elif score_val >= 1.0: return "Moderate confidence (Validated)", min_score
-                                else: return "Low confidence", min_score
+                            # Define motif-specific thresholds and normalizations
+                            thresholds = {
+                                # G4 Family (already normalized 1.0-3.0)
+                                'Canonical G4': {'min': 1.0, 'high': 2.0, 'optimal': 3.0},
+                                'Relaxed G4': {'min': 1.0, 'high': 2.0, 'optimal': 2.5},
+                                'Bulged G4': {'min': 1.0, 'high': 2.0, 'optimal': 2.5},
+                                'Imperfect G4': {'min': 1.0, 'high': 1.5, 'optimal': 2.0},
+                                'Bipartite G4': {'min': 20.0, 'high': 60.0, 'optimal': 100.0},
+                                'Multimeric G4': {'min': 30.0, 'high': 90.0, 'optimal': 150.0},
+                                
+                                # Alternative DNA Structures
+                                'Z-DNA': {'min': 50.0, 'high': 200.0, 'optimal': 500.0},
+                                'Curved DNA': {'min': 15.0, 'high': 100.0, 'optimal': 200.0},
+                                'eGZ': {'min': 10.0, 'high': 55.0, 'optimal': 100.0},
+                                'Extruded-G': {'min': 10.0, 'high': 55.0, 'optimal': 100.0},
+                                'eGZ (Extruded-G)': {'min': 10.0, 'high': 55.0, 'optimal': 100.0},
+                                
+                                # Repeat-based Structures
+                                'Slipped_DNA': {'min': 15.0, 'high': 80.0, 'optimal': 150.0},
+                                'Slipped DNA': {'min': 15.0, 'high': 80.0, 'optimal': 150.0},
+                                'R-Loop': {'min': 20.0, 'high': 150.0, 'optimal': 300.0},
+                                'RLFS': {'min': 20.0, 'high': 150.0, 'optimal': 300.0},
+                                
+                                # Junction Structures
+                                'Cruciform': {'min': 25.0, 'high': 100.0, 'optimal': 200.0},
+                                'Triplex': {'min': 20.0, 'high': 100.0, 'optimal': 180.0},
+                                'H-DNA': {'min': 20.0, 'high': 100.0, 'optimal': 180.0},
+                                'Triplex_DNA': {'min': 20.0, 'high': 100.0, 'optimal': 180.0},
+                                
+                                # Other Structures
+                                'Sticky_DNA': {'min': 10.0, 'high': 45.0, 'optimal': 80.0},
+                                'Sticky DNA': {'min': 10.0, 'high': 45.0, 'optimal': 80.0},
+                                'G-Triplex': {'min': 15.0, 'high': 65.0, 'optimal': 120.0},
+                                'i-Motif': {'min': 15.0, 'high': 55.0, 'optimal': 100.0},
+                            }
                             
-                            # Relaxed/Bulged G4: 1.0-2.5 (Validated)
-                            elif motif_class in ['Relaxed G4', 'Bulged G4']:
-                                min_score = 1.0
-                                if score_val >= 2.0: return "High confidence (Validated)", min_score
-                                elif score_val >= 1.0: return "Moderate confidence (Validated)", min_score
-                                else: return "Low confidence", min_score
-                            
-                            # Imperfect G4: 1.0-2.0 (Moderate)
-                            elif motif_class in ['Imperfect G4']:
-                                min_score = 1.0
-                                if score_val >= 1.5: return "High confidence", min_score
-                                elif score_val >= 1.0: return "Moderate confidence", min_score
-                                else: return "Low confidence", min_score
-                            
-                            # Bipartite G4: 20-100 (High)
-                            elif motif_class in ['Bipartite G4']:
-                                min_score = 20.0
-                                if score_val >= 60: return "High confidence", min_score
-                                elif score_val >= 20: return "Moderate confidence", min_score
-                                else: return "Low confidence", min_score
-                            
-                            # Multimeric G4: 30-150 (High)
-                            elif motif_class in ['Multimeric G4']:
-                                min_score = 30.0
-                                if score_val >= 90: return "High confidence", min_score
-                                elif score_val >= 30: return "Moderate confidence", min_score
-                                else: return "Low confidence", min_score
-                            
-                            # Z-DNA: 50-500 (High)
-                            elif motif_class in ['Z-DNA']:
-                                min_score = 50.0
-                                if score_val >= 200: return "High confidence", min_score
-                                elif score_val >= 50: return "Moderate confidence", min_score
-                                else: return "Low confidence", min_score
-                            
-                            # Curved DNA: 15-200 (Moderate-High)
-                            elif motif_class in ['Curved DNA']:
-                                min_score = 15.0
-                                if score_val >= 100: return "High confidence", min_score
-                                elif score_val >= 15: return "Moderate confidence", min_score
-                                else: return "Low confidence", min_score
-                            
-                            # eGZ (Extruded-G): 10-100 (Moderate)
-                            elif motif_class in ['eGZ', 'Extruded-G', 'eGZ (Extruded-G)']:
-                                min_score = 10.0
-                                if score_val >= 55: return "High confidence", min_score
-                                elif score_val >= 10: return "Moderate confidence", min_score
-                                else: return "Low confidence", min_score
-                            
-                            # Slipped DNA: 15-150 (Moderate-High)
-                            elif motif_class in ['Slipped_DNA', 'Slipped DNA']:
-                                min_score = 15.0
-                                if score_val >= 80: return "High confidence", min_score
-                                elif score_val >= 15: return "Moderate confidence", min_score
-                                else: return "Low confidence", min_score
-                            
-                            # R-Loop: 20-300 (High)
-                            elif motif_class in ['R-Loop', 'RLFS']:
-                                min_score = 20.0
-                                if score_val >= 150: return "High confidence", min_score
-                                elif score_val >= 20: return "Moderate confidence", min_score
-                                else: return "Low confidence", min_score
-                            
-                            # Cruciform: 25-200 (High)
-                            elif motif_class in ['Cruciform']:
-                                min_score = 25.0
-                                if score_val >= 100: return "High confidence", min_score
-                                elif score_val >= 25: return "Moderate confidence", min_score
-                                else: return "Low confidence", min_score
-                            
-                            # Triplex DNA: 20-180 (Moderate-High)
-                            elif motif_class in ['Triplex', 'H-DNA']:
-                                min_score = 20.0
-                                if score_val >= 100: return "High confidence", min_score
-                                elif score_val >= 20: return "Moderate confidence", min_score
-                                else: return "Low confidence", min_score
-                            
-                            # Sticky DNA: 10-80 (Low-Moderate)
-                            elif motif_class in ['Sticky_DNA', 'Sticky DNA']:
-                                min_score = 10.0
-                                if score_val >= 45: return "High confidence", min_score
-                                elif score_val >= 10: return "Moderate confidence", min_score
-                                else: return "Low confidence", min_score
-                            
-                            # G-Triplex: 15-120 (Moderate)
-                            elif motif_class in ['G-Triplex']:
-                                min_score = 15.0
-                                if score_val >= 65: return "High confidence", min_score
-                                elif score_val >= 15: return "Moderate confidence", min_score
-                                else: return "Low confidence", min_score
-                            
-                            # i-Motif: 15-100 (Moderate)
-                            elif motif_class in ['i-Motif']:
-                                min_score = 15.0
-                                if score_val >= 55: return "High confidence", min_score
-                                elif score_val >= 15: return "Moderate confidence", min_score
-                                else: return "Low confidence", min_score
-                            
-                            # AC-Motif: 10-50 (Low-Moderate)
-                            elif motif_class in ['AC-Motif']:
-                                min_score = 10.0
-                                if score_val >= 30: return "High confidence", min_score
-                                elif score_val >= 10: return "Moderate confidence", min_score
-                                else: return "Low confidence", min_score
-                            
-                            # Non-B DNA Clusters: 10-200 (Variable)
-                            elif motif_class in ['Non-B DNA Clusters']:
-                                min_score = 10.0
-                                if score_val >= 100: return "High confidence", min_score
-                                elif score_val >= 10: return "Moderate confidence", min_score
-                                else: return "Low confidence", min_score
-                            
-                            # Hybrid Motif: Variable (Context-dependent)
-                            elif motif_class in ['Hybrid Motif']:
-                                return "Context-dependent", "Variable"
-                            
-                            # Default fallback for any other motif types
+                            # Get thresholds for this motif class
+                            if motif_class in thresholds:
+                                thresh = thresholds[motif_class]
+                                
+                                # Normalize to 1.0-3.0 scale
+                                if score_val >= thresh['optimal']:
+                                    normalized_score = 3.0
+                                elif score_val >= thresh['high']:
+                                    # Linear interpolation between high and optimal
+                                    normalized_score = 2.0 + (score_val - thresh['high']) / (thresh['optimal'] - thresh['high'])
+                                elif score_val >= thresh['min']:
+                                    # Linear interpolation between min and high  
+                                    normalized_score = 1.0 + (score_val - thresh['min']) / (thresh['high'] - thresh['min'])
+                                else:
+                                    # Below minimum threshold
+                                    normalized_score = max(0.1, score_val / thresh['min'])
+                                
+                                return min(3.0, max(0.1, normalized_score))
                             else:
-                                min_score = 15.0
-                                if score_val >= 50: return "High confidence", min_score
-                                elif score_val >= 15: return "Moderate confidence", min_score
-                                else: return "Low confidence", min_score
-                        except:
-                            return "Not assessed", "N/A"
+                                # Default handling for unknown motif types
+                                return 1.0
+                                
+                        except (ValueError, TypeError):
+                            return 1.0
                     
-                    confidence, min_score = get_score_significance(m.get('Score', 0), m.get('Class', ''))
-                    m['Prediction Confidence'] = confidence
-                    m['Minimum Score Threshold'] = min_score
+                    def get_confidence_label(normalized_score):
+                        """Convert normalized score to confidence label"""
+                        if normalized_score >= 2.5:
+                            return "Optimal (≥2.5)"
+                        elif normalized_score >= 2.0:
+                            return "High (≥2.0)"
+                        elif normalized_score >= 1.0:
+                            return "Moderate (≥1.0)"
+                        else:
+                            return "Low (<1.0)"
+                    
+                    # Add normalized scoring
+                    normalized_score = get_normalized_confidence_score(m.get('Score', 0), m.get('Class', ''))
+                    m['Normalized Score'] = f"{normalized_score:.2f}"
+                    m['Confidence Level'] = get_confidence_label(normalized_score)
                     df_all.append(m)
         
         df_all = pd.DataFrame(df_all)
@@ -1789,14 +1794,17 @@ with tab_pages["Documentation"]:
                 "Palindrome length × AT content",
                 "Composite scoring based on constituent motifs"
             ],
-            "High Confidence": [
-                "≥ 1.5", "≥ 100", "≥ 25", "≥ 30", "≥ 50"
+            "Optimal (3.0)": [
+                "≥ 2.5", "≥ 2.5", "≥ 2.5", "≥ 2.5", "≥ 2.5"
             ],
-            "Moderate Confidence": [
-                "1.0 - 1.5", "50 - 100", "15 - 25", "20 - 30", "25 - 50"
+            "High (2.0)": [
+                "2.0 - 2.5", "2.0 - 2.5", "2.0 - 2.5", "2.0 - 2.5", "2.0 - 2.5"
             ],
-            "Low Confidence": [
-                "< 1.0", "< 50", "< 15", "< 20", "< 25"
+            "Moderate (1.0)": [
+                "1.0 - 2.0", "1.0 - 2.0", "1.0 - 2.0", "1.0 - 2.0", "1.0 - 2.0"
+            ],
+            "Low (<1.0)": [
+                "< 1.0", "< 1.0", "< 1.0", "< 1.0", "< 1.0"
             ],
             "Biological Validation": [
                 "Experimental G4 formation data",
@@ -1812,11 +1820,29 @@ with tab_pages["Documentation"]:
         
         st.markdown("""
         <div style='background:linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%); border-radius:12px; padding:16px; margin:15px 0; border-left:4px solid #1565c0;'>
-        <b>▸ Interpretation Guidelines:</b><br>
-        • <b>High confidence:</b> Strong experimental support, likely to form in vivo<br>
-        • <b>Moderate confidence:</b> Reasonable formation potential under specific conditions<br>
-        • <b>Low confidence:</b> Possible formation, requires experimental validation<br>
-        • <b>Threshold Selection:</b> Based on ROC analysis of experimental datasets
+        <b>🎯 Unified Scoring System (1.0-3.0 Scale):</b><br><br>
+        
+        <div style='background:#e8f5e8; padding:12px; border-radius:8px; margin:8px 0;'>
+        <b>🟢 Optimal Confidence (≥2.5):</b> Maximum formation probability with strong experimental support
+        </div>
+        
+        <div style='background:#e3f2fd; padding:12px; border-radius:8px; margin:8px 0;'>
+        <b>🔵 High Confidence (≥2.0):</b> Strong formation potential, likely functional in vivo
+        </div>
+        
+        <div style='background:#fff8e1; padding:12px; border-radius:8px; margin:8px 0;'>
+        <b>🟡 Moderate Confidence (≥1.0):</b> Viable formation under physiological conditions
+        </div>
+        
+        <div style='background:#ffebee; padding:12px; border-radius:8px; margin:8px 0;'>
+        <b>🔴 Low Confidence (<1.0):</b> Below threshold, requires experimental validation
+        </div>
+        
+        <br><b>✨ Key Benefits:</b><br>
+        • <b>Consensus-based:</b> Scoring starts from 1.0 indicating optimal threshold consensus<br>
+        • <b>Normalized:</b> All motif types use the same 1.0-3.0 confidence scale<br>
+        • <b>Comparable:</b> Easy cross-motif confidence comparison<br>
+        • <b>Evidence-based:</b> Thresholds derived from experimental validation datasets
         </div>
         """, unsafe_allow_html=True)
         
