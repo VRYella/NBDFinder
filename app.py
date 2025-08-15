@@ -8,12 +8,34 @@ import io
 import time
 from collections import Counter
 from Bio import Entrez, SeqIO
+import numpy as np
 
 from motifs import (
     all_motifs, 
     find_hotspots,
     parse_fasta, gc_content, reverse_complement,
     select_best_nonoverlapping_motifs, wrap
+)
+
+# Import advanced visualization
+try:
+    from advanced_visualization import create_enhanced_dashboard, export_publication_figure
+    ADVANCED_VIZ_AVAILABLE = True
+except ImportError:
+    ADVANCED_VIZ_AVAILABLE = False
+    st.warning("Advanced visualization not available. Install additional dependencies.")
+
+# ---------- ENHANCED PAGE CONFIGURATION ----------
+st.set_page_config(
+    page_title="NBDFinder - Advanced Non-B DNA Analysis Platform",
+    page_icon="🧬",
+    layout="wide",
+    initial_sidebar_state="expanded",
+    menu_items={
+        'Get Help': 'https://github.com/VRYella/NBDFinder',
+        'Report a bug': 'https://github.com/VRYella/NBDFinder/issues',
+        'About': "NBDFinder - The most advanced non-B DNA prediction platform"
+    }
 )
 
 # ---------- PATCH: Ensure every motif has Subtype ----------
@@ -1427,6 +1449,218 @@ with tab_pages["Results"]:
                     )
                     fig_heatmap.update_layout(height=300)
                     st.plotly_chart(fig_heatmap, use_container_width=True)
+            
+            # ========== ENHANCED ADVANCED VISUALIZATIONS ==========
+            if ADVANCED_VIZ_AVAILABLE and len(motifs) > 0:
+                st.markdown("---")
+                st.markdown('<h3>🚀 Advanced Analysis Dashboard</h3>', unsafe_allow_html=True)
+                st.markdown("*Publication-quality visualizations and comprehensive analysis*")
+                
+                # Create enhanced dashboard
+                motifs_df = pd.DataFrame(motifs)
+                seq_length = len(st.session_state.seqs[seq_idx])
+                
+                try:
+                    enhanced_plots = create_enhanced_dashboard(motifs_df, seq_length)
+                    
+                    # Create tabs for different analysis types
+                    viz_tabs = st.tabs([
+                        "📊 Comprehensive Analysis", 
+                        "🧬 Clinical Significance", 
+                        "🤖 ML Predictions",
+                        "🗺️ Genomic Map",
+                        "🌟 Cluster Analysis",
+                        "🔗 3D Structure"
+                    ])
+                    
+                    with viz_tabs[0]:
+                        st.markdown("### Comprehensive Motif Distribution Analysis")
+                        if 'distribution' in enhanced_plots:
+                            st.plotly_chart(enhanced_plots['distribution'], use_container_width=True)
+                            
+                            # Add export button
+                            if st.button("🔽 Export Distribution Plot", key="export_dist"):
+                                try:
+                                    img_bytes = export_publication_figure(
+                                        enhanced_plots['distribution'], 
+                                        "motif_distribution", 
+                                        format='png'
+                                    )
+                                    st.download_button(
+                                        label="Download PNG",
+                                        data=img_bytes,
+                                        file_name="motif_distribution.png",
+                                        mime="image/png"
+                                    )
+                                except Exception as e:
+                                    st.error(f"Export failed: {e}")
+                    
+                    with viz_tabs[1]:
+                        st.markdown("### Clinical Significance Analysis")
+                        if 'clinical' in enhanced_plots:
+                            st.plotly_chart(enhanced_plots['clinical'], use_container_width=True)
+                            
+                            # Display clinical summary
+                            disease_motifs = motifs_df[motifs_df['Class'] == 'Disease-Associated Motif']
+                            if not disease_motifs.empty:
+                                st.markdown("#### Clinical Summary")
+                                col1, col2, col3 = st.columns(3)
+                                
+                                with col1:
+                                    pathogenic_count = disease_motifs[
+                                        disease_motifs.get('Clinical_Significance', '').str.contains('Pathogenic', na=False)
+                                    ].shape[0]
+                                    st.metric("Pathogenic Variants", pathogenic_count)
+                                
+                                with col2:
+                                    avg_risk = disease_motifs.get('Risk_Score', [0]).astype(float).mean()
+                                    st.metric("Average Risk Score", f"{avg_risk:.1f}")
+                                
+                                with col3:
+                                    diseases = disease_motifs.get('Disease_Name', []).nunique()
+                                    st.metric("Disease Categories", diseases)
+                    
+                    with viz_tabs[2]:
+                        st.markdown("### Machine Learning Enhanced Predictions")
+                        if 'ml_predictions' in enhanced_plots:
+                            st.plotly_chart(enhanced_plots['ml_predictions'], use_container_width=True)
+                            
+                            # ML performance metrics
+                            ml_motifs = motifs_df.dropna(subset=['ML_Probability'])
+                            if not ml_motifs.empty:
+                                st.markdown("#### ML Performance Metrics")
+                                col1, col2, col3, col4 = st.columns(4)
+                                
+                                with col1:
+                                    avg_prob = ml_motifs['ML_Probability'].astype(float).mean()
+                                    st.metric("Avg ML Probability", f"{avg_prob:.3f}")
+                                
+                                with col2:
+                                    avg_conf = ml_motifs['ML_Confidence'].astype(float).mean()
+                                    st.metric("Avg Confidence", f"{avg_conf:.3f}")
+                                
+                                with col3:
+                                    high_conf = (ml_motifs['ML_Confidence'].astype(float) > 0.8).sum()
+                                    st.metric("High Confidence", high_conf)
+                                
+                                with col4:
+                                    enhanced_count = ml_motifs['Enhanced_Score'].notna().sum()
+                                    st.metric("ML Enhanced", enhanced_count)
+                    
+                    with viz_tabs[3]:
+                        st.markdown("### Interactive Genomic Map")
+                        if 'genomic_map' in enhanced_plots:
+                            st.plotly_chart(enhanced_plots['genomic_map'], use_container_width=True)
+                            st.markdown("*Click and drag to zoom, hover for details*")
+                    
+                    with viz_tabs[4]:
+                        st.markdown("### Advanced Cluster Analysis")
+                        if 'cluster_analysis' in enhanced_plots:
+                            st.plotly_chart(enhanced_plots['cluster_analysis'], use_container_width=True)
+                            
+                            # Cluster statistics
+                            cluster_motifs = motifs_df[motifs_df['Class'].str.contains('Cluster', na=False)]
+                            if not cluster_motifs.empty:
+                                st.markdown("#### Cluster Statistics")
+                                col1, col2 = st.columns(2)
+                                
+                                with col1:
+                                    st.metric("Cluster Regions", len(cluster_motifs))
+                                
+                                with col2:
+                                    avg_diversity = cluster_motifs.get('Diversity_Index', [0]).astype(float).mean()
+                                    st.metric("Avg Diversity Index", f"{avg_diversity:.3f}")
+                    
+                    with viz_tabs[5]:
+                        st.markdown("### 3D Structure Visualization")
+                        if '3d_structure' in enhanced_plots:
+                            st.plotly_chart(enhanced_plots['3d_structure'], use_container_width=True)
+                            st.markdown("*Drag to rotate, scroll to zoom*")
+                            st.info("This is a simplified 3D representation. For detailed structural analysis, consider molecular modeling software.")
+                
+                except Exception as e:
+                    st.error(f"Advanced visualization error: {e}")
+                    st.info("Using standard visualizations instead.")
+            
+            # ========== ENHANCED SUMMARY STATISTICS ==========
+            st.markdown("---")
+            st.markdown('<h3>📈 Enhanced Summary Statistics</h3>', unsafe_allow_html=True)
+            
+            # Create comprehensive statistics
+            stats_cols = st.columns(4)
+            
+            with stats_cols[0]:
+                st.metric(
+                    "Total Motifs",
+                    len(motifs),
+                    delta=None
+                )
+            
+            with stats_cols[1]:
+                unique_classes = df['Class'].nunique() if 'Class' in df.columns else 0
+                st.metric(
+                    "Motif Classes",
+                    unique_classes
+                )
+            
+            with stats_cols[2]:
+                if 'Score' in df.columns:
+                    avg_score = pd.to_numeric(df['Score'], errors='coerce').mean()
+                    st.metric(
+                        "Average Score",
+                        f"{avg_score:.1f}" if not pd.isna(avg_score) else "N/A"
+                    )
+                else:
+                    st.metric("Average Score", "N/A")
+            
+            with stats_cols[3]:
+                seq_len = len(st.session_state.seqs[seq_idx])
+                total_coverage = sum(m.get('Length', 0) for m in motifs)
+                coverage_pct = (total_coverage / seq_len) * 100 if seq_len > 0 else 0
+                st.metric(
+                    "Coverage",
+                    f"{coverage_pct:.1f}%"
+                )
+            
+            # Enhanced feature breakdown
+            if any('ML_Probability' in str(m) for m in motifs):
+                st.markdown("#### 🤖 Machine Learning Features")
+                ml_stats_cols = st.columns(3)
+                
+                ml_motifs = [m for m in motifs if 'ML_Probability' in m]
+                
+                with ml_stats_cols[0]:
+                    avg_ml_prob = np.mean([float(m.get('ML_Probability', 0)) for m in ml_motifs])
+                    st.metric("Avg ML Probability", f"{avg_ml_prob:.3f}")
+                
+                with ml_stats_cols[1]:
+                    high_conf_count = sum(1 for m in ml_motifs if float(m.get('ML_Confidence', 0)) > 0.8)
+                    st.metric("High Confidence Motifs", high_conf_count)
+                
+                with ml_stats_cols[2]:
+                    enhanced_count = sum(1 for m in ml_motifs if 'Enhanced_Score' in m)
+                    st.metric("ML Enhanced", enhanced_count)
+            
+            # Disease analysis summary
+            disease_motifs = [m for m in motifs if m.get('Class') == 'Disease-Associated Motif']
+            if disease_motifs:
+                st.markdown("#### 🧬 Clinical Analysis")
+                disease_stats_cols = st.columns(4)
+                
+                with disease_stats_cols[0]:
+                    st.metric("Disease Motifs", len(disease_motifs))
+                
+                with disease_stats_cols[1]:
+                    pathogenic_count = sum(1 for m in disease_motifs if 'Pathogenic' in m.get('Clinical_Significance', ''))
+                    st.metric("Pathogenic", pathogenic_count)
+                
+                with disease_stats_cols[2]:
+                    avg_risk = np.mean([float(m.get('Risk_Score', 0)) for m in disease_motifs])
+                    st.metric("Avg Risk Score", f"{avg_risk:.1f}")
+                
+                with disease_stats_cols[3]:
+                    unique_diseases = len(set(m.get('Disease_Name', 'Unknown') for m in disease_motifs))
+                    st.metric("Disease Types", unique_diseases)
 
 # ---------- DOWNLOAD ----------
 with tab_pages["Download"]:
