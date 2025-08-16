@@ -1042,7 +1042,7 @@ with tab_pages["Home"]:
     
     with left:
         # Enhanced image with caption
-        st.image("nbdcircle.png", use_container_width=True, caption="Non-B DNA structural diversity: From canonical B-form to complex alternative conformations")
+        st.image("nbdcircle.JPG", use_container_width=True, caption="Non-B DNA structural diversity: From canonical B-form to complex alternative conformations")
         
 
     
