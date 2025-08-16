@@ -1,6 +1,3 @@
-# NBDFinder - Professional .gitignore
-# Comprehensive exclusions for Python, Data Science, and Streamlit projects
-
 # Python
 __pycache__/
 *.py[cod]
@@ -19,89 +16,11 @@ parts/
 sdist/
 var/
 wheels/
-share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
 
-# PyInstaller
-*.manifest
-*.spec
-
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
-cover/
-
-# Translations
-*.mo
-*.pot
-
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
-
-# Flask stuff:
-instance/
-.webassets-cache
-
-# Scrapy stuff:
-.scrapy
-
-# Sphinx documentation
-docs/_build/
-
-# PyBuilder
-.pybuilder/
-target/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# IPython
-profile_default/
-ipython_config.py
-
-# pyenv
-.python-version
-
-# pipenv
-Pipfile.lock
-
-# poetry
-poetry.lock
-
-# pdm
-.pdm.toml
-
-# PEP 582
-__pypackages__/
-
-# Celery stuff
-celerybeat-schedule
-celerybeat.pid
-
-# SageMath parsed files
-*.sage.py
-
-# Environments
+# Virtual environments
 .env
 .venv
 env/
@@ -110,38 +29,14 @@ ENV/
 env.bak/
 venv.bak/
 
-# Spyder project settings
-.spyderproject
-.spyproject
-
-# Rope project settings
-.ropeproject
-
-# mkdocs documentation
-/site
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Pyre type checker
-.pyre/
-
-# pytype static type analyzer
-.pytype/
-
-# Cython debug symbols
-cython_debug/
-
-# IDEs
+# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-# OS generated files
+# OS
 .DS_Store
 .DS_Store?
 ._*
@@ -150,109 +45,42 @@ cython_debug/
 ehthumbs.db
 Thumbs.db
 
-# Data Science specific
-*.csv
-*.xlsx
-*.xls
-*.h5
-*.hdf5
-*.pickle
-*.pkl
+# Jupyter Notebook
+.ipynb_checkpoints
 
-# Large data files (except examples)
-data/
-datasets/
+# Data files (except examples)
 *.fasta
 *.fa
-*.fna
 *.fastq
 *.fq
-*.sam
-*.bam
-*.vcf
-*.gff
-*.gtf
-*.bed
+!example_inputs/*.fasta
+!example_inputs/*.fa
 
-# Keep example files
-!example_inputs/
-!**/example*
-!**/sample*
+# Results
+results/
+output/
+*.csv
+*.xlsx
+!tables/*.csv
+
+# Logs
+*.log
+logs/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Documentation builds
+docs/_build/
+site/
 
 # Temporary files
 tmp/
 temp/
 .tmp/
-.temp/
 
-# Log files
-*.log
-logs/
-
-# Streamlit specific
-.streamlit/secrets.toml
-.streamlit/config.toml
-
-# Results and outputs
-results/
-output/
-outputs/
-figures/
-plots/
-
-# Backup files
-*.bak
-*.backup
-*~
-
-# Compressed files
-*.zip
-*.tar.gz
-*.rar
-*.7z
-
-# Documentation builds
-docs/build/
-site/
-
-# Testing artifacts
-.pytest_cache/
-.coverage
-htmlcov/
-
-# Performance profiling
-*.prof
-*.lprof
-
-# Machine learning models
-*.model
-*.joblib
-*.h5
-models/
-
-# Configuration files with sensitive data
-config.ini
-settings.ini
-.env.local
-.env.production
-
-# Database files
-*.db
-*.sqlite
-*.sqlite3
-
-# Cache directories
-.cache/
-cache/
-
-# Node.js (if any frontend components)
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Project specific exclusions
-# Add any NBDFinder specific files to ignore here
-user_uploads/
-analysis_results/
-exported_data/
+# Large datasets
+data/large/
+genomes/
