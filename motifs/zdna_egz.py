@@ -19,7 +19,10 @@ Updated: 2024
 """
 
 import re
-import numpy as np
+
+def mean(values):
+    """Simple mean calculation."""
+    return sum(values) / len(values) if values else 0
 from .shared_utils import wrap, calculate_conservation_score
 
 def zdna_dinucleotide_weights(seq, 
@@ -52,7 +55,7 @@ def zdna_dinucleotide_weights(seq,
     if len(seq) < 2:
         return np.array([])
     
-    weights = np.empty(len(seq) - 1, dtype=float)
+    weights = [0.0] * (len(seq) - 1)
     consecutive_at_count = 0
     consecutive_mismatch_count = 0
     

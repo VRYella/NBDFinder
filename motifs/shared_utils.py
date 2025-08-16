@@ -10,7 +10,23 @@ Updated: 2024
 """
 
 import re
-import numpy as np
+
+def mean(values):
+    """Simple mean calculation without numpy."""
+    return sum(values) / len(values) if values else 0
+
+def std(values):
+    """Simple standard deviation calculation without numpy."""
+    if len(values) <= 1:
+        return 0.0
+    m = mean(values)
+    variance = sum((x - m) ** 2 for x in values) / (len(values) - 1)
+    return variance ** 0.5
+
+def log2(x):
+    """Simple log2 calculation."""
+    import math
+    return math.log2(x)
 
 # =========================
 # Basic sequence utilities
@@ -98,12 +114,12 @@ def calculate_conservation_score(seq, motif_type="general", num_shuffles=100):
     if not shuffle_counts:
         return {"enrichment_score": 0.0, "p_value": 1.0, "significance": "not significant"}
     
-    mu = np.mean(shuffle_counts)  # Null mean
-    sigma = np.std(shuffle_counts, ddof=1) if len(shuffle_counts) > 1 else 0.0  # Null std
+    mu = mean(shuffle_counts)  # Null mean
+    sigma = std(shuffle_counts) if len(shuffle_counts) > 1 else 0.0  # Null std
     
     # Step 5: Calculate log2 enrichment score
     epsilon = 1e-6  # Pseudocount to avoid division by zero
-    enrichment_score = np.log2((observed_count + epsilon) / (mu + epsilon))
+    enrichment_score = log2((observed_count + epsilon) / (mu + epsilon))
     
     # Step 6: Calculate empirical p-value (right-tailed test for enrichment)
     p_value = (1 + sum(1 for c in shuffle_counts if c >= observed_count)) / (num_shuffles + 1)
