@@ -76,7 +76,12 @@ def test_performance_improvements():
     print(f"  Results: {len(g4_result)} motifs")
     if g4_result:
         for r in g4_result:
-            print(f"    G4Hunter: {r.get('G4Hunter_Mean', 'N/A'):.3f}, Structural Factor: {r.get('Structural_Factor', 'N/A'):.3f}")
+            g4_score = r.get('G4Hunter_Mean', 'N/A')
+            struct_factor = r.get('Structural_Factor', 'N/A')
+            if isinstance(g4_score, (int, float)) and isinstance(struct_factor, (int, float)):
+                print(f"    G4Hunter: {g4_score:.3f}, Structural Factor: {struct_factor:.3f}")
+            else:
+                print(f"    G4Hunter: {g4_score}, Structural Factor: {struct_factor}")
     
     # Test bipartite G4
     bipartite_seq = "GGGAAAGGGAAAGGGAAAGGGAAAAAAAAAAAAGGGAAAGGGAAAGGGAAAGGG"
