@@ -101,12 +101,12 @@ def _regex_periodic_groups(seq: str, min_repeats: int, min_spacing: int, max_spa
         group = [t for t in tracts if t[0] >= s and t[1] <= e]
         # verify consecutive spacing
         if len(group) >= min_repeats:
-            group_sorted = sorted(group, key=lambda x: (x + x[1]) // 2)
+            group_sorted = sorted(group, key=lambda x: (x[0] + x[1]) // 2)
             current = [group_sorted]
             ok = True
             for k in range(1, len(group_sorted)):
-                prev_c = (group_sorted[k - 1] + group_sorted[k - 1][1]) // 2
-                curr_c = (group_sorted[k] + group_sorted[k][1]) // 2
+                prev_c = (group_sorted[k - 1][0] + group_sorted[k - 1][1]) // 2
+                curr_c = (group_sorted[k][0] + group_sorted[k][1]) // 2
                 spacing = curr_c - prev_c
                 if min_spacing <= spacing <= max_spacing:
                     current.append(group_sorted[k])
