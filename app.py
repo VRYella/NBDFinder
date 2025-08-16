@@ -1028,7 +1028,7 @@ with tab_pages["Home"]:
     # Enhanced header with dramatic scientific branding
     st.markdown("""
     <div style='text-align: center; padding: 30px; background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 30%, #90caf9 60%, #64b5f6 100%); border-radius: 20px; margin-bottom: 35px; border: 3px solid #1565c0; box-shadow: 0 8px 32px rgba(21, 101, 192, 0.25);'>
-        <h1 style='background: linear-gradient(135deg, #0d47a1, #1565c0, #1976d2, #42a5f5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-family: Montserrat, Arial; font-weight: 900; margin-bottom: 15px; font-size: 3.2rem; text-shadow: 0 4px 8px rgba(13, 71, 161, 0.3);'>
+        <h1 style='background: linear-gradient(135deg, #0d47a1, #1565c0, #1976d2, #42a5f5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-family: Montserrat, Arial; font-weight: 900; margin-bottom: 15px; font-size: 2.4rem; text-shadow: 0 4px 8px rgba(13, 71, 161, 0.3);'>
             NBDFinder: Advanced Non-B DNA Structure Detection Platform
         </h1>
         <p style='color: #1565c0; font-size: 1.4rem; font-weight: 500; margin-top: 10px; text-shadow: 0 2px 4px rgba(21, 101, 192, 0.2);'>
@@ -1051,15 +1051,15 @@ with tab_pages["Home"]:
         <div style='font-family:Montserrat, Arial; font-size:1.2rem; color:#222; line-height:1.8; padding:30px; background:linear-gradient(135deg, #f8fdff 0%, #eaf6ff 50%, #f0f9ff 100%); border-radius:20px; box-shadow:0 8px 32px rgba(21, 101, 192, 0.2); border:3px solid #e3f2fd;'>
         
         <div style='margin-bottom:35px;'>
-            <h3 style='color:#0d47a1; margin-top:0; margin-bottom:18px; font-size:1.65rem; font-weight:800;'>🔬 Non-B DNA Detection Platform</h3>
+            <h3 style='color:#0d47a1; margin-top:0; margin-bottom:18px; font-size:1.65rem; font-weight:800;'>Non-B DNA Detection Platform</h3>
             <p style='margin-bottom:25px; font-size:1.18rem;'><strong style='color:#1565c0;'>Non-canonical DNA structures</strong> are important for genome organization, gene regulation, and disease pathogenesis. This platform provides computational tools for analyzing these structures.</p>
         </div>
         
         <div style='margin-bottom:35px;'>
-            <h4 style='color:#d32f2f; margin-bottom:18px; font-size:1.4rem; font-weight:700;'>🧬 Comprehensive Motif Detection Suite</h4>
+            <h4 style='color:#d32f2f; margin-bottom:18px; font-size:1.4rem; font-weight:700;'>Comprehensive Motif Detection Suite</h4>
             <div style='background:linear-gradient(135deg, #f1f8ff 0%, #e8f4ff 100%); padding:20px; border-radius:15px; border-left:6px solid #1565c0; box-shadow:0 4px 16px rgba(21, 101, 192, 0.1);'>
                 <div style='margin-bottom:12px;'>
-                    <span style='color:#0d47a1; font-weight:800; font-size:1.1rem;'>🔵 G-Quadruplex Family:</span> <span style='font-size:1.05rem;'>Canonical G4, Relaxed G4, Bulged G4, Bipartite G4, Multimeric G4, Imperfect G4</span>
+                    <span style='color:#0d47a1; font-weight:800; font-size:1.1rem;'>G-Quadruplex Family:</span> <span style='font-size:1.05rem;'>Canonical G4, Relaxed G4, Bulged G4, Bipartite G4, Multimeric G4, Imperfect G4</span>
                 </div>
                 <div style='margin-bottom:12px;'>
                     <span style='color:#0d47a1; font-weight:800; font-size:1.1rem;'>🔶 Triplex Structures:</span> <span style='font-size:1.05rem;'>G-Triplex, Triplex DNA, i-Motif</span>
@@ -1094,21 +1094,10 @@ with tab_pages["Home"]:
 # ---------- UPLOAD & ANALYZE ----------
 with tab_pages["Upload & Analyze"]:
     # Enhanced page header for Upload & Analyze
-    st.markdown("""
-    <div style='text-align: center; padding: 25px; background: linear-gradient(135deg, #e8f5e8 0%, #f0f9ff 50%, #fff3e0 100%); border-radius: 18px; margin-bottom: 30px; border: 3px solid #2e7d32; box-shadow: 0 6px 24px rgba(46, 125, 50, 0.2);'>
-        <h2 style='background: linear-gradient(135deg, #2e7d32, #388e3c, #4caf50); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-family: Montserrat, Arial; font-weight: 900; margin-bottom: 10px; font-size: 2.5rem;'>
-            🔬 Sequence Analysis & Motif Detection
-        </h2>
-        <p style='color: #2e7d32; font-size: 1.25rem; font-weight: 600; margin-top: 8px;'>
-            Advanced Non-B DNA Structure Analysis Pipeline
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-    
     # Enhanced Motif class selection with scientific categorization
     st.markdown("""
     <div style='background: linear-gradient(135deg, #f0f9ff 0%, #e3f2fd 50%, #f8fdff 100%); border-radius: 16px; padding: 25px; margin-bottom: 30px; border: 3px solid #1565c0; box-shadow: 0 6px 20px rgba(21, 101, 192, 0.15);'>
-        <h3 style='color: #0d47a1; margin-top: 0; margin-bottom: 18px; font-size: 1.5rem; font-weight: 800;'>🎯 Select Motif Classes for Analysis</h3>
+        <h3 style='color: #0d47a1; margin-top: 0; margin-bottom: 18px; font-size: 1.5rem; font-weight: 800;'>Select Motif Classes for Analysis</h3>
         <p style='margin-bottom: 15px; color: #555; font-size: 1.15rem; line-height: 1.6;'>Select specific Non-B DNA motif classes for targeted analysis. Our comprehensive detection suite covers all major structural categories validated by experimental studies.</p>
     </div>
     """, unsafe_allow_html=True)
@@ -1182,15 +1171,6 @@ with tab_pages["Upload & Analyze"]:
 
     # --- Paste sequence ---
     elif input_method == "Paste Sequence(s)":
-        # Show example format in an expandable section
-        with st.expander("View Single FASTA or Multiple FASTA Format Example"):
-            st.markdown("**Multi-FASTA Format Example:**")
-            st.code(EXAMPLE_MULTI_FASTA, language='text')
-            st.markdown("**Tips:**")
-            st.markdown("- Each sequence starts with `>` followed by sequence name")
-            st.markdown("- DNA sequence follows on the next line(s)")
-            st.markdown("- Multiple sequences can be pasted at once")
-        
         seq_input = st.text_area("Paste FASTA or raw sequence(s)", height=150)
         if seq_input:
             lines = seq_input.splitlines()
@@ -1250,25 +1230,22 @@ with tab_pages["Upload & Analyze"]:
 
     # --- Enhanced NCBI Query with famous examples ---
     elif input_method == "NCBI Fetch":
-        st.markdown("**▪ Fetch sequences from NCBI database:**")
+        st.markdown("**Fetch sequences from NCBI database:**")
         
-        # Show famous examples
-        with st.expander("▸ Famous genes/sequences with Non-B DNA motifs"):
-            st.markdown("**Select from famous examples:**")
-            
-            # Create a searchable selectbox for famous examples
-            example_options = [""] + [f"{gene} ({accession})" for gene, accession in FAMOUS_NCBI_EXAMPLES.items()]
-            selected_example = st.selectbox(
-                "Choose a famous gene/sequence:",
-                options=example_options,
-                help="Select a well-known gene or sequence with Non-B DNA motifs"
-            )
-            
-            if selected_example:
-                # Extract accession from the selected example
-                accession = selected_example.split("(")[1].rstrip(")")
-                st.session_state.ncbi_query = accession
-                st.success(f"✓ Selected: {selected_example}")
+        # Show famous examples as text instead of dropdown
+        st.markdown("**Famous genes/sequences with Non-B DNA motifs:**")
+        st.markdown("""
+        Copy these accession numbers for well-known sequences containing Non-B DNA motifs:
+        - **Human TERT Promoter**: NC_000005.10:1253147-1295047
+        - **Human c-MYC Promoter**: NG_007161.1  
+        - **Human BCL2 Promoter**: NG_009361.1
+        - **Fragile X FMR1 Gene**: NG_007529.1
+        - **Huntington HTT Gene**: NG_009378.1
+        - **Human Immunoglobulin Switch**: NG_001019.6
+        - **Human Alpha Globin**: NG_000006.1
+        - **Friedreich Ataxia FXN**: NG_008845.1
+        """)
+        
             
             # Alternative: Show examples as formatted text for easy reference
             st.markdown("**Available examples:**")
