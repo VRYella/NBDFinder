@@ -53,15 +53,12 @@ Thumbs.db
 *.fa
 *.fastq
 *.fq
-!example_inputs/*.fasta
-!example_inputs/*.fa
 
 # Results
 results/
 output/
 *.csv
 *.xlsx
-!tables/*.csv
 
 # Logs
 *.log
@@ -84,3 +81,8 @@ temp/
 # Large datasets
 data/large/
 genomes/
+
+# NBDFinder specific
+motifs_enhanced_backup/
+motifs_original.py
+README_original.md
