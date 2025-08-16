@@ -1041,8 +1041,19 @@ with tab_pages["Home"]:
     left, right = st.columns([1.2, 1])
     
     with left:
-        # Enhanced image with caption
-        st.image("nbdcircle.png", use_container_width=True, caption="Non-B DNA structural diversity: From canonical B-form to complex alternative conformations")
+        # Educational placeholder for structural diversity information
+        st.markdown("""
+        <div style='background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%); 
+                    border-radius: 15px; padding: 25px; margin: 10px 0; 
+                    border: 2px solid #1565c0; text-align: center;'>
+            <h4 style='color: #1565c0; margin-top: 0; margin-bottom: 15px;'>
+                🧬 Non-B DNA Structural Diversity
+            </h4>
+            <p style='color: #424242; font-size: 1.1rem; line-height: 1.5; margin-bottom: 0;'>
+                From canonical B-form to complex alternative conformations
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
         
 
     
