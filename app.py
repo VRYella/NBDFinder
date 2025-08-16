@@ -1246,13 +1246,12 @@ with tab_pages["Upload & Analyze"]:
         - **Friedreich Ataxia FXN**: NG_008845.1
         """)
         
-            
-            # Alternative: Show examples as formatted text for easy reference
-            st.markdown("**Available examples:**")
-            examples_text = ""
-            for gene, accession in FAMOUS_NCBI_EXAMPLES.items():
-                examples_text += f"• **{gene}**: `{accession}`\n"
-            st.markdown(examples_text)
+        # Alternative: Show examples as formatted text for easy reference
+        st.markdown("**Available examples:**")
+        examples_text = ""
+        for gene, accession in FAMOUS_NCBI_EXAMPLES.items():
+            examples_text += f"• **{gene}**: `{accession}`\n"
+        st.markdown(examples_text)
         
         # NCBI query input
         ncbi_query = st.text_input(
