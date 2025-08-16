@@ -1,4 +1,3 @@
-# Standard scientific libraries only
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -17,6 +16,14 @@ from motifs import (
     parse_fasta, gc_content, reverse_complement,
     select_best_nonoverlapping_motifs, wrap
 )
+
+# Import advanced visualization
+try:
+    from advanced_visualization import create_enhanced_dashboard, export_publication_figure
+    ADVANCED_VIZ_AVAILABLE = True
+except ImportError:
+    ADVANCED_VIZ_AVAILABLE = False
+    st.warning("Advanced visualization not available. Install additional dependencies.")
 
 # ---------- ENHANCED PAGE CONFIGURATION ----------
 st.set_page_config(
@@ -43,25 +50,14 @@ def ensure_subtype(motif):
         return {'Subtype': 'Other', 'Motif': motif}
 
 
-# ---------- PROFESSIONAL CSS FOR ENHANCED TYPOGRAPHY ----------
+# ---------- PROFESSIONAL CSS FOR BALANCED DESIGN ----------
 st.markdown("""
     <style>
-    :root {
-        --primary-font: Arial, 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
-        --heading-font: 'Segoe UI', Arial, sans-serif;
-        --display-font: 'Segoe UI', Arial, sans-serif;
-        --mono-font: 'Segoe UI Mono', 'Courier New', monospace;
-    }
-    
     body, [data-testid="stAppViewContainer"], .main {
         background: linear-gradient(135deg, #f7fafd 0%, #f0f9ff 50%, #f8fdff 100%) !important;
-        font-family: var(--primary-font) !important;
-        font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-        text-rendering: optimizeLegibility;
+        font-family: 'Montserrat', Arial, sans-serif !important;
     }
-    /* Tabs: enhanced with professional typography and spacing */
+    /* Tabs: enhanced bold, large, highly appealing with vibrant colors */
     .stTabs [data-baseweb="tab-list"] {
         width: 100vw !important;
         justify-content: stretch !important;
@@ -72,190 +68,128 @@ st.markdown("""
         border-radius: 16px 16px 0 0;
     }
     .stTabs [data-baseweb="tab"] {
-        font-family: var(--heading-font) !important;
-        font-size: 1.75rem !important;
-        font-weight: 700 !important;
+        font-size: 1.85rem !important;
+        font-weight: 900 !important;
         flex: 1 1 0%;
         min-width: 0 !important;
-        padding: 24px 18px 24px 18px !important;
+        padding: 22px 15px 22px 15px !important;
         text-align: center;
         color: #0d47a1 !important;
         background: linear-gradient(135deg, #ffffff 0%, #f8fdff 50%, #f0f9ff 100%) !important;
         border-right: 3px solid #e3f2fd !important;
-        letter-spacing: 0.025em;
+        letter-spacing: 0.08em;
         text-shadow: 0 2px 4px rgba(13, 71, 161, 0.15);
         border-radius: 12px 12px 0 0;
         margin: 6px 3px 0 3px;
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        font-feature-settings: "kern" 1, "liga" 1;
     }
     .stTabs [data-baseweb="tab"]:hover {
         background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 50%, #e8f5e8 100%) !important;
         color: #0d47a1 !important;
-        transform: translateY(-3px);
+        transform: translateY(-4px);
         box-shadow: 0 8px 32px rgba(13, 71, 161, 0.3);
-        font-size: 1.8rem !important;
-        font-weight: 800 !important;
+        font-size: 1.9rem !important;
     }
     .stTabs [aria-selected="true"] {
-        font-family: var(--heading-font) !important;
         color: #ffffff !important;
         border-bottom: 8px solid #ff6f00 !important;
         background: linear-gradient(135deg, #0d47a1 0%, #1565c0 30%, #1976d2 60%, #42a5f5 100%) !important;
         box-shadow: 0 12px 40px rgba(13, 71, 161, 0.4);
         transform: translateY(-6px);
-        font-size: 1.9rem !important;
-        font-weight: 800 !important;
+        font-size: 2.0rem !important;
         text-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
         border-left: 4px solid #ff6f00 !important;
         border-right: 4px solid #ff6f00 !important;
-        letter-spacing: 0.01em;
     }
     .stTabs [data-baseweb="tab"]:last-child {
         border-right: none !important;
     }
-    /* Headings: professional typography hierarchy with optimal readability */
-    h1, h2, h3, h4, h5, h6 {
-        font-family: var(--heading-font) !important;
+    /* Headings: dramatically enhanced with larger, more impactful sizes */
+    h1, h2, h3, h4 {
+        font-family: 'Montserrat', Arial, sans-serif !important;
         color: #0d47a1 !important;
-        margin-top: 1.2em;
-        margin-bottom: 0.8em;
-        text-shadow: 0 2px 4px rgba(13, 71, 161, 0.15);
-        font-feature-settings: "kern" 1, "liga" 1;
-        line-height: 1.3;
+        font-weight: 900 !important;
+        margin-top: 1.0em;
+        margin-bottom: 1.0em;
+        text-shadow: 0 2px 4px rgba(13, 71, 161, 0.2);
     }
     h1 { 
-        font-family: var(--display-font) !important;
-        font-size: 3.2rem !important;
-        font-weight: 700 !important;
+        font-size: 2.8rem !important; 
         background: linear-gradient(135deg, #0d47a1, #1565c0, #42a5f5) !important;
         -webkit-background-clip: text !important;
         -webkit-text-fill-color: transparent !important;
         background-clip: text !important;
-        letter-spacing: -0.02em;
-        line-height: 1.2;
     }
     h2 { 
-        font-size: 2.4rem !important; 
-        font-weight: 600 !important;
+        font-size: 2.2rem !important; 
         color: #1565c0 !important;
-        letter-spacing: -0.015em;
     }
     h3 { 
-        font-size: 1.8rem !important; 
+        font-size: 1.6rem !important; 
         color: #1976d2 !important;
-        font-weight: 600 !important;
-        letter-spacing: -0.01em;
+        font-weight: 800 !important;
     }
     h4 { 
-        font-size: 1.5rem !important; 
+        font-size: 1.35rem !important; 
         color: #42a5f5 !important;
-        font-weight: 600 !important;
-        letter-spacing: 0;
+        font-weight: 700 !important;
     }
-    h5 {
-        font-size: 1.25rem !important;
-        color: #1976d2 !important;
-        font-weight: 600 !important;
-    }
-    h6 {
-        font-size: 1.1rem !important;
-        color: #1976d2 !important;
-        font-weight: 600 !important;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-    /* Body text and UI elements: enhanced readability and modern typography */
-    .stMarkdown, .markdown-text-container, .stText, p, span, label, div[data-testid="stMarkdownContainer"] {
-        font-family: var(--primary-font) !important;
-        font-size: 1.125rem !important;
-        line-height: 1.65 !important;
-        color: #374151 !important;
-        font-weight: 400 !important;
-        font-feature-settings: "kern" 1, "liga" 1;
-    }
-    
-    /* Input elements with consistent typography */
-    input, .stTextInput>div>div>input, .stSelectbox>div>div>div, .stMultiSelect>div>div>div, .stRadio>div>div>label>div {
-        font-family: var(--primary-font) !important;
-        font-size: 1.1rem !important;
+    /* Markdown/text: enhanced size for better readability */
+    .stMarkdown, .markdown-text-container, .stText, p, span, label, input, .stTextInput>div>div>input, .stSelectbox>div>div>div, .stMultiSelect>div>div>div, .stRadio>div>div>label>div {
+        font-size: 1.15rem !important;
+        font-family: 'Montserrat', Arial, sans-serif !important;
         line-height: 1.6 !important;
-        font-weight: 400 !important;
     }
-    
-    /* Strong and emphasis elements */
-    strong, b {
-        font-weight: 600 !important;
-        color: #1f2937 !important;
-    }
-    
-    em, i {
-        font-style: italic !important;
-        color: #4b5563 !important;
-    }
-    /* Buttons: modern design with enhanced typography */
+    /* Buttons: modern, larger, more engaging */
     .stButton>button {
-        font-family: var(--primary-font) !important;
-        font-size: 1.125rem !important;
-        font-weight: 600 !important;
-        padding: 0.75em 2em !important;
+        font-size: 1.2rem !important;
+        font-family: 'Montserrat', Arial, sans-serif !important;
+        padding: 0.6em 1.5em !important;
         background: linear-gradient(135deg, #0d47a1 0%, #1565c0 50%, #42a5f5 100%) !important;
         color: #fff !important;
         border-radius: 12px !important;
         border: none !important;
+        font-weight: 700 !important;
         box-shadow: 0 4px 16px rgba(13, 71, 161, 0.3);
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        text-transform: none;
-        letter-spacing: 0.01em;
-        font-feature-settings: "kern" 1;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
     .stButton>button:hover {
         background: linear-gradient(135deg, #42a5f5 0%, #1565c0 50%, #0d47a1 100%) !important;
         transform: translateY(-2px);
         box-shadow: 0 8px 24px rgba(13, 71, 161, 0.4);
-        font-size: 1.15rem !important;
-        font-weight: 600 !important;
+        font-size: 1.25rem !important;
     }
-    /* Enhanced DataFrame styling with professional typography */
+    /* Enhanced DataFrame styling for outstanding data presentation */
     .stDataFrame, .stTable {
-        font-family: var(--primary-font) !important;
-        font-size: 1.05rem !important;
+        font-size: 1.12rem !important;
+        font-family: 'Montserrat', Arial, sans-serif !important;
         border-radius: 16px !important;
         box-shadow: 0 6px 24px rgba(13, 71, 161, 0.15) !important;
         border: 2px solid #e3f2fd !important;
         overflow: hidden !important;
     }
     
-    /* Enhanced table headers with professional typography */
+    /* Enhanced table headers with vibrant gradients */
     .stDataFrame th {
-        font-family: var(--heading-font) !important;
         background: linear-gradient(135deg, #0d47a1 0%, #1565c0 30%, #1976d2 60%, #42a5f5 100%) !important;
         color: white !important;
-        font-weight: 600 !important;
+        font-weight: 800 !important;
         text-align: center !important;
         border: none !important;
-        font-size: 1.1rem !important;
-        padding: 14px 18px !important;
+        font-size: 1.18rem !important;
+        padding: 12px 16px !important;
         text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        letter-spacing: 0.01em;
     }
     
     /* Enhanced table cell styling */
     .stDataFrame td {
-        font-family: var(--primary-font) !important;
         text-align: center !important;
         padding: 12px 16px !important;
         border-bottom: 2px solid #f0f8ff !important;
-        font-size: 1.05rem !important;
-        font-weight: 400 !important;
-        line-height: 1.5;
-    }
-    
-    /* Monospace for data that should be monospaced */
-    .stDataFrame .data-cell {
-        font-family: var(--mono-font) !important;
-        font-size: 0.95rem !important;
-        letter-spacing: 0;
+        font-size: 1.1rem !important;
+        font-weight: 500 !important;
     }
     
     /* Enhanced alternating row colors */
@@ -351,11 +285,9 @@ st.markdown("""
         margin: 8px 0 !important;
     }
     .stRadio > div > label {
-        font-family: var(--primary-font) !important;
-        font-weight: 600 !important;
+        font-weight: 700 !important;
         color: #0d47a1 !important;
-        font-size: 1.15rem !important;
-        line-height: 1.5;
+        font-size: 1.2rem !important;
     }
     .stRadio > div > label > div:first-child {
         background: linear-gradient(135deg, #0d47a1, #1565c0, #42a5f5) !important;
@@ -364,210 +296,36 @@ st.markdown("""
         width: 24px !important;
         height: 24px !important;
     }
-    /* Enhanced Text Styling with modern typography hierarchy */
+    /* Enhanced Text Styling with superior visual hierarchy */
     .input-method-title {
-        font-family: var(--heading-font) !important;
-        font-weight: 700 !important;
-        font-size: 1.5rem !important;
+        font-weight: 900 !important;
+        font-size: 1.4rem !important;
         color: #0d47a1 !important;
         text-shadow: 0 2px 4px rgba(13, 71, 161, 0.25) !important;
-        margin-bottom: 12px !important;
-        letter-spacing: -0.01em;
+        margin-bottom: 8px !important;
     }
     .input-method-subtitle {
-        font-family: var(--primary-font) !important;
-        font-weight: 600 !important;
+        font-weight: 700 !important;
         font-style: italic !important;
         color: #2e7d32 !important;
-        font-size: 1.25rem !important;
+        font-size: 1.2rem !important;
         text-shadow: 0 1px 2px rgba(46, 125, 50, 0.2) !important;
-        line-height: 1.4;
     }
     .input-method-regular {
-        font-family: var(--primary-font) !important;
-        font-weight: 400 !important;
-        color: #4b5563 !important;
-        font-size: 1.125rem !important;
-        line-height: 1.65 !important;
+        font-weight: 500 !important;
+        color: #424242 !important;
+        font-size: 1.15rem !important;
+        line-height: 1.6 !important;
     }
     .sequence-preview-title {
-        font-family: var(--mono-font) !important;
-        font-weight: 600 !important;
+        font-weight: 800 !important;
         color: #d32f2f !important;
-        font-size: 1.2rem !important;
+        font-size: 1.35rem !important;
         text-shadow: 0 2px 4px rgba(211, 47, 47, 0.25) !important;
         background: linear-gradient(135deg, #d32f2f, #f44336, #ef5350) !important;
         -webkit-background-clip: text !important;
         -webkit-text-fill-color: transparent !important;
         background-clip: text !important;
-        letter-spacing: 0.02em;
-    }
-    
-    /* Code and preformatted text styling */
-    code, pre, .stCode {
-        font-family: var(--mono-font) !important;
-        font-size: 0.95rem !important;
-        font-weight: 500 !important;
-        letter-spacing: 0;
-        line-height: 1.5;
-    }
-    
-    /* Lists and structured content */
-    ul, ol {
-        font-family: var(--primary-font) !important;
-        line-height: 1.65;
-    }
-    
-    li {
-        font-size: 1.1rem !important;
-        margin-bottom: 0.5rem;
-    }
-    
-    /* Links with improved typography */
-    a, .stMarkdown a {
-        font-family: var(--primary-font) !important;
-        font-weight: 500 !important;
-        text-decoration: none !important;
-        color: #1565c0 !important;
-        transition: color 0.2s ease;
-    }
-    
-    a:hover, .stMarkdown a:hover {
-        color: #0d47a1 !important;
-        text-decoration: underline !important;
-    }
-    
-    /* Sidebar styling */
-    .css-1d391kg, .stSidebar {
-        font-family: var(--primary-font) !important;
-    }
-    
-    .stSidebar .stMarkdown {
-        font-size: 1.05rem !important;
-        line-height: 1.6;
-    }
-    
-    /* Metrics and statistics text */
-    .metric-value, .stMetric {
-        font-family: var(--mono-font) !important;
-        font-weight: 600 !important;
-        letter-spacing: 0.02em;
-    }
-    
-    /* Tooltips and help text */
-    .tooltip, [data-testid="stTooltip"] {
-        font-family: var(--primary-font) !important;
-        font-size: 0.95rem !important;
-        line-height: 1.5;
-    }
-    
-    /* Streamlit native components enhancement */
-    .stSelectbox label, .stMultiSelect label, .stTextInput label {
-        font-family: var(--primary-font) !important;
-        font-weight: 600 !important;
-        font-size: 1.1rem !important;
-        color: #374151 !important;
-    }
-    
-    /* Status messages */
-    .stSuccess, .stInfo, .stWarning, .stError {
-        font-family: var(--primary-font) !important;
-        font-size: 1.05rem !important;
-        line-height: 1.5;
-    }
-    
-    /* Progressive enhancement for supported browsers */
-    @supports (font-variation-settings: normal) {
-        body, [data-testid="stAppViewContainer"], .main {
-            font-variation-settings: 'wght' 400, 'slnt' 0;
-        }
-        
-        h1, h2, h3, h4, h5, h6 {
-            font-variation-settings: 'wght' 600, 'slnt' 0;
-        }
-    }
-    
-    /* Enhanced file uploader styling */
-    .stFileUploader > div {
-        font-family: var(--primary-font) !important;
-        font-size: 1.05rem !important;
-    }
-    
-    .stFileUploader label {
-        font-family: var(--primary-font) !important;
-        font-weight: 600 !important;
-        font-size: 1.1rem !important;
-        color: #374151 !important;
-    }
-    
-    /* Enhanced expander styling */
-    .streamlit-expanderHeader {
-        font-family: var(--heading-font) !important;
-        font-weight: 600 !important;
-        font-size: 1.2rem !important;
-    }
-    
-    /* Enhanced columns and containers */
-    .stColumn > div {
-        font-family: var(--primary-font) !important;
-    }
-    
-    /* Better text area styling */
-    .stTextArea textarea {
-        font-family: var(--mono-font) !important;
-        font-size: 1rem !important;
-        line-height: 1.5;
-    }
-    
-    .stTextArea label {
-        font-family: var(--primary-font) !important;
-        font-weight: 600 !important;
-        font-size: 1.1rem !important;
-    }
-    
-    /* Enhanced number input */
-    .stNumberInput label {
-        font-family: var(--primary-font) !important;
-        font-weight: 600 !important;
-        font-size: 1.1rem !important;
-    }
-    
-    /* Enhanced slider */
-    .stSlider label {
-        font-family: var(--primary-font) !important;
-        font-weight: 600 !important;
-        font-size: 1.1rem !important;
-    }
-    
-    /* Enhanced checkbox */
-    .stCheckbox label {
-        font-family: var(--primary-font) !important;
-        font-weight: 500 !important;
-        font-size: 1.05rem !important;
-    }
-    
-    /* Tab-specific color schemes */
-    .stTabs > div:nth-child(1) > div:nth-child(1) {
-        background: linear-gradient(135deg, #e8f4fd 0%, #f0f9ff 100%) !important; /* Home - Light Blue */
-    }
-    .stTabs > div:nth-child(1) > div:nth-child(2) {
-        background: linear-gradient(135deg, #f0fdf4 0%, #f7fee7 100%) !important; /* Upload & Analyze - Light Green */
-    }
-    .stTabs > div:nth-child(1) > div:nth-child(3) {
-        background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%) !important; /* Results - Light Yellow */
-    }
-    .stTabs > div:nth-child(1) > div:nth-child(4) {
-        background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%) !important; /* Download - Light Pink */
-    }
-    .stTabs > div:nth-child(1) > div:nth-child(5) {
-        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%) !important; /* Documentation - Light Gray */
-    }
-    
-    /* Tab content padding and styling */
-    .stTabs > div[data-baseweb="tab-panel"] {
-        padding: 2rem !important;
-        border-radius: 0 0 16px 16px !important;
-        min-height: 500px !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -1028,7 +786,7 @@ with tab_pages["Home"]:
     # Enhanced header with dramatic scientific branding
     st.markdown("""
     <div style='text-align: center; padding: 30px; background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 30%, #90caf9 60%, #64b5f6 100%); border-radius: 20px; margin-bottom: 35px; border: 3px solid #1565c0; box-shadow: 0 8px 32px rgba(21, 101, 192, 0.25);'>
-        <h1 style='background: linear-gradient(135deg, #0d47a1, #1565c0, #1976d2, #42a5f5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-family: Montserrat, Arial; font-weight: 900; margin-bottom: 15px; font-size: 2.4rem; text-shadow: 0 4px 8px rgba(13, 71, 161, 0.3);'>
+        <h1 style='background: linear-gradient(135deg, #0d47a1, #1565c0, #1976d2, #42a5f5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-family: Montserrat, Arial; font-weight: 900; margin-bottom: 15px; font-size: 3.2rem; text-shadow: 0 4px 8px rgba(13, 71, 161, 0.3);'>
             NBDFinder: Advanced Non-B DNA Structure Detection Platform
         </h1>
         <p style='color: #1565c0; font-size: 1.4rem; font-weight: 500; margin-top: 10px; text-shadow: 0 2px 4px rgba(21, 101, 192, 0.2);'>
@@ -1042,7 +800,7 @@ with tab_pages["Home"]:
     
     with left:
         # Enhanced image with caption
-        st.image("nbdcircle.png", use_container_width=True, caption="Non-B DNA structural diversity: From canonical B-form to complex alternative conformations")
+        st.image("nbdcircle.JPG", use_container_width=True, caption="Non-B DNA structural diversity: From canonical B-form to complex alternative conformations")
         
 
     
@@ -1051,15 +809,15 @@ with tab_pages["Home"]:
         <div style='font-family:Montserrat, Arial; font-size:1.2rem; color:#222; line-height:1.8; padding:30px; background:linear-gradient(135deg, #f8fdff 0%, #eaf6ff 50%, #f0f9ff 100%); border-radius:20px; box-shadow:0 8px 32px rgba(21, 101, 192, 0.2); border:3px solid #e3f2fd;'>
         
         <div style='margin-bottom:35px;'>
-            <h3 style='color:#0d47a1; margin-top:0; margin-bottom:18px; font-size:1.65rem; font-weight:800;'>Non-B DNA Detection Platform</h3>
+            <h3 style='color:#0d47a1; margin-top:0; margin-bottom:18px; font-size:1.65rem; font-weight:800;'>🔬 Non-B DNA Detection Platform</h3>
             <p style='margin-bottom:25px; font-size:1.18rem;'><strong style='color:#1565c0;'>Non-canonical DNA structures</strong> are important for genome organization, gene regulation, and disease pathogenesis. This platform provides computational tools for analyzing these structures.</p>
         </div>
         
         <div style='margin-bottom:35px;'>
-            <h4 style='color:#d32f2f; margin-bottom:18px; font-size:1.4rem; font-weight:700;'>Comprehensive Motif Detection Suite</h4>
+            <h4 style='color:#d32f2f; margin-bottom:18px; font-size:1.4rem; font-weight:700;'>🧬 Comprehensive Motif Detection Suite</h4>
             <div style='background:linear-gradient(135deg, #f1f8ff 0%, #e8f4ff 100%); padding:20px; border-radius:15px; border-left:6px solid #1565c0; box-shadow:0 4px 16px rgba(21, 101, 192, 0.1);'>
                 <div style='margin-bottom:12px;'>
-                    <span style='color:#0d47a1; font-weight:800; font-size:1.1rem;'>G-Quadruplex Family:</span> <span style='font-size:1.05rem;'>Canonical G4, Relaxed G4, Bulged G4, Bipartite G4, Multimeric G4, Imperfect G4</span>
+                    <span style='color:#0d47a1; font-weight:800; font-size:1.1rem;'>🔵 G-Quadruplex Family:</span> <span style='font-size:1.05rem;'>Canonical G4, Relaxed G4, Bulged G4, Bipartite G4, Multimeric G4, Imperfect G4</span>
                 </div>
                 <div style='margin-bottom:12px;'>
                     <span style='color:#0d47a1; font-weight:800; font-size:1.1rem;'>🔶 Triplex Structures:</span> <span style='font-size:1.05rem;'>G-Triplex, Triplex DNA, i-Motif</span>
@@ -1094,10 +852,21 @@ with tab_pages["Home"]:
 # ---------- UPLOAD & ANALYZE ----------
 with tab_pages["Upload & Analyze"]:
     # Enhanced page header for Upload & Analyze
+    st.markdown("""
+    <div style='text-align: center; padding: 25px; background: linear-gradient(135deg, #e8f5e8 0%, #f0f9ff 50%, #fff3e0 100%); border-radius: 18px; margin-bottom: 30px; border: 3px solid #2e7d32; box-shadow: 0 6px 24px rgba(46, 125, 50, 0.2);'>
+        <h2 style='background: linear-gradient(135deg, #2e7d32, #388e3c, #4caf50); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-family: Montserrat, Arial; font-weight: 900; margin-bottom: 10px; font-size: 2.5rem;'>
+            🔬 Sequence Analysis & Motif Detection
+        </h2>
+        <p style='color: #2e7d32; font-size: 1.25rem; font-weight: 600; margin-top: 8px;'>
+            Advanced Non-B DNA Structure Analysis Pipeline
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
     # Enhanced Motif class selection with scientific categorization
     st.markdown("""
     <div style='background: linear-gradient(135deg, #f0f9ff 0%, #e3f2fd 50%, #f8fdff 100%); border-radius: 16px; padding: 25px; margin-bottom: 30px; border: 3px solid #1565c0; box-shadow: 0 6px 20px rgba(21, 101, 192, 0.15);'>
-        <h3 style='color: #0d47a1; margin-top: 0; margin-bottom: 18px; font-size: 1.5rem; font-weight: 800;'>Select Motif Classes for Analysis</h3>
+        <h3 style='color: #0d47a1; margin-top: 0; margin-bottom: 18px; font-size: 1.5rem; font-weight: 800;'>🎯 Select Motif Classes for Analysis</h3>
         <p style='margin-bottom: 15px; color: #555; font-size: 1.15rem; line-height: 1.6;'>Select specific Non-B DNA motif classes for targeted analysis. Our comprehensive detection suite covers all major structural categories validated by experimental studies.</p>
     </div>
     """, unsafe_allow_html=True)
@@ -1171,6 +940,15 @@ with tab_pages["Upload & Analyze"]:
 
     # --- Paste sequence ---
     elif input_method == "Paste Sequence(s)":
+        # Show example format in an expandable section
+        with st.expander("View Single FASTA or Multiple FASTA Format Example"):
+            st.markdown("**Multi-FASTA Format Example:**")
+            st.code(EXAMPLE_MULTI_FASTA, language='text')
+            st.markdown("**Tips:**")
+            st.markdown("- Each sequence starts with `>` followed by sequence name")
+            st.markdown("- DNA sequence follows on the next line(s)")
+            st.markdown("- Multiple sequences can be pasted at once")
+        
         seq_input = st.text_area("Paste FASTA or raw sequence(s)", height=150)
         if seq_input:
             lines = seq_input.splitlines()
@@ -1230,28 +1008,32 @@ with tab_pages["Upload & Analyze"]:
 
     # --- Enhanced NCBI Query with famous examples ---
     elif input_method == "NCBI Fetch":
-        st.markdown("**Fetch sequences from NCBI database:**")
+        st.markdown("**▪ Fetch sequences from NCBI database:**")
         
-        # Show famous examples as text instead of dropdown
-        st.markdown("**Famous genes/sequences with Non-B DNA motifs:**")
-        st.markdown("""
-        Copy these accession numbers for well-known sequences containing Non-B DNA motifs:
-        - **Human TERT Promoter**: NC_000005.10:1253147-1295047
-        - **Human c-MYC Promoter**: NG_007161.1  
-        - **Human BCL2 Promoter**: NG_009361.1
-        - **Fragile X FMR1 Gene**: NG_007529.1
-        - **Huntington HTT Gene**: NG_009378.1
-        - **Human Immunoglobulin Switch**: NG_001019.6
-        - **Human Alpha Globin**: NG_000006.1
-        - **Friedreich Ataxia FXN**: NG_008845.1
-        """)
-        
-        # Alternative: Show examples as formatted text for easy reference
-        st.markdown("**Available examples:**")
-        examples_text = ""
-        for gene, accession in FAMOUS_NCBI_EXAMPLES.items():
-            examples_text += f"• **{gene}**: `{accession}`\n"
-        st.markdown(examples_text)
+        # Show famous examples
+        with st.expander("▸ Famous genes/sequences with Non-B DNA motifs"):
+            st.markdown("**Select from famous examples:**")
+            
+            # Create a searchable selectbox for famous examples
+            example_options = [""] + [f"{gene} ({accession})" for gene, accession in FAMOUS_NCBI_EXAMPLES.items()]
+            selected_example = st.selectbox(
+                "Choose a famous gene/sequence:",
+                options=example_options,
+                help="Select a well-known gene or sequence with Non-B DNA motifs"
+            )
+            
+            if selected_example:
+                # Extract accession from the selected example
+                accession = selected_example.split("(")[1].rstrip(")")
+                st.session_state.ncbi_query = accession
+                st.success(f"✓ Selected: {selected_example}")
+            
+            # Alternative: Show examples as formatted text for easy reference
+            st.markdown("**Available examples:**")
+            examples_text = ""
+            for gene, accession in FAMOUS_NCBI_EXAMPLES.items():
+                examples_text += f"• **{gene}**: `{accession}`\n"
+            st.markdown(examples_text)
         
         # NCBI query input
         ncbi_query = st.text_input(
@@ -1668,6 +1450,137 @@ with tab_pages["Results"]:
                     fig_heatmap.update_layout(height=300)
                     st.plotly_chart(fig_heatmap, use_container_width=True)
             
+            # ========== ENHANCED ADVANCED VISUALIZATIONS ==========
+            if ADVANCED_VIZ_AVAILABLE and len(motifs) > 0:
+                st.markdown("---")
+                st.markdown('<h3>🚀 Advanced Analysis Dashboard</h3>', unsafe_allow_html=True)
+                st.markdown("*Publication-quality visualizations and comprehensive analysis*")
+                
+                # Create enhanced dashboard
+                motifs_df = pd.DataFrame(motifs)
+                seq_length = len(st.session_state.seqs[seq_idx])
+                
+                try:
+                    enhanced_plots = create_enhanced_dashboard(motifs_df, seq_length)
+                    
+                    # Create tabs for different analysis types
+                    viz_tabs = st.tabs([
+                        "📊 Comprehensive Analysis", 
+                        "🧬 Clinical Significance", 
+                        "🤖 ML Predictions",
+                        "🗺️ Genomic Map",
+                        "🌟 Cluster Analysis",
+                        "🔗 3D Structure"
+                    ])
+                    
+                    with viz_tabs[0]:
+                        st.markdown("### Comprehensive Motif Distribution Analysis")
+                        if 'distribution' in enhanced_plots:
+                            st.plotly_chart(enhanced_plots['distribution'], use_container_width=True)
+                            
+                            # Add export button
+                            if st.button("🔽 Export Distribution Plot", key="export_dist"):
+                                try:
+                                    img_bytes = export_publication_figure(
+                                        enhanced_plots['distribution'], 
+                                        "motif_distribution", 
+                                        format='png'
+                                    )
+                                    st.download_button(
+                                        label="Download PNG",
+                                        data=img_bytes,
+                                        file_name="motif_distribution.png",
+                                        mime="image/png"
+                                    )
+                                except Exception as e:
+                                    st.error(f"Export failed: {e}")
+                    
+                    with viz_tabs[1]:
+                        st.markdown("### Clinical Significance Analysis")
+                        if 'clinical' in enhanced_plots:
+                            st.plotly_chart(enhanced_plots['clinical'], use_container_width=True)
+                            
+                            # Display clinical summary
+                            disease_motifs = motifs_df[motifs_df['Class'] == 'Disease-Associated Motif']
+                            if not disease_motifs.empty:
+                                st.markdown("#### Clinical Summary")
+                                col1, col2, col3 = st.columns(3)
+                                
+                                with col1:
+                                    pathogenic_count = disease_motifs[
+                                        disease_motifs.get('Clinical_Significance', '').str.contains('Pathogenic', na=False)
+                                    ].shape[0]
+                                    st.metric("Pathogenic Variants", pathogenic_count)
+                                
+                                with col2:
+                                    avg_risk = disease_motifs.get('Risk_Score', [0]).astype(float).mean()
+                                    st.metric("Average Risk Score", f"{avg_risk:.1f}")
+                                
+                                with col3:
+                                    diseases = disease_motifs.get('Disease_Name', []).nunique()
+                                    st.metric("Disease Categories", diseases)
+                    
+                    with viz_tabs[2]:
+                        st.markdown("### Machine Learning Enhanced Predictions")
+                        if 'ml_predictions' in enhanced_plots:
+                            st.plotly_chart(enhanced_plots['ml_predictions'], use_container_width=True)
+                            
+                            # ML performance metrics
+                            ml_motifs = motifs_df.dropna(subset=['ML_Probability'])
+                            if not ml_motifs.empty:
+                                st.markdown("#### ML Performance Metrics")
+                                col1, col2, col3, col4 = st.columns(4)
+                                
+                                with col1:
+                                    avg_prob = ml_motifs['ML_Probability'].astype(float).mean()
+                                    st.metric("Avg ML Probability", f"{avg_prob:.3f}")
+                                
+                                with col2:
+                                    avg_conf = ml_motifs['ML_Confidence'].astype(float).mean()
+                                    st.metric("Avg Confidence", f"{avg_conf:.3f}")
+                                
+                                with col3:
+                                    high_conf = (ml_motifs['ML_Confidence'].astype(float) > 0.8).sum()
+                                    st.metric("High Confidence", high_conf)
+                                
+                                with col4:
+                                    enhanced_count = ml_motifs['Enhanced_Score'].notna().sum()
+                                    st.metric("ML Enhanced", enhanced_count)
+                    
+                    with viz_tabs[3]:
+                        st.markdown("### Interactive Genomic Map")
+                        if 'genomic_map' in enhanced_plots:
+                            st.plotly_chart(enhanced_plots['genomic_map'], use_container_width=True)
+                            st.markdown("*Click and drag to zoom, hover for details*")
+                    
+                    with viz_tabs[4]:
+                        st.markdown("### Advanced Cluster Analysis")
+                        if 'cluster_analysis' in enhanced_plots:
+                            st.plotly_chart(enhanced_plots['cluster_analysis'], use_container_width=True)
+                            
+                            # Cluster statistics
+                            cluster_motifs = motifs_df[motifs_df['Class'].str.contains('Cluster', na=False)]
+                            if not cluster_motifs.empty:
+                                st.markdown("#### Cluster Statistics")
+                                col1, col2 = st.columns(2)
+                                
+                                with col1:
+                                    st.metric("Cluster Regions", len(cluster_motifs))
+                                
+                                with col2:
+                                    avg_diversity = cluster_motifs.get('Diversity_Index', [0]).astype(float).mean()
+                                    st.metric("Avg Diversity Index", f"{avg_diversity:.3f}")
+                    
+                    with viz_tabs[5]:
+                        st.markdown("### 3D Structure Visualization")
+                        if '3d_structure' in enhanced_plots:
+                            st.plotly_chart(enhanced_plots['3d_structure'], use_container_width=True)
+                            st.markdown("*Drag to rotate, scroll to zoom*")
+                            st.info("This is a simplified 3D representation. For detailed structural analysis, consider molecular modeling software.")
+                
+                except Exception as e:
+                    st.error(f"Advanced visualization error: {e}")
+                    st.info("Using standard visualizations instead.")
             
             # ========== ENHANCED SUMMARY STATISTICS ==========
             st.markdown("---")
@@ -1709,28 +1622,45 @@ with tab_pages["Results"]:
                     f"{coverage_pct:.1f}%"
                 )
             
-            # Basic statistics summary
-            if motifs:
-                st.markdown("#### 📊 Analysis Summary")
-                basic_stats_cols = st.columns(4)
+            # Enhanced feature breakdown
+            if any('ML_Probability' in str(m) for m in motifs):
+                st.markdown("#### 🤖 Machine Learning Features")
+                ml_stats_cols = st.columns(3)
                 
-                # Count by motif class
-                class_counts = Counter([m.get('Class', 'Unknown') for m in motifs])
+                ml_motifs = [m for m in motifs if 'ML_Probability' in m]
                 
-                with basic_stats_cols[0]:
-                    st.metric("Total Motifs", len(motifs))
+                with ml_stats_cols[0]:
+                    avg_ml_prob = np.mean([float(m.get('ML_Probability', 0)) for m in ml_motifs])
+                    st.metric("Avg ML Probability", f"{avg_ml_prob:.3f}")
                 
-                with basic_stats_cols[1]:
-                    g4_count = class_counts.get('G4_Quadruplex', 0)
-                    st.metric("G-Quadruplex", g4_count)
+                with ml_stats_cols[1]:
+                    high_conf_count = sum(1 for m in ml_motifs if float(m.get('ML_Confidence', 0)) > 0.8)
+                    st.metric("High Confidence Motifs", high_conf_count)
                 
-                with basic_stats_cols[2]:
-                    zdna_count = class_counts.get('Z-DNA', 0)
-                    st.metric("Z-DNA", zdna_count)
+                with ml_stats_cols[2]:
+                    enhanced_count = sum(1 for m in ml_motifs if 'Enhanced_Score' in m)
+                    st.metric("ML Enhanced", enhanced_count)
+            
+            # Disease analysis summary
+            disease_motifs = [m for m in motifs if m.get('Class') == 'Disease-Associated Motif']
+            if disease_motifs:
+                st.markdown("#### 🧬 Clinical Analysis")
+                disease_stats_cols = st.columns(4)
                 
-                with basic_stats_cols[3]:
-                    other_count = len(motifs) - g4_count - zdna_count
-                    st.metric("Other Structures", other_count)
+                with disease_stats_cols[0]:
+                    st.metric("Disease Motifs", len(disease_motifs))
+                
+                with disease_stats_cols[1]:
+                    pathogenic_count = sum(1 for m in disease_motifs if 'Pathogenic' in m.get('Clinical_Significance', ''))
+                    st.metric("Pathogenic", pathogenic_count)
+                
+                with disease_stats_cols[2]:
+                    avg_risk = np.mean([float(m.get('Risk_Score', 0)) for m in disease_motifs])
+                    st.metric("Avg Risk Score", f"{avg_risk:.1f}")
+                
+                with disease_stats_cols[3]:
+                    unique_diseases = len(set(m.get('Disease_Name', 'Unknown') for m in disease_motifs))
+                    st.metric("Disease Types", unique_diseases)
 
 # ---------- DOWNLOAD ----------
 with tab_pages["Download"]:
