@@ -1042,7 +1042,7 @@ with tab_pages["Home"]:
     
     with left:
         # Enhanced image with caption
-        st.image("nbdcircle.JPG", use_container_width=True, caption="Non-B DNA structural diversity: From canonical B-form to complex alternative conformations")
+        st.image("nbdcircle.png", use_container_width=True, caption="Non-B DNA structural diversity: From canonical B-form to complex alternative conformations")
         
 
     
@@ -1245,6 +1245,14 @@ with tab_pages["Upload & Analyze"]:
         - **Human Alpha Globin**: NG_000006.1
         - **Friedreich Ataxia FXN**: NG_008845.1
         """)
+        
+            
+            # Alternative: Show examples as formatted text for easy reference
+            st.markdown("**Available examples:**")
+            examples_text = ""
+            for gene, accession in FAMOUS_NCBI_EXAMPLES.items():
+                examples_text += f"• **{gene}**: `{accession}`\n"
+            st.markdown(examples_text)
         
         # NCBI query input
         ncbi_query = st.text_input(
