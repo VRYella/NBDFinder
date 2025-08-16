@@ -34,6 +34,18 @@ from .g4_related import *
 from .hybrid import *
 from .cluster import *
 
+# Import new enhancement modules
+from .regex_engine import regex_engine, MotifConfig, get_g4_pattern, get_curved_pattern
+from .scoring_system import (
+    G4HunterScorer, iMotifScorer, ZDNAScorer, ConservationScorer, ThermodynamicScorer,
+    CombinatorialScorer, create_g4_scorer, create_zdna_scorer, create_imotif_scorer,
+    ScoreComponents
+)
+from .performance import (
+    BatchProcessor, VectorizedScanner, StreamingProcessor, PatternCache,
+    benchmark_motif_function, profiler, optimize_for_large_genome
+)
+
 # Re-export the main all_motifs function
 from .shared_utils import all_motifs, format_motif_rows
 
@@ -75,5 +87,18 @@ __all__ = [
     'find_hybrids',
     
     # Category 10: Clusters
-    'find_hotspots', 'merge_hotspots', 'select_best_nonoverlapping_motifs'
+    'find_hotspots', 'merge_hotspots', 'select_best_nonoverlapping_motifs',
+    
+    # New Enhancement Modules
+    # Configurable Regex Engine
+    'regex_engine', 'MotifConfig', 'get_g4_pattern', 'get_curved_pattern',
+    
+    # Modular Scoring System
+    'G4HunterScorer', 'iMotifScorer', 'ZDNAScorer', 'ConservationScorer', 'ThermodynamicScorer',
+    'CombinatorialScorer', 'create_g4_scorer', 'create_zdna_scorer', 'create_imotif_scorer',
+    'ScoreComponents',
+    
+    # Performance Optimizations
+    'BatchProcessor', 'VectorizedScanner', 'StreamingProcessor', 'PatternCache',
+    'benchmark_motif_function', 'profiler', 'optimize_for_large_genome'
 ]
