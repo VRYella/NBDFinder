@@ -650,7 +650,7 @@ def create_genome_browser_view(motifs_df, sequence, seq_name):
         
         # Show sequence segments around motifs
         if len(motifs_df) > 0:
-            st.markdown("**📍 Motif Context (±20bp):**")
+            st.markdown("**Motif Context (±20bp):**")
             for idx, motif in motifs_df.head(3).iterrows():  # Show first 3 motifs
                 start = max(0, motif['Start'] - 20)
                 end = min(seq_length, motif['End'] + 20)
@@ -1096,7 +1096,7 @@ CCCTAACCCTAACCCTAACCCTAA
 >Sequence3_ZDna
 CGCGCGCGCGCGCGCGCGCG""", language='text')
             
-            st.markdown("**💡 Pro Tips:**")
+            st.markdown("**Professional Tips:**")
             st.markdown("- Each sequence starts with `>` followed by sequence name")
             st.markdown("- DNA sequence follows on the next line(s)")
             st.markdown("- Multiple sequences can be pasted at once")
@@ -1322,7 +1322,7 @@ CGCGCGCGCGCGCGCGCGCG""", language='text')
                 format_col1, format_col2, format_col3 = st.columns(3)
                 
                 format_options = ["Comprehensive (All Data)", "Summary Only", "Coordinates Only"]
-                format_labels = ["📋 All Data", "📊 Summary", "📍 Coordinates"]
+                format_labels = ["All Data", "Summary", "Coordinates"]
                 
                 with format_col1:
                     if st.button(
@@ -1363,7 +1363,7 @@ CGCGCGCGCGCGCGCGCGCG""", language='text')
                 overlap_col1, overlap_col2, overlap_col3 = st.columns(3)
                 
                 overlap_options = ["Best Score", "Longest Motif", "No Filtering"]
-                overlap_labels = ["🏆 Best Score", "📏 Longest", "🔄 No Filter"]
+                overlap_labels = ["Best Score", "Longest", "No Filter"]
                 
                 with overlap_col1:
                     if st.button(
@@ -1401,7 +1401,7 @@ CGCGCGCGCGCGCGCGCGCG""", language='text')
                 
                 # Statistical analysis
                 enable_stats = st.checkbox(
-                    "📈 Extended Statistical Analysis",
+                    "Extended Statistical Analysis",
                     value=True,
                     help="Include detailed statistical metrics and clustering analysis"
                 )
@@ -1482,7 +1482,7 @@ with tab_pages["Results"]:
     st.markdown("""
     <div style='text-align: center; margin-bottom: 30px;'>
         <h2 style='color: #374151; font-family: Inter, sans-serif; font-weight: 600; margin-bottom: 8px;'>
-            🧬 Advanced Results Analysis Dashboard
+            Advanced Results Analysis Dashboard
         </h2>
         <p style='color: #6b7280; font-size: 1rem; margin: 0;'>
             Publication-quality visualizations and comprehensive motif analysis
@@ -1492,83 +1492,104 @@ with tab_pages["Results"]:
     
     if not st.session_state.results:
         st.markdown("""
-        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 12px; padding: 40px; text-align: center; margin: 20px 0;'>
-            <h3 style='color: white; margin: 0 0 12px 0;'>🚀 Ready for Analysis</h3>
+        <div style='background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%); color: white; border-radius: 12px; padding: 40px; text-align: center; margin: 20px 0;'>
+            <h3 style='color: white; margin: 0 0 12px 0;'>Ready for Analysis</h3>
             <p style='color: white; margin: 0; font-size: 1.1rem; opacity: 0.9;'>
                 Upload sequences in the <strong>Upload & Analyze</strong> tab to see advanced visualizations here
             </p>
         </div>
         """, unsafe_allow_html=True)
     else:
-        # ========== 5 SUBPAGE NAVIGATION ==========
+        # ========== 6 SCIENTIFIC SUBPAGE NAVIGATION ==========
         st.markdown("""
         <div style='background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 24px;'>
-            <h3 style='color: #374151; margin: 0 0 16px 0;'>Analysis Modules</h3>
+            <h3 style='color: #374151; margin: 0 0 16px 0;'>Scientific Analysis Modules</h3>
         </div>
         """, unsafe_allow_html=True)
         
-        # Simple subpage selection with radio buttons
-        st.markdown("**Analysis View:**")
+        # Scientific subpage selection
+        st.markdown("**Analysis Module:**")
         subpage_selection = st.radio(
-            "Choose analysis view:",
-            ["Overview", "Results Table", "Download"],
+            "Choose scientific analysis view:",
+            ["Overview", "Motif Classes", "Genomic Position", "Hybrid Analysis", "Cluster Analysis", "Statistical Summary"],
             horizontal=True,
-            key="results_view_radio"
+            key="scientific_results_view_radio"
         )
         
         st.markdown("---")
         
-        # Simplified results content based on selection
+        # Scientific results content based on selection
         if subpage_selection == "Overview":
             st.markdown("## Analysis Overview")
             
-            # Calculate summary statistics
+            # Calculate comprehensive summary statistics
             total_sequences = len(st.session_state.results)
             total_motifs = sum(len(motifs) for _, motifs in st.session_state.results)
             all_motifs_flat = []
             for _, motifs in st.session_state.results:
                 all_motifs_flat.extend(motifs)
             
-            # Summary metrics
-            col1, col2, col3 = st.columns(3)
+            # Summary metrics in professional layout
+            col1, col2, col3, col4 = st.columns(4)
             with col1:
                 st.metric("Sequences Analyzed", total_sequences)
             with col2:
                 st.metric("Total Motifs Found", total_motifs)
             with col3:
                 unique_classes = len(set([m['Class'] for m in all_motifs_flat]))
-                st.metric("Motif Types", unique_classes)
+                st.metric("Motif Classes", unique_classes)
+            with col4:
+                avg_motifs = total_motifs / total_sequences if total_sequences > 0 else 0
+                st.metric("Avg Motifs/Sequence", f"{avg_motifs:.1f}")
             
-            # Simple motif distribution
+            # Class distribution chart with professional styling
             if all_motifs_flat:
-                st.markdown("### Motif Class Distribution")
+                st.markdown("### Class Distribution Analysis")
                 class_counts = {}
                 for motif in all_motifs_flat:
                     motif_class = motif.get('Class', 'Unknown')
                     class_counts[motif_class] = class_counts.get(motif_class, 0) + 1
                 
                 if class_counts:
-                    # Simple bar chart
+                    # Professional publication-quality chart
                     classes = list(class_counts.keys())
                     counts = list(class_counts.values())
                     
+                    # Use professional color scheme
+                    colors = ['#2563eb', '#dc2626', '#059669', '#7c3aed', '#ea580c', '#0891b2', '#ec4899', '#f59e0b', '#10b981', '#8b5cf6']
+                    
                     fig = go.Figure()
-                    fig.add_trace(go.Bar(x=classes, y=counts))
+                    fig.add_trace(go.Bar(
+                        x=classes, 
+                        y=counts,
+                        marker_color=colors[:len(classes)],
+                        text=counts,
+                        textposition='auto'
+                    ))
                     fig.update_layout(
-                        title="Non-B DNA Motif Distribution",
+                        title="Non-B DNA Motif Class Distribution",
                         xaxis_title="Motif Class",
                         yaxis_title="Count",
-                        height=400
+                        height=400,
+                        plot_bgcolor='white',
+                        paper_bgcolor='white',
+                        font=dict(family="Arial, sans-serif", size=12),
+                        title_font_size=16
                     )
                     st.plotly_chart(fig, use_container_width=True)
+                
+                # Summary table
+                summary_df = pd.DataFrame([
+                    {"Motif Class": cls, "Count": count, "Percentage": f"{count/total_motifs*100:.1f}%"}
+                    for cls, count in sorted(class_counts.items(), key=lambda x: x[1], reverse=True)
+                ])
+                st.markdown("### Summary Statistics")
+                st.dataframe(summary_df, use_container_width=True)
         
-        elif subpage_selection == "Results Table":
-            # Simple results table implementation
-            st.markdown("## Results Table")
+            # Detailed breakdown by motif class with data tables
+            st.markdown("## Motif Classes Analysis")
             
-            # Calculate summary statistics
-            total_sequences = len(st.session_state.results)
-            total_motifs = sum(len(motifs) for _, motifs in st.session_state.results)
+            # Get all motifs data
             all_motifs_flat = []
             for _, motifs in st.session_state.results:
                 all_motifs_flat.extend(motifs)
@@ -1584,10 +1605,18 @@ with tab_pages["Results"]:
                 
                 df_comprehensive = pd.DataFrame(all_data)
                 
-                # Simple filtering controls
-                col1, col2 = st.columns(2)
+                # Professional filtering controls
+                col1, col2, col3 = st.columns(3)
                 
                 with col1:
+                    # Class filter
+                    available_classes = sorted(df_comprehensive['Class'].unique()) if 'Class' in df_comprehensive.columns else []
+                    selected_class = st.selectbox(
+                        "Motif Class:",
+                        options=["All Classes"] + available_classes
+                    )
+                
+                with col2:
                     # Score filter slider
                     if 'Score' in df_comprehensive.columns:
                         score_values = pd.to_numeric(df_comprehensive['Score'], errors='coerce').dropna()
@@ -1603,42 +1632,336 @@ with tab_pages["Results"]:
                     else:
                         min_score = 0
                 
-                with col2:
-                    # Class filter
-                    available_classes = sorted(df_comprehensive['Class'].unique()) if 'Class' in df_comprehensive.columns else []
-                    selected_class = st.selectbox(
-                        "Filter by Class (optional):",
-                        options=["All"] + available_classes
-                    )
+                with col3:
+                    # Length filter
+                    if 'Length' in df_comprehensive.columns:
+                        length_values = pd.to_numeric(df_comprehensive['Length'], errors='coerce').dropna()
+                        if len(length_values) > 0:
+                            min_length = st.slider(
+                                "Minimum Length (bp):",
+                                min_value=int(length_values.min()),
+                                max_value=int(length_values.max()),
+                                value=int(length_values.min())
+                            )
+                        else:
+                            min_length = 0
+                    else:
+                        min_length = 0
                 
                 # Apply filters
                 filtered_df = df_comprehensive.copy()
+                if selected_class != "All Classes":
+                    filtered_df = filtered_df[filtered_df['Class'] == selected_class]
+                
                 if 'Score' in filtered_df.columns:
                     score_numeric = pd.to_numeric(filtered_df['Score'], errors='coerce')
                     filtered_df = filtered_df[score_numeric >= min_score]
                 
-                if selected_class != "All":
-                    filtered_df = filtered_df[filtered_df['Class'] == selected_class]
+                if 'Length' in filtered_df.columns:
+                    length_numeric = pd.to_numeric(filtered_df['Length'], errors='coerce')
+                    filtered_df = filtered_df[length_numeric >= min_length]
                 
                 # Display summary
                 st.markdown(f"**Showing {len(filtered_df)} of {len(df_comprehensive)} total motifs**")
                 
-                # Display the table
-                st.dataframe(filtered_df, use_container_width=True, height=400)
+                # Display the table with professional styling
+                key_columns = ['Sequence Name', 'Class', 'Subtype', 'Start', 'End', 'Length', 'Score']
+                display_columns = [col for col in key_columns if col in filtered_df.columns]
                 
-                # Download button
-                csv = filtered_df.to_csv(index=False)
+                st.dataframe(
+                    filtered_df[display_columns] if display_columns else filtered_df, 
+                    use_container_width=True, 
+                    height=400
+                )
+                
+                # Export options
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    csv = filtered_df.to_csv(index=False)
+                    st.download_button(
+                        label="Export CSV",
+                        data=csv,
+                        file_name="motif_classes_analysis.csv",
+                        mime="text/csv"
+                    )
+                with col2:
+                    # Excel export
+                    excel_data = io.BytesIO()
+                    with pd.ExcelWriter(excel_data, engine='xlsxwriter') as writer:
+                        filtered_df.to_excel(writer, index=False, sheet_name="Motif_Classes")
+                    excel_data.seek(0)
+                    st.download_button(
+                        label="Export Excel",
+                        data=excel_data,
+                        file_name="motif_classes_analysis.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
+                with col3:
+                    # TXT export
+                    txt_data = filtered_df.to_string(index=False)
+                    st.download_button(
+                        label="Export TXT",
+                        data=txt_data,
+                        file_name="motif_classes_analysis.txt",
+                        mime="text/plain"
+                    )
+        
+        elif subpage_selection == "Genomic Position":
+            # Interactive genomic position mapping
+            st.markdown("## Genomic Position Analysis")
+            
+            # Get all sequences and motifs
+            all_sequences = []
+            for seq_name, motifs in st.session_state.results:
+                for i, seq in enumerate(st.session_state.seqs):
+                    if st.session_state.names[i] == seq_name:
+                        all_sequences.append((seq_name, seq, motifs))
+                        break
+            
+            if all_sequences:
+                # Sequence selector
+                seq_names = [name for name, _, _ in all_sequences]
+                selected_seq = st.selectbox("Select Sequence:", seq_names)
+                
+                # Find selected sequence data
+                for seq_name, seq, motifs in all_sequences:
+                    if seq_name == selected_seq:
+                        # Create genome browser visualization
+                        create_genome_browser_view(motifs, seq, seq_name)
+                        break
+        
+        elif subpage_selection == "Hybrid Analysis":
+            # Comprehensive hybrid structure analysis with class combinations
+            st.markdown("## Hybrid Structure Analysis")
+            
+            # Get all motifs and filter for hybrids
+            all_motifs_flat = []
+            hybrid_motifs = []
+            
+            for _, motifs in st.session_state.results:
+                for motif in motifs:
+                    all_motifs_flat.append(motif)
+                    if motif.get('Class') == 'Hybrid':
+                        hybrid_motifs.append(motif)
+            
+            if hybrid_motifs:
+                st.markdown(f"**Found {len(hybrid_motifs)} hybrid structures**")
+                
+                # Hybrid class combination analysis
+                class_combinations = {}
+                for hybrid in hybrid_motifs:
+                    classes = hybrid.get('MotifClasses', [])
+                    if classes:
+                        combo_key = ' + '.join(sorted(classes))
+                        class_combinations[combo_key] = class_combinations.get(combo_key, 0) + 1
+                
+                if class_combinations:
+                    st.markdown("### Class Combination Frequency")
+                    combo_df = pd.DataFrame([
+                        {"Class Combination": combo, "Count": count}
+                        for combo, count in sorted(class_combinations.items(), key=lambda x: x[1], reverse=True)
+                    ])
+                    st.dataframe(combo_df, use_container_width=True)
+                    
+                    # Visualization of combinations
+                    if len(class_combinations) > 0:
+                        fig = go.Figure()
+                        fig.add_trace(go.Bar(
+                            x=list(class_combinations.keys()),
+                            y=list(class_combinations.values()),
+                            marker_color='#0891b2'
+                        ))
+                        fig.update_layout(
+                            title="Hybrid Structure Class Combinations",
+                            xaxis_title="Class Combination",
+                            yaxis_title="Count",
+                            height=400,
+                            plot_bgcolor='white',
+                            paper_bgcolor='white'
+                        )
+                        st.plotly_chart(fig, use_container_width=True)
+                
+                # Detailed hybrid table
+                st.markdown("### Hybrid Structure Details")
+                hybrid_df = pd.DataFrame(hybrid_motifs)
+                key_columns = ['Sequence Name', 'Subtype', 'Start', 'End', 'Length', 'OverlapDegree', 'Score']
+                display_columns = [col for col in key_columns if col in hybrid_df.columns]
+                st.dataframe(hybrid_df[display_columns] if display_columns else hybrid_df, use_container_width=True)
+                
+                # Export hybrid analysis
+                csv = hybrid_df.to_csv(index=False)
                 st.download_button(
-                    label="Download Results CSV",
+                    label="Export Hybrid Analysis CSV",
                     data=csv,
-                    file_name="nbdfinder_results.csv",
+                    file_name="hybrid_analysis.csv",
                     mime="text/csv"
                 )
+            else:
+                st.info("No hybrid structures detected in current analysis. Hybrids form when 2+ different motif classes overlap.")
         
-        elif subpage_selection == "Download":
-            # Redirect to download tab functionality 
-            st.markdown("## Download Results")
-            st.info("Please use the Download tab for exporting results.")
+        elif subpage_selection == "Cluster Analysis":
+            # Non-B DNA cluster regions with complexity metrics
+            st.markdown("## Cluster Analysis")
+            
+            # Get all motifs and identify clusters
+            all_motifs_flat = []
+            cluster_motifs = []
+            
+            for _, motifs in st.session_state.results:
+                for motif in motifs:
+                    all_motifs_flat.append(motif)
+                    if motif.get('Class') == 'Non-B DNA Clusters':
+                        cluster_motifs.append(motif)
+            
+            if cluster_motifs:
+                st.markdown(f"**Found {len(cluster_motifs)} cluster regions**")
+                
+                # Cluster complexity metrics
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    avg_length = np.mean([c.get('Length', 0) for c in cluster_motifs])
+                    st.metric("Average Cluster Length", f"{avg_length:.1f} bp")
+                with col2:
+                    avg_motifs = np.mean([len(c.get('ContributingMotifs', [])) for c in cluster_motifs])
+                    st.metric("Average Motifs/Cluster", f"{avg_motifs:.1f}")
+                with col3:
+                    max_density = max([c.get('MotifDensity', 0) for c in cluster_motifs], default=0)
+                    st.metric("Max Motif Density", f"{max_density:.2f}/100bp")
+                
+                # Cluster details table
+                st.markdown("### Cluster Region Details")
+                cluster_df = pd.DataFrame(cluster_motifs)
+                key_columns = ['Sequence Name', 'Start', 'End', 'Length', 'MotifDensity', 'SubclassCount', 'Score']
+                display_columns = [col for col in key_columns if col in cluster_df.columns]
+                st.dataframe(cluster_df[display_columns] if display_columns else cluster_df, use_container_width=True)
+                
+                # Export cluster analysis
+                csv = cluster_df.to_csv(index=False)
+                st.download_button(
+                    label="Export Cluster Analysis CSV", 
+                    data=csv,
+                    file_name="cluster_analysis.csv",
+                    mime="text/csv"
+                )
+            else:
+                st.info("No cluster regions detected. Clusters form when 3+ motifs occur within 100nt windows.")
+        
+        elif subpage_selection == "Statistical Summary":
+            # Publication-ready statistical analysis and metrics
+            st.markdown("## Statistical Summary")
+            
+            # Comprehensive statistical analysis
+            all_motifs_flat = []
+            for _, motifs in st.session_state.results:
+                all_motifs_flat.extend(motifs)
+            
+            if all_motifs_flat:
+                # Create comprehensive statistics
+                stats_data = []
+                
+                # Per-class statistics
+                class_stats = {}
+                for motif in all_motifs_flat:
+                    motif_class = motif.get('Class', 'Unknown')
+                    if motif_class not in class_stats:
+                        class_stats[motif_class] = {
+                            'count': 0,
+                            'lengths': [],
+                            'scores': []
+                        }
+                    
+                    class_stats[motif_class]['count'] += 1
+                    if 'Length' in motif:
+                        try:
+                            class_stats[motif_class]['lengths'].append(float(motif['Length']))
+                        except:
+                            pass
+                    if 'Score' in motif:
+                        try:
+                            class_stats[motif_class]['scores'].append(float(motif['Score']))
+                        except:
+                            pass
+                
+                # Compile statistics table
+                for class_name, stats in class_stats.items():
+                    lengths = stats['lengths']
+                    scores = stats['scores']
+                    
+                    stats_row = {
+                        'Motif Class': class_name,
+                        'Count': stats['count'],
+                        'Frequency (%)': f"{stats['count']/len(all_motifs_flat)*100:.1f}%"
+                    }
+                    
+                    if lengths:
+                        stats_row.update({
+                            'Mean Length (bp)': f"{np.mean(lengths):.1f}",
+                            'Std Length (bp)': f"{np.std(lengths):.1f}",
+                            'Min Length (bp)': f"{min(lengths):.0f}",
+                            'Max Length (bp)': f"{max(lengths):.0f}"
+                        })
+                    
+                    if scores:
+                        stats_row.update({
+                            'Mean Score': f"{np.mean(scores):.2f}",
+                            'Std Score': f"{np.std(scores):.2f}"
+                        })
+                    
+                    stats_data.append(stats_row)
+                
+                # Display comprehensive statistics table
+                stats_df = pd.DataFrame(stats_data)
+                st.markdown("### Comprehensive Statistical Analysis")
+                st.dataframe(stats_df, use_container_width=True)
+                
+                # Overall summary metrics
+                st.markdown("### Summary Metrics")
+                col1, col2, col3, col4 = st.columns(4)
+                
+                with col1:
+                    total_sequences = len(st.session_state.results)
+                    st.metric("Total Sequences", total_sequences)
+                with col2:
+                    st.metric("Total Motifs", len(all_motifs_flat))
+                with col3:
+                    st.metric("Unique Classes", len(class_stats))
+                with col4:
+                    overall_coverage = sum([m.get('Length', 0) for m in all_motifs_flat])
+                    total_seq_length = sum([len(seq) for seq in st.session_state.seqs])
+                    coverage_pct = (overall_coverage / total_seq_length * 100) if total_seq_length > 0 else 0
+                    st.metric("Total Coverage", f"{coverage_pct:.1f}%")
+                
+                # Export comprehensive statistics
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    csv = stats_df.to_csv(index=False)
+                    st.download_button(
+                        label="Export Statistics CSV",
+                        data=csv,
+                        file_name="statistical_summary.csv",
+                        mime="text/csv"
+                    )
+                with col2:
+                    excel_data = io.BytesIO()
+                    with pd.ExcelWriter(excel_data, engine='xlsxwriter') as writer:
+                        stats_df.to_excel(writer, index=False, sheet_name="Statistics")
+                    excel_data.seek(0)
+                    st.download_button(
+                        label="Export Statistics Excel",
+                        data=excel_data,
+                        file_name="statistical_summary.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
+                with col3:
+                    txt_data = stats_df.to_string(index=False)
+                    st.download_button(
+                        label="Export Statistics TXT",
+                        data=txt_data,
+                        file_name="statistical_summary.txt",
+                        mime="text/plain"
+                    )
+            else:
+                st.info("No motifs available for statistical analysis.")
 
 
 # ---------- DOWNLOAD ----------
