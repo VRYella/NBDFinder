@@ -80,548 +80,186 @@ CGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGCGC
 GAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAAGAAA
 """
 
-# ---------- SCIENTIFIC PROFESSIONAL DESIGN SYSTEM ----------
+# ---------- CONCISE DESIGN SYSTEM ----------
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     
     :root {
-        --primary-color: #1e3a8a;
-        --secondary-color: #475569;
-        --accent-color: #0891b2;
-        --text-primary: #1e3a8a;
-        --text-secondary: #475569;
-        --text-muted: #64748b;
-        --border-color: #e2e8f0;
-        --background-color: #ffffff;
-        --surface-color: #f8fafc;
-        --border-radius: 8px;
-        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        --transition: all 0.2s ease-in-out;
+        --primary: #1e3a8a; --accent: #0891b2; --text: #1e3a8a; --text-muted: #64748b;
+        --border: #e2e8f0; --bg: #ffffff; --surface: #f8fafc; --radius: 8px;
+        --shadow: 0 2px 4px rgba(0,0,0,0.1); --transition: all 0.2s ease;
     }
     
     body, [data-testid="stAppViewContainer"], .main {
-        background: var(--background-color) !important;
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-        color: var(--text-primary) !important;
-        line-height: 1.6 !important;
+        background: var(--bg); font-family: Inter, sans-serif; color: var(--text); line-height: 1.6;
     }
     
-    /* ENHANCED TAB NAVIGATION SYSTEM - FULL WIDTH & MODERN */
+    /* TABS */
     .stTabs [data-baseweb="tab-list"] {
-        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
-        border: 1px solid var(--border-color) !important;
-        border-radius: 12px !important;
-        padding: 8px !important;
-        margin-bottom: 24px !important;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
-        display: flex !important;
-        align-items: center !important;
-        gap: 4px !important;
-        width: 100% !important;
+        background: linear-gradient(135deg, var(--surface) 0%, var(--border) 100%);
+        border: 1px solid var(--border); border-radius: 12px; padding: 8px; margin-bottom: 24px;
+        box-shadow: var(--shadow); display: flex; gap: 4px; width: 100%;
     }
     .stTabs [data-baseweb="tab"] {
-        background: transparent !important;
-        border: none !important;
-        border-radius: 8px !important;
-        font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
-        font-weight: 500 !important;
-        font-size: 1.125rem !important;
-        color: var(--text-secondary) !important;
-        padding: 12px 24px !important;
-        margin: 0 !important;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        cursor: pointer !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        white-space: nowrap !important;
-        min-width: fit-content !important;
-        flex: 1 !important;
+        background: transparent; border: none; border-radius: var(--radius);
+        font-family: Inter, sans-serif; font-weight: 500; font-size: 1.125rem;
+        color: var(--text-muted); padding: 12px 24px; transition: var(--transition);
+        cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+        white-space: nowrap; flex: 1;
     }
     .stTabs [data-baseweb="tab"]:hover {
-        background: rgba(255, 255, 255, 0.8) !important;
-        color: var(--primary-color) !important;
-        font-weight: 600 !important;
-        transform: translateY(-1px) !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+        background: rgba(255,255,255,0.8); color: var(--primary); font-weight: 600;
+        transform: translateY(-1px); box-shadow: var(--shadow);
     }
     .stTabs [aria-selected="true"] {
-        background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%) !important;
-        color: white !important;
-        font-weight: 700 !important;
-        font-size: 1.25rem !important;
-        box-shadow: 0 4px 12px rgba(30, 58, 138, 0.3) !important;
-        transform: translateY(-2px) !important;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+        color: white; font-weight: 700; font-size: 1.25rem;
+        box-shadow: 0 4px 12px rgba(30,58,138,0.3); transform: translateY(-2px);
     }
     
-    /* CLEAN FORM CONTROLS */
+    /* FORM CONTROLS */
     .stSelectbox > div, .stMultiSelect > div, .stTextInput > div, .stTextArea > div {
-        background: var(--background-color) !important;
-        border: 1px solid var(--border-color) !important;
-        border-radius: var(--border-radius) !important;
-        transition: var(--transition) !important;
+        background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); 
+        transition: var(--transition);
     }
     .stSelectbox > div:hover, .stMultiSelect > div:hover, .stTextInput > div:hover, .stTextArea > div:hover {
-        border-color: var(--accent-color) !important;
+        border-color: var(--accent);
     }
     .stSelectbox > div:focus-within, .stMultiSelect > div:focus-within, .stTextInput > div:focus-within, .stTextArea > div:focus-within {
-        border-color: var(--primary-color) !important;
-        box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.1) !important;
+        border-color: var(--primary); box-shadow: 0 0 0 2px rgba(30,64,175,0.1);
     }
     
-    /* PROFESSIONAL BUTTONS */
+    /* BUTTONS */
     .stButton > button {
-        background: var(--primary-color) !important;
-        color: white !important;
-        border: none !important;
-        border-radius: var(--border-radius) !important;
-        font-weight: 500 !important;
-        transition: var(--transition) !important;
-        cursor: pointer !important;
+        background: var(--primary); color: white; border: none; border-radius: var(--radius);
+        font-weight: 500; transition: var(--transition); cursor: pointer;
     }
-    .stButton > button:hover {
-        background: #1e3a8a !important;
-        box-shadow: var(--shadow-md) !important;
-    }
-    .stButton > button:active {
-        transform: translateY(1px) !important;
-    }
+    .stButton > button:hover { background: #1e3a8a; box-shadow: var(--shadow); }
+    .stButton > button:active { transform: translateY(1px); }
     
-    /* CONTAINERS AND LAYOUT - FULL WIDTH */
-    .main .block-container {
-        padding: 1.5rem 2rem !important;
-        max-width: none !important;
-        width: 100% !important;
-    }
-    
-    /* Additional full-width optimization */
-    .stApp > .main {
-        width: 100% !important;
-        max-width: none !important;
-    }
-    
-    /* Ensure content spans full viewport */
-    [data-testid="stAppViewContainer"] {
-        width: 100% !important;
-        max-width: none !important;
-    }
+    /* LAYOUT */
+    .main .block-container { padding: 1.5rem 2rem; max-width: none; width: 100%; }
+    .stApp > .main { width: 100%; max-width: none; }
+    [data-testid="stAppViewContainer"] { width: 100%; max-width: none; }
 
-    /* ENHANCED TYPOGRAPHY SYSTEM - IMPROVED VISUAL IMPACT */
+    /* TYPOGRAPHY */
     h1, h2, h3, h4, h5, h6 {
-        font-family: 'Inter', sans-serif !important;
-        font-weight: 700 !important;
-        letter-spacing: -0.025em !important;
-        line-height: 1.1 !important;
-        margin-top: 1.5rem !important;
-        margin-bottom: 1rem !important;
-        color: var(--primary-color) !important;
-        background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%) !important;
-        -webkit-background-clip: text !important;
-        -webkit-text-fill-color: transparent !important;
-        background-clip: text !important;
+        font-family: Inter, sans-serif; font-weight: 700; letter-spacing: -0.025em;
+        line-height: 1.1; margin: 1.5rem 0 1rem; color: var(--primary);
+        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     }
-    h1 { 
-        font-size: 4rem !important; 
-        font-weight: 900 !important;
-        letter-spacing: -0.04em !important;
-        margin-bottom: 1.5rem !important;
-    }
-    h2 { 
-        font-size: 3rem !important; 
-        font-weight: 800 !important;
-        letter-spacing: -0.03em !important;
-    }
-    h3 { 
-        font-size: 2.25rem !important; 
-        font-weight: 750 !important;
-        letter-spacing: -0.025em !important;
-    }
-    h4 { 
-        font-size: 1.75rem !important; 
-        font-weight: 700 !important;
-        letter-spacing: -0.02em !important;
-    }
-    h5 { 
-        font-size: 1.375rem !important; 
-        font-weight: 650 !important;
-    }
-    h6 { 
-        font-size: 1.25rem !important; 
-        font-weight: 600 !important;
-    }
+    h1 { font-size: 4rem; font-weight: 900; letter-spacing: -0.04em; margin-bottom: 1.5rem; }
+    h2 { font-size: 3rem; font-weight: 800; letter-spacing: -0.03em; }
+    h3 { font-size: 2.25rem; font-weight: 750; letter-spacing: -0.025em; }
+    h4 { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.02em; }
+    h5 { font-size: 1.375rem; font-weight: 650; }
+    h6 { font-size: 1.25rem; font-weight: 600; }
     
-    /* ENHANCED TEXT AND COMPONENTS - IMPROVED READABILITY */
     .stMarkdown, .markdown-text-container, .stText, p, span, label, input {
-        font-family: 'Inter', sans-serif !important;
-        font-size: 1.125rem !important;
-        line-height: 1.7 !important;
-        color: var(--text-primary) !important;
-        font-weight: 400 !important;
+        font-family: Inter, sans-serif; font-size: 1.125rem; line-height: 1.7; 
+        color: var(--text); font-weight: 400;
     }
+    .stMarkdown p { margin-bottom: 1.25rem; font-size: 1.125rem; }
+    .stMarkdown ul, .stMarkdown ol { font-size: 1.125rem; line-height: 1.7; margin-bottom: 1.5rem; }
+    .stMarkdown li { margin-bottom: 0.5rem; padding-left: 0.5rem; }
     
-    /* Special styling for important paragraphs */
-    .stMarkdown p {
-        margin-bottom: 1.25rem !important;
-        font-size: 1.125rem !important;
-    }
-    
-    /* Enhanced list styling */
-    .stMarkdown ul, .stMarkdown ol {
-        font-size: 1.125rem !important;
-        line-height: 1.7 !important;
-        margin-bottom: 1.5rem !important;
-    }
-    
-    .stMarkdown li {
-        margin-bottom: 0.5rem !important;
-        padding-left: 0.5rem !important;
-    }
-    
-    /* PROFESSIONAL BUTTON STYLING */
+    /* BUTTON STYLING */
     .stButton>button {
-        font-family: 'Inter', sans-serif !important;
-        font-weight: 600 !important;
-        font-size: 1rem !important;
-        padding: 10px 20px !important;
-        background: var(--primary-color) !important;
-        color: white !important;
-        border: none !important;
-        border-radius: var(--border-radius) !important;
-        transition: var(--transition) !important;
-        cursor: pointer !important;
+        font-family: Inter, sans-serif; font-weight: 600; font-size: 1rem; padding: 10px 20px;
+        background: var(--primary); color: white; border: none; border-radius: var(--radius);
+        transition: var(--transition); cursor: pointer;
     }
-    .stButton>button:hover {
-        background: #1e3a8a !important;
-        box-shadow: var(--shadow-md) !important;
-    }
-    .stButton>button:active {
-        transform: translateY(1px) !important;
-    }
+    .stButton>button:hover { background: #1e3a8a; box-shadow: var(--shadow); }
+    .stButton>button:active { transform: translateY(1px); }
     
-    /* CLEAN DATA TABLES */
+    /* DATA TABLES */
     .stDataFrame, .stTable {
-        font-family: 'Inter', sans-serif !important;
-        border-radius: var(--border-radius) !important;
-        overflow: hidden !important;
-        box-shadow: var(--shadow-sm) !important;
-        border: 1px solid var(--border-color) !important;
-        background: var(--background-color) !important;
+        font-family: Inter, sans-serif; border-radius: var(--radius); overflow: hidden;
+        box-shadow: var(--shadow); border: 1px solid var(--border); background: var(--bg);
     }
     .stDataFrame th, .stTable th {
-        background: var(--surface-color) !important;
-        color: var(--text-primary) !important;
-        font-weight: 600 !important;
-        font-size: 0.875rem !important;
-        padding: 12px !important;
-        text-align: left !important;
-        border-bottom: 2px solid var(--border-color) !important;
+        background: var(--surface); color: var(--text); font-weight: 600; font-size: 0.875rem;
+        padding: 12px; text-align: left; border-bottom: 2px solid var(--border);
     }
     .stDataFrame td, .stTable td {
-        padding: 10px 12px !important;
-        text-align: left !important;
-        font-size: 0.875rem !important;
-        font-weight: 400 !important;
-        border-bottom: 1px solid var(--border-color) !important;
+        padding: 10px 12px; text-align: left; font-size: 0.875rem; font-weight: 400;
+        border-bottom: 1px solid var(--border);
     }
-    .stDataFrame tr:hover td, .stTable tr:hover td {
-        background: var(--surface-color) !important;
-    }
-    .stDataFrame tr:nth-child(even), .stTable tr:nth-child(even) {
-        background: rgba(248, 250, 252, 0.5) !important;
-    }
+    .stDataFrame tr:hover td, .stTable tr:hover td { background: var(--surface); }
+    .stDataFrame tr:nth-child(even), .stTable tr:nth-child(even) { background: rgba(248,250,252,0.5); }
     
-    /* Professional confidence level styling */
-    .stDataFrame .confidence-optimal {
-        background: #059669 !important;
-        color: white !important;
-        font-weight: 600 !important;
-        border-radius: var(--border-radius) !important;
-        padding: 4px 8px !important;
-        font-size: 0.75rem !important;
-    }
+    /* CONFIDENCE BADGES */
+    .stDataFrame .confidence-optimal { background: #059669; color: white; font-weight: 600; border-radius: var(--radius); padding: 4px 8px; font-size: 0.75rem; }
+    .stDataFrame .confidence-high { background: var(--primary); color: white; font-weight: 600; border-radius: var(--radius); padding: 4px 8px; font-size: 0.75rem; }
+    .stDataFrame .confidence-moderate { background: #ea580c; color: white; font-weight: 600; border-radius: var(--radius); padding: 4px 8px; font-size: 0.75rem; }
+    .stDataFrame .confidence-low { background: #dc2626; color: white; font-weight: 600; border-radius: var(--radius); padding: 4px 8px; font-size: 0.75rem; }
     
-    .stDataFrame .confidence-high {
-        background: var(--primary-color) !important;
-        color: white !important;
-        font-weight: 600 !important;
-        border-radius: var(--border-radius) !important;
-        padding: 4px 8px !important;
-        font-size: 0.75rem !important;
-    }
+    /* DROPDOWNS & MISC */
+    .stSelectbox > div > div { min-width: 200px; padding-right: 40px; }
+    .stSelectbox > div > div > div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 30px; }
+    .stDataFrame div[data-testid="stTable"] button { min-width: auto; padding-right: 25px; }
+    .stDataFrame .dropdown-menu { min-width: 150px; }
+    .stSelectbox [data-baseweb="select"] > div:last-child { padding-left: 8px; min-width: 24px; }
     
-    .stDataFrame .confidence-moderate {
-        background: #ea580c !important;
-        color: white !important;
-        font-weight: 600 !important;
-        border-radius: var(--border-radius) !important;
-        padding: 4px 8px !important;
-        font-size: 0.75rem !important;
-    }
+    /* EXPANDERS & PROGRESS */
+    [data-testid="stExpander"] { border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); margin-bottom: 16px; }
+    [data-testid="stExpander"] summary { padding: 12px 16px; font-family: Inter, sans-serif; font-weight: 500; font-size: 0.875rem; color: var(--text); cursor: pointer; background: var(--surface); border: none; display: flex; align-items: center; justify-content: space-between; }
+    [data-testid="stExpander"] summary:hover { background: #f1f5f9; }
+    [data-testid="stExpander"] summary div { display: flex; align-items: center; gap: 8px; }
+    .stProgress > div > div { background: var(--primary); border-radius: var(--radius); }
+    .stProgress > div { background: var(--border); border-radius: var(--radius); }
     
-    .stDataFrame .confidence-low {
-        background: #dc2626 !important;
-        color: white !important;
-        font-weight: 600 !important;
-        border-radius: var(--border-radius) !important;
-        padding: 4px 8px !important;
-        font-size: 0.75rem !important;
-    }
-    /* Fix dropdown text overlap issues */
-    .stSelectbox > div > div {
-        min-width: 200px !important;
-        padding-right: 40px !important;
-    }
-    .stSelectbox > div > div > div {
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-        padding-right: 30px !important;
-    }
-    /* Fix data table dropdown menus */
-    .stDataFrame div[data-testid="stTable"] button {
-        min-width: auto !important;
-        padding-right: 25px !important;
-    }
-    .stDataFrame .dropdown-menu {
-        min-width: 150px !important;
-    }
-    /* Fix selectbox arrow positioning */
-    .stSelectbox [data-baseweb="select"] > div:last-child {
-        padding-left: 8px !important;
-        min-width: 24px !important;
-    }
+    /* SCROLLBAR */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--surface); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
     
-    /* Clean expander styling */
-    [data-testid="stExpander"] {
-        border: 1px solid var(--border-color) !important;
-        border-radius: var(--border-radius) !important;
-        background: var(--background-color) !important;
-        margin-bottom: 16px !important;
-    }
-    
-    /* Clean expander header */
-    [data-testid="stExpander"] summary {
-        padding: 12px 16px !important;
-        font-family: 'Inter', sans-serif !important;
-        font-weight: 500 !important;
-        font-size: 0.875rem !important;
-        color: var(--text-primary) !important;
-        cursor: pointer !important;
-        background: var(--surface-color) !important;
-        border: none !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: space-between !important;
-    }
-    
-    [data-testid="stExpander"] summary:hover {
-        background: #f1f5f9 !important;
-    }
-    }
-    
-    /* Ensure proper spacing for the gear emoji and text */
-    [data-testid="stExpander"] summary div {
-        display: flex !important;
-        align-items: center !important;
-        gap: 8px !important;
-    }
-    
-    /* Clean progress bars */
-    .stProgress > div > div {
-        background: var(--primary-color) !important;
-        border-radius: var(--border-radius) !important;
-    }
-    .stProgress > div {
-        background: var(--border-color) !important;
-        border-radius: var(--border-radius) !important;
-    }
-    
-    /* Clean scrollbar styling */
-    ::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-        background: var(--surface-color);
-        border-radius: 3px;
-    }
-    ::-webkit-scrollbar-thumb {
-        background: var(--text-muted);
-        border-radius: 3px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-        background: var(--primary-color);
-    }
-    
-    /* HORIZONTAL TOGGLE BUTTON GROUPS */
+    /* TOGGLE BUTTONS */
     .stButton > button {
-        font-family: 'Inter', sans-serif !important;
-        font-weight: 500 !important;
-        border-radius: var(--border-radius) !important;
-        transition: var(--transition) !important;
-        border: 1px solid var(--border-color) !important;
-        min-height: 42px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        white-space: nowrap !important;
-        text-overflow: ellipsis !important;
-        overflow: hidden !important;
+        font-family: Inter, sans-serif; font-weight: 500; border-radius: var(--radius);
+        transition: var(--transition); border: 1px solid var(--border); min-height: 42px;
+        display: flex; align-items: center; justify-content: center; white-space: nowrap;
+        text-overflow: ellipsis; overflow: hidden;
     }
+    .stButton > button[kind="secondary"] { background: var(--bg); color: var(--text-muted); border: 1px solid var(--border); }
+    .stButton > button[kind="secondary"]:hover { background: var(--surface); color: var(--text); border-color: var(--accent); transform: translateY(-1px); box-shadow: var(--shadow); }
+    .stButton > button[kind="primary"] { background: var(--primary); color: white; border: 1px solid var(--primary); font-weight: 600; box-shadow: var(--shadow); }
+    .stButton > button[kind="primary"]:hover { background: #1e3a8a; border-color: #1e3a8a; transform: translateY(-1px); box-shadow: var(--shadow); }
+    .element-container:has(.stButton) { margin-bottom: 8px; }
     
-    /* Secondary button styling (unselected toggle buttons) */
-    .stButton > button[kind="secondary"] {
-        background: var(--background-color) !important;
-        color: var(--text-secondary) !important;
-        border: 1px solid var(--border-color) !important;
-    }
-    
-    .stButton > button[kind="secondary"]:hover {
-        background: var(--surface-color) !important;
-        color: var(--text-primary) !important;
-        border-color: var(--accent-color) !important;
-        transform: translateY(-1px) !important;
-        box-shadow: var(--shadow-sm) !important;
-    }
-    
-    /* Primary button styling (selected toggle buttons) */
-    .stButton > button[kind="primary"] {
-        background: var(--primary-color) !important;
-        color: white !important;
-        border: 1px solid var(--primary-color) !important;
-        font-weight: 600 !important;
-        box-shadow: var(--shadow-sm) !important;
-    }
-    
-    .stButton > button[kind="primary"]:hover {
-        background: #1e3a8a !important;
-        border-color: #1e3a8a !important;
-        transform: translateY(-1px) !important;
-        box-shadow: var(--shadow-md) !important;
-    }
-    
-    /* Ensure proper spacing for toggle button groups */
-    .element-container:has(.stButton) {
-        margin-bottom: 8px !important;
-    }
-    
-    /* Advanced Analysis Options section styling */
-    [data-testid="stExpander"] summary {
-        padding: 12px 16px !important;
-        background: var(--surface-color) !important;
-        border: 1px solid var(--border-color) !important;
-        border-radius: var(--border-radius) !important;
-        font-family: 'Inter', sans-serif !important;
-        font-weight: 500 !important;
-        cursor: pointer !important;
-        transition: var(--transition) !important;
-    }
-    
-    [data-testid="stExpander"] summary:hover {
-        background: var(--background-color) !important;
-        border-color: var(--accent-color) !important;
-    }
-    
-    [data-testid="stExpander"] > div:first-child {
-        border: none !important;
-        background: transparent !important;
-    }
-    
-    /* Remove default button focus outline and add custom one */
-    .stButton > button:focus {
-        outline: none !important;
-        box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.3) !important;
-    }
+    /* FINAL STYLING */
+    [data-testid="stExpander"] > div:first-child { border: none; background: transparent; }
+    .stButton > button:focus { outline: none; box-shadow: 0 0 0 2px rgba(30,64,175,0.3); }
     </style>
     """, unsafe_allow_html=True)
 
 # ---------- CONSTANTS ----------
-# Motifs organized by category and alphabetically within each category as per requirements
 MOTIF_CATEGORIES = {
-    "G-quadruplex-related": [
-        "Bipartite G4", "Bulged G4", "Canonical G4", "Imperfect G4", "Multimeric G4", "Relaxed G4"
-    ],
-    "G-Triplex": [
-        "G-Triplex"
-    ],
-    "i-motif related": [
-        "AC-Motif", "i-Motif"
-    ],
-    "Helix deviations": [
-        "Curved DNA", "eGZ (Extruded-G)", "Z-DNA"
-    ],
-    "Repeat/junction": [
-        "Cruciform", "R-Loop", "Slipped DNA", "Sticky DNA", "Triplex DNA"
-    ],
-    "Hybrid": [
-        "Hybrid"
-    ],
-    "Non-B DNA Clusters": [
-        "Non-B DNA Clusters"
-    ]
+    "G-quadruplex-related": ["Bipartite G4", "Bulged G4", "Canonical G4", "Imperfect G4", "Multimeric G4", "Relaxed G4"],
+    "G-Triplex": ["G-Triplex"],
+    "i-motif related": ["AC-Motif", "i-Motif"],
+    "Helix deviations": ["Curved DNA", "eGZ (Extruded-G)", "Z-DNA"],
+    "Repeat/junction": ["Cruciform", "R-Loop", "Slipped DNA", "Sticky DNA", "Triplex DNA"],
+    "Hybrid": ["Hybrid"],
+    "Non-B DNA Clusters": ["Non-B DNA Clusters"]
 }
 
-# Flatten categories to create alphabetical order within categories
-MOTIF_ORDER = []
-for category, motifs in MOTIF_CATEGORIES.items():
-    MOTIF_ORDER.extend(sorted(motifs))
+MOTIF_ORDER = [motif for motifs in MOTIF_CATEGORIES.values() for motif in sorted(motifs)]
 
-# Enhanced color scheme from the reference implementation
-# Enhanced premium color schemes for top-tier visualization and accessibility
+# Color schemes
 MOTIF_COLORS = {
-    # G4 Family - Sophisticated blues with perfect contrast
     "Canonical G4": "#1E40AF", "Relaxed G4": "#3B82F6", "Bulged G4": "#60A5FA", 
     "Bipartite G4": "#1D4ED8", "Multimeric G4": "#2563EB", "Imperfect G4": "#93C5FD",
-    
-    # Alternative Structures - Elegant warm tones  
     "Z-DNA": "#DC2626", "eGZ (Extruded-G)": "#EA580C", "Curved DNA": "#F59E0B",
-    
-    # Repeats - Professional greens
     "Slipped DNA": "#059669", "R-Loop": "#10B981", "Sticky DNA": "#34D399",
-    
-    # Junctions - Rich purples and magentas
     "Cruciform": "#7C3AED", "Triplex DNA": "#8B5CF6", "G-Triplex": "#A78BFA",
-    
-    # Special Motifs - Distinctive premium colors
     "i-Motif": "#EC4899", "AC-Motif": "#F59E0B", "Hybrid": "#06B6D4", 
     "Non-B DNA Clusters": "#EF4444"
 }
 
-# Premium publication-quality color scheme for scientific figures
-PUBLICATION_COLORS = {
-    # G4 Family - Deep professional blues
-    'Canonical G4': '#1E3A8A',      
-    'Relaxed G4': '#3B82F6',        
-    'Bulged G4': '#60A5FA',         
-    'Bipartite G4': '#1E40AF',      
-    'Multimeric G4': '#1D4ED8',     
-    'Imperfect G4': '#93C5FD',      
-    
-    # G-related structures - Distinguished colors
-    'G-Triplex': '#7C2D92',         
-    'i-Motif': '#EC4899',           
-    
-    # Z-DNA Family - Rich purples (left-handed helix)
-    'Z-DNA': '#7C2D92',             
-    'eGZ (Extruded-G)': '#A855F7',  
-    
-    # Structural variants - Sophisticated warm colors
-    'Curved_DNA': '#DC2626',        
-    'Slipped_DNA': '#EA580C',       
-    'Cruciform': '#F59E0B',         
-    
-    # Complex structures - Premium earth tones
-    'Triplex_DNA': '#059669',       
-    'Sticky_DNA': '#0891B2',        
-    'R-Loop': '#7C3AED',            
-    
-    # Specialized motifs - Distinctive premium colors
-    'AC-Motif': '#F59E0B',          
-    'Hybrid': '#06B6D4',            
-    'Non-B DNA Clusters': '#EF4444' 
-}
 PAGES = {
     "Home": "Overview",
     "Upload & Analyze": "Sequence Upload and Motif Analysis",
@@ -632,7 +270,6 @@ PAGES = {
 Entrez.email = "raazbiochem@gmail.com"
 Entrez.api_key = None
 
-# Enhanced example sequences with specific Non-B DNA structures
 EXAMPLE_SEQUENCES = {
     "Human Telomere G4-Rich": {
         "name": "G4_Rich_Human_Telomere_Example", 
@@ -656,7 +293,6 @@ EXAMPLE_SEQUENCES = {
     }
 }
 
-# Famous genes/sequences known for Non-B DNA motifs  
 FAMOUS_NCBI_EXAMPLES = {
     "Human TERT Promoter": "NC_000005.10:1253147-1295047",
     "Human c-MYC Promoter": "NG_007161.1",
@@ -1081,7 +717,7 @@ def create_enhanced_motif_visualization(motifs, seq_name, seq_length):
         if motif_class == "Z-DNA" and motif.get("Subclass", "") == "eGZ (Extruded-G)":
             motif_class = "eGZ (Extruded-G)"
         
-        color = PUBLICATION_COLORS.get(motif_class, "#666666")
+        color = MOTIF_COLORS.get(motif_class, "#666666")
         
         # Enhanced hover information with scientific details
         hover_text = (f"<b>{motif_class}</b><br>"
@@ -2140,11 +1776,9 @@ with tab_pages["Documentation"]:
     st.markdown("""
     <style>
     /* Documentation-specific theme: neutral grayscale with accent cyan */
-    .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4 {
-        color: #1f2937 !important;
-    }
+    .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4 { color: #1f2937; }
     .doc-accent {
-        color: #0891b2 !important;
+        color: #0891b2;
         background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
