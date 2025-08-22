@@ -192,16 +192,27 @@ def validate_motif(motif, seq_length):
         return False
     return True
 
-def all_motifs(seq, nonoverlap=False, report_hotspots=False, sequence_name="Sequence", fast_mode=False):
+def all_motifs(seq, nonoverlap=False, report_hotspots=False, sequence_name="Sequence"):
     """
-    OPTIMIZED: Main function to detect all non-B DNA motifs in a sequence
+    COMPLETE PERFORMANCE MODE: Detect all non-B DNA motifs in specified order
+    
+    This function runs each class one after another in the exact order specified:
+    1. Curved DNA
+    2. Slipped DNA  
+    3. Cruciform DNA
+    4. R-loop
+    5. Triplex
+    6. G-Quadruplex Family
+    7. i-motif family
+    8. Z-DNA
+    9. Hybrid (overlaps between any two or more)
+    10. Non-B DNA cluster regions
     
     Args:
         seq: DNA sequence string
         nonoverlap: If True, remove overlapping motifs per class
         report_hotspots: If True, include cluster analysis
         sequence_name: Name for the sequence
-        fast_mode: If True, skip expensive operations for speed
     
     Returns:
         List of motif dictionaries
@@ -213,118 +224,210 @@ def all_motifs(seq, nonoverlap=False, report_hotspots=False, sequence_name="Sequ
     seq = seq.upper()
     
     motif_list = []
+    processed_classes = []
     
-    # Try to import and call functions, gracefully handle missing ones
+    print(f"Starting Non-B DNA detection for sequence of length {len(seq)}")
+    
+    # 1. Curved DNA
+    print("1. Processing Curved DNA...")
     try:
         from .curved_dna import find_curved_DNA
-        motif_list += find_curved_DNA(seq)
-    except (ImportError, AttributeError):
-        pass
-        
-    try:
-        from .zdna_egz import find_zdna, find_egz_motif
-        motif_list += find_zdna(seq)
-        motif_list += find_egz_motif(seq)
-    except (ImportError, AttributeError):
-        pass
-        
+        curved_motifs = find_curved_DNA(seq)
+        motif_list += curved_motifs
+        processed_classes.append(f"Curved DNA: {len(curved_motifs)} motifs found")
+        print(f"   Found {len(curved_motifs)} Curved DNA motifs")
+    except (ImportError, AttributeError) as e:
+        processed_classes.append("Curved DNA: not found in result")
+        print(f"   Curved DNA: not found in result ({e})")
+    
+    # 2. Slipped DNA
+    print("2. Processing Slipped DNA...")
     try:
         from .slipped_dna import find_slipped_dna
-        motif_list += find_slipped_dna(seq)
-    except (ImportError, AttributeError):
-        pass
-        
-    try:
-        from .r_loop import find_rlfs
-        motif_list += find_rlfs(seq)
-    except (ImportError, AttributeError):
-        pass
-        
+        slipped_motifs = find_slipped_dna(seq)
+        motif_list += slipped_motifs
+        processed_classes.append(f"Slipped DNA: {len(slipped_motifs)} motifs found")
+        print(f"   Found {len(slipped_motifs)} Slipped DNA motifs")
+    except (ImportError, AttributeError) as e:
+        processed_classes.append("Slipped DNA: not found in result")
+        print(f"   Slipped DNA: not found in result ({e})")
+    
+    # 3. Cruciform DNA
+    print("3. Processing Cruciform DNA...")
     try:
         from .hairpin_cruciform import find_cruciform
-        motif_list += find_cruciform(seq)
-    except (ImportError, AttributeError):
-        pass
-        
+        cruciform_motifs = find_cruciform(seq)
+        motif_list += cruciform_motifs
+        processed_classes.append(f"Cruciform DNA: {len(cruciform_motifs)} motifs found")
+        print(f"   Found {len(cruciform_motifs)} Cruciform DNA motifs")
+    except (ImportError, AttributeError) as e:
+        processed_classes.append("Cruciform DNA: not found in result")
+        print(f"   Cruciform DNA: not found in result ({e})")
+    
+    # 4. R-loop
+    print("4. Processing R-loop...")
+    try:
+        from .r_loop import find_rlfs
+        rloop_motifs = find_rlfs(seq)
+        motif_list += rloop_motifs
+        processed_classes.append(f"R-loop: {len(rloop_motifs)} motifs found")
+        print(f"   Found {len(rloop_motifs)} R-loop motifs")
+    except (ImportError, AttributeError) as e:
+        processed_classes.append("R-loop: not found in result")
+        print(f"   R-loop: not found in result ({e})")
+    
+    # 5. Triplex
+    print("5. Processing Triplex...")
     try:
         from .triplex_dna import find_hdna, find_sticky_dna
-        motif_list += find_hdna(seq)
-        motif_list += find_sticky_dna(seq)
-    except (ImportError, AttributeError):
-        pass
-        
+        triplex_motifs = find_hdna(seq) + find_sticky_dna(seq)
+        motif_list += triplex_motifs
+        processed_classes.append(f"Triplex: {len(triplex_motifs)} motifs found")
+        print(f"   Found {len(triplex_motifs)} Triplex motifs")
+    except (ImportError, AttributeError) as e:
+        processed_classes.append("Triplex: not found in result")
+        print(f"   Triplex: not found in result ({e})")
+    
+    # 6. G-Quadruplex Family
+    print("6. Processing G-Quadruplex Family...")
     try:
-        from .g4_related import find_gquadruplex, find_gtriplex
-        motif_list += find_gquadruplex(seq)
-        motif_list += find_gtriplex(seq)
-        # Try other G4 variants but don't fail if they have issues
-        try:
-            from .g4_related import (find_relaxed_gquadruplex, find_bulged_gquadruplex, 
-                                    find_bipartite_gquadruplex, find_multimeric_gquadruplex, 
-                                    find_imperfect_gquadruplex)
-            motif_list += find_relaxed_gquadruplex(seq)
-            motif_list += find_bulged_gquadruplex(seq)
-            motif_list += find_bipartite_gquadruplex(seq)
-            motif_list += find_multimeric_gquadruplex(seq)
-            motif_list += find_imperfect_gquadruplex(seq)
-        except Exception:
-            pass
-    except (ImportError, AttributeError):
-        pass
+        from .g4_related import (find_gquadruplex, find_gtriplex, find_relaxed_gquadruplex, 
+                                find_bulged_gquadruplex, find_bipartite_gquadruplex, 
+                                find_multimeric_gquadruplex, find_imperfect_gquadruplex)
+        g4_motifs = []
         
+        # Try each G4 function individually to handle any issues
+        try:
+            g4_motifs += find_multimeric_gquadruplex(seq)
+        except Exception as e:
+            print(f"     Warning: Multimeric G4 detection failed: {e}")
+            
+        try:
+            g4_motifs += find_gquadruplex(seq)
+        except Exception as e:
+            print(f"     Warning: Canonical G4 detection failed: {e}")
+            
+        try:
+            g4_motifs += find_relaxed_gquadruplex(seq)
+        except Exception as e:
+            print(f"     Warning: Relaxed G4 detection failed: {e}")
+            
+        try:
+            g4_motifs += find_bulged_gquadruplex(seq)
+        except Exception as e:
+            print(f"     Warning: Bulged G4 detection failed: {e}")
+            
+        try:
+            g4_motifs += find_bipartite_gquadruplex(seq)
+        except Exception as e:
+            print(f"     Warning: Bipartite G4 detection failed: {e}")
+            
+        try:
+            g4_motifs += find_imperfect_gquadruplex(seq)
+        except Exception as e:
+            print(f"     Warning: Imperfect G4 detection failed: {e}")
+            
+        try:
+            g4_motifs += find_gtriplex(seq)
+        except Exception as e:
+            print(f"     Warning: G-triplex detection failed: {e}")
+        
+        motif_list += g4_motifs
+        processed_classes.append(f"G-Quadruplex Family: {len(g4_motifs)} motifs found")
+        print(f"   Found {len(g4_motifs)} G-Quadruplex Family motifs")
+    except (ImportError, AttributeError) as e:
+        processed_classes.append("G-Quadruplex Family: not found in result")
+        print(f"   G-Quadruplex Family: not found in result ({e})")
+    
+    # 7. i-motif family
+    print("7. Processing i-motif family...")
     try:
         from .imotif_ac import find_imotif, find_ac_motifs
-        motif_list += find_imotif(seq)
-        motif_list += find_ac_motifs(seq)
-    except (ImportError, AttributeError):
-        pass
+        imotif_motifs = find_imotif(seq) + find_ac_motifs(seq)
+        motif_list += imotif_motifs
+        processed_classes.append(f"i-motif family: {len(imotif_motifs)} motifs found")
+        print(f"   Found {len(imotif_motifs)} i-motif family motifs")
+    except (ImportError, AttributeError) as e:
+        processed_classes.append("i-motif family: not found in result")
+        print(f"   i-motif family: not found in result ({e})")
     
-    # Try to add disease motifs if available (skip in fast mode for long sequences)
-    if not fast_mode or len(seq) < 1000:
-        try:
-            import sys
-            import os
-            sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-            from disease_motifs import find_disease_associated_motifs
-            motif_list += find_disease_associated_motifs(seq)
-        except ImportError:
-            pass
+    # 8. Z-DNA
+    print("8. Processing Z-DNA...")
+    try:
+        from .zdna_egz import find_zdna, find_egz_motif
+        zdna_motifs = find_zdna(seq) + find_egz_motif(seq)
+        motif_list += zdna_motifs
+        processed_classes.append(f"Z-DNA: {len(zdna_motifs)} motifs found")
+        print(f"   Found {len(zdna_motifs)} Z-DNA motifs")
+    except (ImportError, AttributeError) as e:
+        processed_classes.append("Z-DNA: not found in result")
+        print(f"   Z-DNA: not found in result ({e})")
+    
+    # Add disease motifs if available
+    try:
+        import sys
+        import os
+        sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+        from disease_motifs import find_disease_associated_motifs
+        disease_motifs = find_disease_associated_motifs(seq)
+        motif_list += disease_motifs
+        print(f"   Added {len(disease_motifs)} disease-associated motifs")
+    except ImportError:
+        pass
     
     # Validate and standardize fields
     motif_list = [m for m in motif_list if validate_motif(m, len(seq))]
     
-    # Add hybrids (skip in fast mode for long sequences)
-    if not fast_mode or len(seq) < 500:
-        try:
-            from .hybrid import find_hybrids
-            motif_list += find_hybrids(motif_list, seq)
-        except (ImportError, AttributeError):
-            pass
+    # 9. Hybrid (overlaps between any two or more)
+    print("9. Processing Hybrid...")
+    try:
+        from .hybrid import find_hybrids
+        hybrid_motifs = find_hybrids(motif_list, seq)
+        motif_list += hybrid_motifs
+        processed_classes.append(f"Hybrid: {len(hybrid_motifs)} motifs found")
+        print(f"   Found {len(hybrid_motifs)} Hybrid motifs")
+        
+        # Check for overlaps and report
+        if hybrid_motifs:
+            print(f"   Hybrid overlap analysis:")
+            for hybrid in hybrid_motifs:
+                if 'MotifClasses' in hybrid:
+                    classes = hybrid['MotifClasses']
+                    print(f"     - {hybrid.get('Subtype', 'Unknown')} (Classes: {', '.join(classes)})")
+    except (ImportError, AttributeError) as e:
+        processed_classes.append("Hybrid: not found in result")
+        print(f"   Hybrid: not found in result ({e})")
     
     # De-overlap per class if asked
     if nonoverlap:
         try:
             from .cluster import select_best_nonoverlapping_motifs
             motif_list = select_best_nonoverlapping_motifs(motif_list)
+            print(f"   Applied overlap resolution, keeping {len(motif_list)} motifs")
         except (ImportError, AttributeError):
             pass
     
-    # Hotspots appended if asked
+    # 10. Non-B DNA cluster regions
     if report_hotspots:
+        print("10. Processing Non-B DNA cluster regions...")
         try:
             from .cluster import find_hotspots
-            motif_list += find_hotspots(motif_list, len(seq))
-        except (ImportError, AttributeError):
-            pass
+            cluster_motifs = find_hotspots(motif_list, len(seq))
+            motif_list += cluster_motifs
+            processed_classes.append(f"Non-B DNA cluster regions: {len(cluster_motifs)} motifs found")
+            print(f"    Found {len(cluster_motifs)} Non-B DNA cluster regions")
+        except (ImportError, AttributeError) as e:
+            processed_classes.append("Non-B DNA cluster regions: not found in result")
+            print(f"    Non-B DNA cluster regions: not found in result ({e})")
             
-        # Try to add advanced clustering if available (skip in fast mode)
-        if not fast_mode:
-            try:
-                from advanced_clustering import find_advanced_clusters, find_hybrid_structures
-                motif_list += find_advanced_clusters(motif_list, len(seq))
-                motif_list += find_hybrid_structures(motif_list)
-            except ImportError:
-                pass
+        # Add advanced clustering
+        try:
+            from advanced_clustering import find_advanced_clusters, find_hybrid_structures
+            advanced_motifs = find_advanced_clusters(motif_list, len(seq)) + find_hybrid_structures(motif_list)
+            motif_list += advanced_motifs
+            print(f"    Added {len(advanced_motifs)} advanced cluster motifs")
+        except ImportError:
+            pass
     
     # Add Sequence Name and ensure ordered keys exist
     for m in motif_list:
@@ -340,14 +443,19 @@ def all_motifs(seq, nonoverlap=False, report_hotspots=False, sequence_name="Sequ
             except (ValueError, TypeError):
                 pass
         
-        # Try to enhance with ML if available (skip in fast mode)
-        if not fast_mode:
-            try:
-                from ml_predictor import enhance_motif_with_ml
-                m = enhance_motif_with_ml(m, seq)
-            except ImportError:
-                pass
-            
+        # Try to enhance with ML if available
+        try:
+            from ml_predictor import enhance_motif_with_ml
+            m = enhance_motif_with_ml(m, seq)
+        except ImportError:
+            pass
+    
+    # Print summary
+    print(f"\nProcessing Summary:")
+    for status in processed_classes:
+        print(f"  {status}")
+    print(f"Total motifs detected: {len(motif_list)}")
+    
     return motif_list
 
 def format_motif_rows(motifs):
