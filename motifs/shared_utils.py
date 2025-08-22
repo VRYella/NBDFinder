@@ -450,6 +450,14 @@ def all_motifs(seq, nonoverlap=False, report_hotspots=False, sequence_name="Sequ
         except ImportError:
             pass
     
+    # Apply G4 priority filtering while preserving all other motif classes
+    from .classification_config import apply_g4_priority_filter
+    original_count = len(motif_list)
+    motif_list = apply_g4_priority_filter(motif_list)
+    g4_filtered_count = original_count - len(motif_list)
+    if g4_filtered_count > 0:
+        print(f"   Applied G4 priority filtering: removed {g4_filtered_count} overlapping G4 motifs")
+    
     # Print summary
     print(f"\nProcessing Summary:")
     for status in processed_classes:
