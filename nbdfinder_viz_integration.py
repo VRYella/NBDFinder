@@ -117,7 +117,20 @@ class NBDFinderVisualizationHub:
             'C_Fraction': 0.0,
             'iMotif_Mean': 0.0,
             'OverlapDegree': 0.0,
-            'InteractionStrength': 0.0
+            'InteractionStrength': 0.0,
+            'ClusterSize': 1,
+            'DiversityIndex': 0.0,
+            'HotspotScore': 0.0,
+            'Density': 0.0,
+            'Span': 0,
+            'Complexity': 0.0,
+            'PatternScore': 0.0,
+            'StabilityScore': 0.0,
+            'Entropy': 0.0,
+            'RegionScore': 0.0,
+            'Distance': 0,
+            'Proximity': 0.0,
+            'Centrality': 0.0
         }
         
         for col, default_val in numeric_fill_defaults.items():
@@ -135,7 +148,20 @@ class NBDFinderVisualizationHub:
             'ScoreMethod': 'Standard',
             'Arms/Repeat Unit/Copies': '',
             'Spacer': '',
-            'Loop_Lengths': '[]'
+            'Loop_Lengths': '[]',
+            'ClusterType': 'Simple',
+            'ClusterMotifs': 'N/A',
+            'HotspotType': 'None',
+            'RegionType': 'Standard',
+            'StructuralClass': 'Standard',
+            'FunctionalCategory': 'Unknown',
+            'EvolutionaryConservation': 'Unknown',
+            'TherapeuticTarget': 'Unknown',
+            'BiologicalContext': 'Unknown',
+            'PatternType': 'Standard',
+            'Topology': 'Linear',
+            'Stability': 'Medium',
+            'Environment': 'Nuclear'
         }
         
         for col, default_val in string_fill_defaults.items():
@@ -168,6 +194,15 @@ class NBDFinderVisualizationHub:
                 return options[hash_val]
             
             df['Clinical_Significance'] = df.apply(assign_clinical, axis=1)
+        
+        # Final pass: Fill any remaining N/A values
+        # For numeric columns, fill with 0
+        numeric_cols = df.select_dtypes(include=[np.number]).columns
+        df[numeric_cols] = df[numeric_cols].fillna(0)
+        
+        # For object/string columns, fill with appropriate defaults
+        object_cols = df.select_dtypes(include=['object']).columns
+        df[object_cols] = df[object_cols].fillna('N/A')
         
         return df
     
