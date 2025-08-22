@@ -1716,7 +1716,9 @@ with tab_pages["Results"]:
                 for seq_name, seq, motifs in all_sequences:
                     if seq_name == selected_seq:
                         # Create genome browser visualization
-                        create_genome_browser_view(motifs, seq, seq_name)
+                        # Convert motifs list to DataFrame as expected by the function
+                        motifs_df = pd.DataFrame(motifs) if motifs else pd.DataFrame()
+                        create_genome_browser_view(motifs_df, seq, seq_name)
                         break
         
         elif subpage_selection == "Hybrid Analysis":
