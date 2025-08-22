@@ -1873,66 +1873,75 @@ def get_basic_stats(seq, motifs=None):
 # Aggregator
 # =========================
 
-def all_motifs(seq, nonoverlap=False, report_hotspots=False, sequence_name="Sequence", fast_mode=False):
+def all_motifs(seq, nonoverlap=False, report_hotspots=False, sequence_name="Sequence"):
     """
-    OPTIMIZED: High-performance motif detection with optional fast mode.
+    COMPLETE PERFORMANCE MODE: High-performance motif detection with all features enabled.
     
-    Performance improvements:
-    - Fast mode skips expensive ML enhancement and clustering
-    - Early validation to avoid processing invalid sequences
-    - Optimized field standardization
-    - Conditional feature execution based on parameters
+    Detects all non-B DNA motifs in the specified order:
+    1. Curved DNA
+    2. Slipped DNA  
+    3. Cruciform DNA
+    4. R-loop
+    5. Triplex
+    6. G-Quadruplex Family
+    7. i-motif family
+    8. Z-DNA
+    9. Hybrid (overlaps between any two or more)
+    10. Non-B DNA cluster regions
     
-    Parameters:
-    fast_mode (bool): If True, skips ML enhancement and advanced clustering for speed
+    Args:
+        seq: DNA sequence string
+        nonoverlap: If True, remove overlapping motifs per class
+        report_hotspots: If True, include cluster analysis
+        sequence_name: Name for the sequence
+    
+    Returns:
+        List of motif dictionaries
     """
     if not seq or not re.match("^[ATGC]+$", seq, re.IGNORECASE):
         return []
     seq = seq.upper()
     
-    # Core motif detection (always performed)
+    # Core motif detection in specified order
     motif_list = (
-        find_sticky_dna(seq) +
-        find_curved_DNA(seq) +
-        find_zdna(seq) +
-        find_egz_motif(seq) +
-        find_slipped_dna(seq) +
-        find_rlfs(seq) +
-        find_cruciform(seq) +
-        find_hdna(seq) +
-        find_gtriplex(seq) +
+        find_curved_DNA(seq) +          # 1. Curved DNA
+        find_slipped_dna(seq) +         # 2. Slipped DNA
+        find_cruciform(seq) +           # 3. Cruciform DNA
+        find_rlfs(seq) +                # 4. R-loop
+        find_hdna(seq) +                # 5. Triplex
+        find_sticky_dna(seq) +          #    (part of Triplex)
+        find_multimeric_gquadruplex(seq) +  # 6. G-Quadruplex Family
         find_gquadruplex(seq) +
         find_relaxed_gquadruplex(seq) +
         find_bulged_gquadruplex(seq) +
         find_bipartite_gquadruplex(seq) +
-        find_multimeric_gquadruplex(seq) +
         find_imperfect_gquadruplex(seq) +
-        find_imotif(seq) +
-        find_ac_motifs(seq)
+        find_gtriplex(seq) +
+        find_imotif(seq) +              # 7. i-motif family
+        find_ac_motifs(seq) +
+        find_zdna(seq) +                # 8. Z-DNA
+        find_egz_motif(seq)
     )
     
-    # Add disease motifs only if not in fast mode or sequence is short
-    if not fast_mode or len(seq) < 1000:
-        motif_list += find_disease_associated_motifs(seq)
+    # Add disease motifs
+    motif_list += find_disease_associated_motifs(seq)
     
     # Validate and standardize fields
     motif_list = [m for m in motif_list if validate_motif(m, len(seq))]
     
-    # Add hybrids (only if not in fast mode for long sequences)
-    if not fast_mode or len(seq) < 500:
-        motif_list += find_hybrids(motif_list, seq)
+    # Add hybrids (9. Hybrid - overlaps between any two or more)
+    motif_list += find_hybrids(motif_list, seq)
     
     # De-overlap per class if asked
     if nonoverlap:
         motif_list = select_best_nonoverlapping_motifs(motif_list)
     
-    # Hotspots and advanced features (skip in fast mode for performance)
+    # Hotspots and advanced features (10. Non-B DNA cluster regions)
     if report_hotspots:
         motif_list += find_hotspots(motif_list, len(seq))
-        if not fast_mode:
-            # Advanced clustering is expensive - skip in fast mode
-            motif_list += find_advanced_clusters(motif_list, len(seq))
-            motif_list += find_hybrid_structures(motif_list)
+        # Advanced clustering - always included in complete mode
+        motif_list += find_advanced_clusters(motif_list, len(seq))
+        motif_list += find_hybrid_structures(motif_list)
     
     # Efficient field standardization
     for m in motif_list:
@@ -1948,9 +1957,8 @@ def all_motifs(seq, nonoverlap=False, report_hotspots=False, sequence_name="Sequ
             except (ValueError, TypeError):
                 pass
         
-        # Skip expensive ML enhancement in fast mode
-        if not fast_mode:
-            m = enhance_motif_with_ml(m, seq)
+        # ML enhancement - always included in complete mode
+        m = enhance_motif_with_ml(m, seq)
     
     return motif_list
 

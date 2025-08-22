@@ -52,6 +52,33 @@ from .shared_utils import (
     unified_hunter_score, calculate_structural_factor
 )
 
+def find_g4_unified(seq, motif_subtype="Canonical G4", pattern=r"G{3,}\w{1,7}G{3,}\w{1,7}G{3,}\w{1,7}G{3,}", g4_threshold=1.0, min_length=12):
+    """
+    Unified G4 detection framework
+    """
+    results = []
+    for m in overlapping_finditer(pattern, seq):
+        motif_seq = m.group(0)
+        if len(motif_seq) < min_length:
+            continue
+        g4_score = g4hunter_score(motif_seq)
+        if g4_score >= g4_threshold:
+            structural_factor = g4_structural_factor(motif_seq, motif_subtype.lower().replace(" ", "_"))
+            conservation_result = calculate_conservation_score(motif_seq, motif_subtype)
+            formation_data = get_g4_formation_category(g4_score)
+            results.append({
+                "Sequence Name": "", "Class": "G-Quadruplex Family", "Subtype": motif_subtype,
+                "Start": m.start() + 1, "End": m.end(), "Length": len(motif_seq),
+                "Sequence": wrap(motif_seq), "ScoreMethod": "G4_UnifiedHunter_raw",
+                "Score": float(g4_score * len(motif_seq) * structural_factor),
+                "G4Hunter_Score": float(g4_score), "Structural_Factor": round(structural_factor, 3),
+                "Formation_Category": formation_data["category"],
+                "Conservation_Score": float(conservation_result["enrichment_score"]),
+                "Conservation_P_Value": float(conservation_result["p_value"]),
+                "Arms/Repeat Unit/Copies": "", "Spacer": ""
+            })
+    return results
+
 # Categorize G4 formation potential based on experimental thresholds.
 def get_g4_formation_category(g4hunter_score):
     """Categorize G4 formation potential based on experimental thresholds."""

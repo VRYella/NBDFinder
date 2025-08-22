@@ -493,23 +493,20 @@ def analyze_sequence_with_progress(seq, seq_name, selected_motifs):
     # Initialize progress
     st.session_state.analysis_progress = 0
     st.session_state.analysis_status = f"Analyzing {seq_name} ({len(seq):,} bp)..."
-    # Performance mode selection
-    performance_mode = st.session_state.get('performance_mode', 'fast')
     
     # Check if we need to run all motifs
     run_all = any(m in selected_motifs for m in ["Hybrid", "Non-B DNA Clusters"])
     
-    # Determine analysis parameters based on sequence length and performance mode
-    fast_mode = performance_mode == 'fast' or len(seq) > 10000
-    enable_hotspots = len(seq) < 5000 and performance_mode != 'fast'
+    # Always use complete performance mode as requested
+    enable_hotspots = True  # Always enable hotspots in complete mode
     
     if run_all:
         st.session_state.analysis_status = f"Running comprehensive motif detection on {seq_name}..."
-        motifs = all_motifs(seq, report_hotspots=enable_hotspots, fast_mode=fast_mode)
+        motifs = all_motifs(seq, report_hotspots=enable_hotspots)
         st.session_state.analysis_progress = 0.8
     else:
         st.session_state.analysis_status = f"Detecting selected motifs in {seq_name}..."
-        motifs = all_motifs(seq, fast_mode=fast_mode)
+        motifs = all_motifs(seq)
         # Filter by selected motifs
         motifs = [m for m in motifs if m['Class'] in selected_motifs]
         st.session_state.analysis_progress = 0.7
@@ -942,16 +939,8 @@ with tab_pages["Upload & Analyze"]:
     </div>
     """, unsafe_allow_html=True)
     
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        if st.button("Fast Mode", use_container_width=True, type="primary" if st.session_state.get('performance_mode', 'fast') == 'fast' else "secondary"):
-            st.session_state.performance_mode = 'fast'
-    with col2:
-        if st.button("Balanced Mode", use_container_width=True, type="primary" if st.session_state.get('performance_mode', 'fast') == 'balanced' else "secondary"):
-            st.session_state.performance_mode = 'balanced'
-    with col3:
-        if st.button("Complete Mode", use_container_width=True, type="primary" if st.session_state.get('performance_mode', 'fast') == 'complete' else "secondary"):
-            st.session_state.performance_mode = 'complete'
+    # Using Complete Performance Mode Only (as requested)
+    st.markdown("**Performance Mode: Complete** (Comprehensive analysis with all features enabled)")
     
     # Scientific motif class selection with academic categorization
     st.markdown("""
