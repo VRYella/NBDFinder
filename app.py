@@ -89,48 +89,7 @@ def add_floating_back_to_top():
     </style>
     """, unsafe_allow_html=True)
 
-def add_sticky_action_buttons():
-    """Add sticky action buttons for Run Analysis and Download"""
-    if 'analysis_running' not in st.session_state:
-        st.session_state.analysis_running = False
-    if 'results' not in st.session_state:
-        st.session_state.results = []
-    
-    st.markdown("""
-    <div style="
-        position: fixed; 
-        top: 80px; 
-        right: 20px; 
-        background: rgba(255, 255, 255, 0.95);
-        border: 1px solid #e2e8f0;
-        border-radius: 12px; 
-        padding: 16px; 
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        backdrop-filter: blur(10px);
-        z-index: 999;
-        min-width: 160px;
-    ">
-        <div style="text-align: center;">
-            <div style="font-weight: 600; color: #374151; margin-bottom: 12px; font-size: 14px;">Quick Actions</div>
-    """, unsafe_allow_html=True)
-    
-    # Run Analysis Button
-    if not st.session_state.analysis_running:
-        if st.button("🔬 Run Analysis", key="sticky_run", help="Start motif analysis"):
-            st.session_state.analysis_running = True
-            st.rerun()
-    else:
-        st.button("⏳ Running...", disabled=True, key="sticky_running")
-    
-    # Download Button
-    if st.session_state.results:
-        if st.button("📥 Download Results", key="sticky_download", help="Download analysis results"):
-            # This will be handled by the Download page logic
-            pass
-    else:
-        st.button("📥 Download Results", disabled=True, key="sticky_download_disabled", help="No results available")
-    
-    st.markdown("</div></div>", unsafe_allow_html=True)
+
 
 # ---------- DESIGN SYSTEM ----------
 st.markdown("""
@@ -241,19 +200,19 @@ MOTIF_COLORS = {
 
 # Main application pages structure
 MAIN_PAGES = {
-    "🏠 Home": "Home / Welcome",
-    "📤 Upload & Analyze": "Sequence Upload and Analysis",
-    "📊 Results": "Analysis Results and Visualization", 
-    "🎨 Visualization": "Publication-Ready Visualizations",
-    "🏥 Clinical/Disease": "Disease Annotation and Clinical Data",
-    "📥 Download & Export": "Download Results and Export Data",
-    "📚 Documentation": "Scientific Documentation & References",
-    "⚙️ Settings": "Application Settings and Preferences"
+    "Home": "Home / Welcome",
+    "Upload & Analyze": "Sequence Upload and Analysis",
+    "Results": "Analysis Results and Visualization", 
+    "Visualization": "Publication-Ready Visualizations",
+    "Clinical/Disease": "Disease Annotation and Clinical Data",
+    "Download & Export": "Download Results and Export Data",
+    "Documentation": "Scientific Documentation & References",
+    "Settings": "Application Settings and Preferences"
 }
 
 # Initialize session state
 if 'current_page' not in st.session_state:
-    st.session_state.current_page = "🏠 Home"
+    st.session_state.current_page = "Home"
 if 'seqs' not in st.session_state:
     st.session_state.seqs = []
 if 'names' not in st.session_state:
@@ -290,13 +249,12 @@ EXAMPLE_SEQUENCES = {
 
 # Add floating components
 add_floating_back_to_top()
-add_sticky_action_buttons()
 
 # Header
 st.markdown("""
 <div style='text-align: center; padding: 20px; margin-bottom: 30px; background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); border-radius: 12px; border: 1px solid #e2e8f0;'>
     <h1 style='color: #1e3a8a; font-family: Inter, sans-serif; font-weight: 700; margin-bottom: 8px; font-size: 2.5rem;'>
-        🧬 NBDFinder: Non-B DNA Analysis Platform
+        NBDFinder: Non-B DNA Analysis Platform
     </h1>
     <p style='color: #64748b; font-size: 1.125rem; margin: 0;'>Publication-ready computational framework for genome-wide detection and analysis of non-B DNA structural motifs</p>
 </div>
@@ -309,7 +267,7 @@ tab_dict = dict(zip(MAIN_PAGES.keys(), main_tabs))
 # =====================================================
 # HOME / WELCOME PAGE
 # =====================================================
-with tab_dict["🏠 Home"]:
+with tab_dict["Home"]:
     col1, col2 = st.columns([1.2, 1])
     
     with col1:
@@ -324,22 +282,22 @@ with tab_dict["🏠 Home"]:
         st.markdown("""
         <div class="feature-card">
             <h3 style='color: #374151; margin-top: 0; margin-bottom: 20px; font-size: 1.25rem; font-weight: 600;'>
-                🎯 10 Non-B DNA Classes Detected
+                10 Non-B DNA Classes Detected
             </h3>
             <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;'>
                 <div>
-                    <div style='margin-bottom: 8px; font-weight: 500; color: #374151;'>1. 🌀 Curved DNA</div>
-                    <div style='margin-bottom: 8px; font-weight: 500; color: #374151;'>2. 🔄 Slipped DNA</div>
-                    <div style='margin-bottom: 8px; font-weight: 500; color: #374151;'>3. ✚ Cruciform DNA</div>
-                    <div style='margin-bottom: 8px; font-weight: 500; color: #374151;'>4. 🔁 R-loop</div>
-                    <div style='margin-bottom: 8px; font-weight: 500; color: #374151;'>5. 🧬 Triplex</div>
+                    <div style='margin-bottom: 8px; font-weight: 500; color: #374151;'>1. Curved DNA</div>
+                    <div style='margin-bottom: 8px; font-weight: 500; color: #374151;'>2. Slipped DNA</div>
+                    <div style='margin-bottom: 8px; font-weight: 500; color: #374151;'>3. Cruciform DNA</div>
+                    <div style='margin-bottom: 8px; font-weight: 500; color: #374151;'>4. R-loop</div>
+                    <div style='margin-bottom: 8px; font-weight: 500; color: #374151;'>5. Triplex</div>
                 </div>
                 <div>
-                    <div style='margin-bottom: 8px; font-weight: 500; color: #374151;'>6. 🟫 G-Quadruplex Family</div>
-                    <div style='margin-bottom: 8px; font-weight: 500; color: #374151;'>7. 🔴 i-motif family</div>
-                    <div style='margin-bottom: 8px; font-weight: 500; color: #374151;'>8. ⚡ Z-DNA</div>
-                    <div style='margin-bottom: 8px; font-weight: 500; color: #374151;'>9. 🔗 Hybrid</div>
-                    <div style='margin-bottom: 8px; font-weight: 500; color: #374151;'>10. 🎯 Non-B DNA clusters</div>
+                    <div style='margin-bottom: 8px; font-weight: 500; color: #374151;'>6. G-Quadruplex Family</div>
+                    <div style='margin-bottom: 8px; font-weight: 500; color: #374151;'>7. i-motif family</div>
+                    <div style='margin-bottom: 8px; font-weight: 500; color: #374151;'>8. Z-DNA</div>
+                    <div style='margin-bottom: 8px; font-weight: 500; color: #374151;'>9. Hybrid</div>
+                    <div style='margin-bottom: 8px; font-weight: 500; color: #374151;'>10. Non-B DNA clusters</div>
                 </div>
             </div>
         </div>
@@ -352,7 +310,7 @@ with tab_dict["🏠 Home"]:
     with col1:
         st.markdown("""
         <div class="feature-card">
-            <h4>📋 Version Information</h4>
+            <h4>Version Information</h4>
             <p><strong>Version:</strong> 2.0</p>
             <p><strong>Last Updated:</strong> December 2024</p>
             <p><strong>License:</strong> Academic Use</p>
@@ -362,7 +320,7 @@ with tab_dict["🏠 Home"]:
     with col2:
         st.markdown("""
         <div class="feature-card">
-            <h4>📖 Citation</h4>
+            <h4>Citation</h4>
             <p style="font-size: 0.9rem; font-style: italic;">
             Yella, V.R. (2024). NBDFinder: A Comprehensive Computational Framework 
             for Genome-Wide Detection and Analysis of Non-B DNA Structural Motifs. 
@@ -374,7 +332,7 @@ with tab_dict["🏠 Home"]:
     with col3:
         st.markdown("""
         <div class="feature-card">
-            <h4>🚀 Platform Overview</h4>
+            <h4>Platform Overview</h4>
             <p>High-performance analysis platform for non-canonical DNA structures with:</p>
             <ul style="font-size: 0.9rem;">
                 <li>Real-time detection algorithms</li>
@@ -388,15 +346,15 @@ with tab_dict["🏠 Home"]:
 # =====================================================
 # UPLOAD & ANALYZE PAGE
 # =====================================================
-with tab_dict["📤 Upload & Analyze"]:
+with tab_dict["Upload & Analyze"]:
     # Subtabs for Upload & Analyze
-    upload_subtabs = st.tabs(["📁 Upload Sequence", "⚙️ Parameter Settings", "▶️ Run Analysis"])
+    upload_subtabs = st.tabs(["Upload Sequence", "Parameter Settings", "Run Analysis"])
     
     # ---- UPLOAD SEQUENCE SUBTAB ----
     with upload_subtabs[0]:
         st.markdown("""
         <div style='background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 20px; margin-bottom: 24px;'>
-            <h3 style='color: #374151; margin-top: 0; margin-bottom: 12px;'>📁 Sequence Input</h3>
+            <h3 style='color: #374151; margin-top: 0; margin-bottom: 12px;'>Sequence Input</h3>
             <p style='margin-bottom: 0; color: #6b7280; font-size: 0.875rem;'>Choose your preferred method for sequence input. All formats support both single sequences and batch processing.</p>
         </div>
         """, unsafe_allow_html=True)
@@ -419,7 +377,7 @@ with tab_dict["📤 Upload & Analyze"]:
         if input_method == "Upload FASTA / Multi-FASTA File":
             st.markdown("""
             <div class="feature-card">
-                <h4>📤 File Upload</h4>
+                <h4>File Upload</h4>
                 <p>Drag & drop your FASTA files here</p>
                 <p style="font-size: 0.875rem; color: #6b7280;">Supports .fa, .fasta, .txt files • Single or Multi-FASTA format</p>
             </div>
@@ -436,7 +394,7 @@ with tab_dict["📤 Upload & Analyze"]:
                     content = fasta_file.read().decode('utf-8')
                     seqs, names = parse_fasta(content)
                     if seqs:
-                        st.success(f"✅ Successfully loaded {len(seqs)} sequence(s)")
+                        st.success(f"Successfully loaded {len(seqs)} sequence(s)")
                         for i, (name, seq) in enumerate(zip(names, seqs)):
                             with st.expander(f"Sequence {i+1}: {name[:50]}..."):
                                 st.text(f"Length: {len(seq)} bp")
@@ -475,12 +433,12 @@ with tab_dict["📤 Upload & Analyze"]:
                         st.error("❌ Invalid sequence characters detected")
                 
                 if seqs:
-                    st.success(f"✅ Parsed {len(seqs)} sequence(s)")
+                    st.success(f"Parsed {len(seqs)} sequence(s)")
         
         elif input_method == "Example Sequence":
             st.markdown("""
             <div class="feature-card">
-                <h4>🧪 Example Datasets</h4>
+                <h4>Example Datasets</h4>
                 <p>Choose from pre-loaded example sequences for testing</p>
             </div>
             """, unsafe_allow_html=True)
@@ -493,7 +451,7 @@ with tab_dict["📤 Upload & Analyze"]:
             
             if selected_example:
                 example_data = EXAMPLE_SEQUENCES[selected_example]
-                st.info(f"📋 **{selected_example}**: {example_data['description']}")
+                st.info(f"**{selected_example}**: {example_data['description']}")
                 seqs = [example_data['sequence']]
                 names = [example_data['name']]
                 
@@ -505,7 +463,7 @@ with tab_dict["📤 Upload & Analyze"]:
         elif input_method == "NCBI Fetch":
             st.markdown("""
             <div class="feature-card">
-                <h4>🌐 NCBI Database Fetch</h4>
+                <h4>NCBI Database Fetch</h4>
                 <p>Retrieve sequences directly from NCBI databases</p>
             </div>
             """, unsafe_allow_html=True)
@@ -516,7 +474,7 @@ with tab_dict["📤 Upload & Analyze"]:
                 placeholder="NG_123456.1"
             )
             
-            if accession and st.button("🔍 Fetch Sequence"):
+            if accession and st.button("Fetch Sequence"):
                 try:
                     with st.spinner("Fetching sequence from NCBI..."):
                         handle = Entrez.efetch(db="nucleotide", id=accession, rettype="fasta", retmode="text")
@@ -525,7 +483,7 @@ with tab_dict["📤 Upload & Analyze"]:
                         
                         seqs, names = parse_fasta(fasta_content)
                         if seqs:
-                            st.success(f"✅ Successfully fetched: {names[0]}")
+                            st.success(f"Successfully fetched: {names[0]}")
                         else:
                             st.error("❌ No sequence data found")
                 except Exception as e:
@@ -540,7 +498,7 @@ with tab_dict["📤 Upload & Analyze"]:
     with upload_subtabs[1]:
         st.markdown("""
         <div style='background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 20px; margin-bottom: 24px;'>
-            <h3 style='color: #374151; margin-top: 0; margin-bottom: 12px;'>⚙️ Analysis Parameters</h3>
+            <h3 style='color: #374151; margin-top: 0; margin-bottom: 12px;'>Analysis Parameters</h3>
             <p style='margin-bottom: 0; color: #6b7280; font-size: 0.875rem;'>Configure motif detection settings and sensitivity thresholds</p>
         </div>
         """, unsafe_allow_html=True)
@@ -548,7 +506,7 @@ with tab_dict["📤 Upload & Analyze"]:
         col1, col2 = st.columns(2)
         
         with col1:
-            st.markdown("**🎯 Motif Classes Selection**")
+            st.markdown("**Motif Classes Selection**")
             motif_classes = st.multiselect(
                 "Select motif classes to analyze:",
                 list(MOTIF_COLORS.keys()),
@@ -556,7 +514,7 @@ with tab_dict["📤 Upload & Analyze"]:
                 help="Choose which non-B DNA motif types to detect"
             )
             
-            st.markdown("**📊 Sensitivity Settings**")
+            st.markdown("**Sensitivity Settings**")
             sensitivity = st.select_slider(
                 "Detection sensitivity:",
                 options=["Low", "Medium", "High", "Maximum"],
@@ -565,7 +523,7 @@ with tab_dict["📤 Upload & Analyze"]:
             )
         
         with col2:
-            st.markdown("**🔬 Advanced Options**")
+            st.markdown("**Advanced Options**")
             with st.expander("Advanced Detection Parameters"):
                 min_motif_length = st.number_input("Minimum motif length (bp):", 
                                                  min_value=3, max_value=100, value=10)
@@ -595,7 +553,7 @@ with tab_dict["📤 Upload & Analyze"]:
     with upload_subtabs[2]:
         st.markdown("""
         <div style='background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 20px; margin-bottom: 24px;'>
-            <h3 style='color: #374151; margin-top: 0; margin-bottom: 12px;'>▶️ Analysis Execution</h3>
+            <h3 style='color: #374151; margin-top: 0; margin-bottom: 12px;'>Analysis Execution</h3>
             <p style='margin-bottom: 0; color: #6b7280; font-size: 0.875rem;'>Review settings and launch motif detection analysis</p>
         </div>
         """, unsafe_allow_html=True)
@@ -604,16 +562,16 @@ with tab_dict["📤 Upload & Analyze"]:
         col1, col2 = st.columns(2)
         
         with col1:
-            st.markdown("**📋 Analysis Summary**")
+            st.markdown("**Analysis Summary**")
             if st.session_state.seqs:
-                st.success(f"✅ {len(st.session_state.seqs)} sequence(s) loaded")
+                st.success(f"{len(st.session_state.seqs)} sequence(s) loaded")
                 for i, name in enumerate(st.session_state.names):
                     st.text(f"• {name[:50]}... ({len(st.session_state.seqs[i])} bp)")
             else:
-                st.warning("⚠️ No sequences loaded. Please upload sequences first.")
+                st.warning("No sequences loaded. Please upload sequences first.")
         
         with col2:
-            st.markdown("**⚙️ Current Settings**")
+            st.markdown("**Current Settings**")
             if 'analysis_settings' in st.session_state:
                 settings = st.session_state.analysis_settings
                 st.text(f"• Motif classes: {len(settings.get('motif_classes', []))} selected")
@@ -625,13 +583,13 @@ with tab_dict["📤 Upload & Analyze"]:
         
         # Analysis button
         if st.session_state.seqs and not st.session_state.get('analysis_running', False):
-            if st.button("🚀 Start Analysis", type="primary", use_container_width=True):
+            if st.button("Start Analysis", type="primary", use_container_width=True):
                 st.session_state.analysis_running = True
                 st.rerun()
         
         # Analysis progress
         if st.session_state.get('analysis_running', False):
-            st.markdown("**🔬 Analysis in Progress**")
+            st.markdown("**Analysis in Progress**")
             progress_bar = st.progress(0)
             status_text = st.empty()
             
@@ -666,7 +624,7 @@ with tab_dict["📤 Upload & Analyze"]:
                 
                 st.session_state.results = results
                 st.session_state.analysis_running = False
-                st.success("✅ Analysis completed successfully!")
+                st.success("Analysis completed successfully!")
                 st.balloons()
                 
             except Exception as e:
@@ -676,16 +634,16 @@ with tab_dict["📤 Upload & Analyze"]:
 # =====================================================
 # RESULTS PAGE
 # =====================================================
-with tab_dict["📊 Results"]:
+with tab_dict["Results"]:
     if not st.session_state.results:
-        st.info("📋 No analysis results available. Please run an analysis first.")
+        st.info("No analysis results available. Please run an analysis first.")
     else:
         # Results subtabs
-        results_subtabs = st.tabs(["📈 Overview", "🔍 Motif Classes", "📍 Genomic Position", "🔗 Hybrid & Cluster Analysis", "📊 Statistical Summary"])
+        results_subtabs = st.tabs(["Overview", "Motif Classes", "Genomic Position", "Hybrid & Cluster Analysis", "Statistical Summary"])
         
         # ---- OVERVIEW SUBTAB ----
         with results_subtabs[0]:
-            st.markdown("### 📈 Analysis Overview")
+            st.markdown("### Analysis Overview")
             
             # Summary metrics
             total_sequences = len(st.session_state.results)
@@ -707,7 +665,7 @@ with tab_dict["📊 Results"]:
                 st.metric("Motif Types Found", len(unique_types))
             
             # Results table
-            st.markdown("### 📋 Results Summary")
+            st.markdown("### Results Summary")
             results_data = []
             for result in st.session_state.results:
                 results_data.append({
@@ -721,7 +679,7 @@ with tab_dict["📊 Results"]:
         
         # ---- MOTIF CLASSES SUBTAB ----
         with results_subtabs[1]:
-            st.markdown("### 🔍 Motif Classes Analysis")
+            st.markdown("### Motif Classes Analysis")
             
             # Motif type distribution
             motif_counts = {}
@@ -742,14 +700,14 @@ with tab_dict["📊 Results"]:
                 st.plotly_chart(fig, use_container_width=True)
                 
                 # Detailed table
-                st.markdown("### 📊 Detailed Motif Breakdown")
+                st.markdown("### Detailed Motif Breakdown")
                 motif_df = pd.DataFrame(list(motif_counts.items()), columns=['Motif Type', 'Count'])
                 motif_df['Percentage'] = (motif_df['Count'] / motif_df['Count'].sum() * 100).round(2)
                 st.dataframe(motif_df, use_container_width=True)
         
         # ---- GENOMIC POSITION SUBTAB ----
         with results_subtabs[2]:
-            st.markdown("### 📍 Genomic Position Analysis")
+            st.markdown("### Genomic Position Analysis")
             
             # Sequence selection for detailed view
             if len(st.session_state.results) > 1:
@@ -792,7 +750,7 @@ with tab_dict["📊 Results"]:
         
         # ---- HYBRID & CLUSTER ANALYSIS SUBTAB ----
         with results_subtabs[3]:
-            st.markdown("### 🔗 Hybrid & Cluster Analysis")
+            st.markdown("### Hybrid & Cluster Analysis")
             st.info("Hybrid motif and cluster analysis functionality will be implemented here.")
             
             # Placeholder for hybrid analysis
@@ -806,14 +764,14 @@ with tab_dict["📊 Results"]:
         
         # ---- STATISTICAL SUMMARY SUBTAB ----
         with results_subtabs[4]:
-            st.markdown("### 📊 Statistical Summary")
+            st.markdown("### Statistical Summary")
             
             # Advanced statistics
             if st.session_state.results:
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    st.markdown("**📈 Distribution Statistics**")
+                    st.markdown("**Distribution Statistics**")
                     motif_counts_per_seq = [r['total_motifs'] for r in st.session_state.results]
                     st.text(f"Mean motifs per sequence: {np.mean(motif_counts_per_seq):.2f}")
                     st.text(f"Median motifs per sequence: {np.median(motif_counts_per_seq):.2f}")
@@ -822,7 +780,7 @@ with tab_dict["📊 Results"]:
                     st.text(f"Max motifs: {np.max(motif_counts_per_seq)}")
                 
                 with col2:
-                    st.markdown("**🔍 Sequence Statistics**")
+                    st.markdown("**Sequence Statistics**")
                     seq_lengths = [r['sequence_length'] for r in st.session_state.results]
                     st.text(f"Mean sequence length: {np.mean(seq_lengths):.0f} bp")
                     st.text(f"Median sequence length: {np.median(seq_lengths):.0f} bp")
@@ -831,16 +789,16 @@ with tab_dict["📊 Results"]:
 # =====================================================
 # VISUALIZATION PAGE
 # =====================================================
-with tab_dict["🎨 Visualization"]:
+with tab_dict["Visualization"]:
     if not st.session_state.results:
-        st.info("📋 No analysis results available for visualization. Please run an analysis first.")
+        st.info("No analysis results available for visualization. Please run an analysis first.")
     else:
         # Visualization subtabs
-        viz_subtabs = st.tabs(["📊 Motif Distributions", "📸 Publication Figures", "🌐 3D/Advanced Views"])
+        viz_subtabs = st.tabs(["Motif Distributions", "Publication Figures", "3D/Advanced Views"])
         
         # ---- MOTIF DISTRIBUTIONS SUBTAB ----
         with viz_subtabs[0]:
-            st.markdown("### 📊 Interactive Motif Distribution Plots")
+            st.markdown("### Interactive Motif Distribution Plots")
             
             # Use the existing visualization integration if available
             if PUBLICATION_VIZ_AVAILABLE:
@@ -872,7 +830,7 @@ with tab_dict["🎨 Visualization"]:
         
         # ---- PUBLICATION FIGURES SUBTAB ----
         with viz_subtabs[1]:
-            st.markdown("### 📸 Publication-Ready Figures")
+            st.markdown("### Publication-Ready Figures")
             
             col1, col2 = st.columns(2)
             with col1:
@@ -885,12 +843,12 @@ with tab_dict["🎨 Visualization"]:
                 color_scheme = st.selectbox("Color scheme:", ["Default", "Colorblind-friendly", "Grayscale"])
                 include_title = st.checkbox("Include title", value=True)
             
-            if st.button("🎨 Generate Publication Figure"):
+            if st.button("Generate Publication Figure"):
                 st.info("Publication figure generation functionality will be implemented here.")
         
         # ---- 3D/ADVANCED VIEWS SUBTAB ----
         with viz_subtabs[2]:
-            st.markdown("### 🌐 3D and Advanced Visualizations")
+            st.markdown("### 3D and Advanced Visualizations")
             
             if ADVANCED_VIZ_AVAILABLE:
                 st.info("Advanced 3D visualization functionality will be integrated here.")
@@ -900,20 +858,20 @@ with tab_dict["🎨 Visualization"]:
 # =====================================================
 # CLINICAL/DISEASE ANNOTATION PAGE
 # =====================================================
-with tab_dict["🏥 Clinical/Disease"]:
+with tab_dict["Clinical/Disease"]:
     # Clinical subtabs
-    clinical_subtabs = st.tabs(["🩺 Disease Motif Results", "📋 Clinical Summary"])
+    clinical_subtabs = st.tabs(["Disease Motif Results", "Clinical Summary"])
     
     # ---- DISEASE MOTIF RESULTS SUBTAB ----
     with clinical_subtabs[0]:
         st.markdown("### 🩺 Disease-Associated Motif Analysis")
         
         if not st.session_state.results:
-            st.info("📋 No analysis results available. Please run an analysis first.")
+            st.info("No analysis results available. Please run an analysis first.")
         else:
             st.markdown("""
             <div class="feature-card">
-                <h4>🧬 Disease Annotation Status</h4>
+                <h4>Disease Annotation Status</h4>
                 <p>Clinical disease annotation functionality is being integrated.</p>
                 <p><strong>Planned Features:</strong></p>
                 <ul>
@@ -927,11 +885,11 @@ with tab_dict["🏥 Clinical/Disease"]:
     
     # ---- CLINICAL SUMMARY SUBTAB ----
     with clinical_subtabs[1]:
-        st.markdown("### 📋 Clinical Interpretation Summary")
+        st.markdown("### Clinical Interpretation Summary")
         
         st.markdown("""
         <div class="feature-card">
-            <h4>🏥 Clinical Data Integration</h4>
+            <h4>Clinical Data Integration</h4>
             <p>This section will provide:</p>
             <ul>
                 <li>Risk assessment for detected motifs</li>
@@ -945,19 +903,19 @@ with tab_dict["🏥 Clinical/Disease"]:
 # =====================================================
 # DOWNLOAD & EXPORT PAGE
 # =====================================================
-with tab_dict["📥 Download & Export"]:
-    st.markdown("### 📥 Download Analysis Results")
+with tab_dict["Download & Export"]:
+    st.markdown("### Download Analysis Results")
     
     if not st.session_state.results:
-        st.info("📋 No analysis results available for download. Please run an analysis first.")
+        st.info("No analysis results available for download. Please run an analysis first.")
     else:
         col1, col2 = st.columns(2)
         
         with col1:
-            st.markdown("**📊 Data Export Options**")
+            st.markdown("**Data Export Options**")
             
             # Results table download
-            if st.button("📋 Download Results Table (CSV)"):
+            if st.button("Download Results Table (CSV)"):
                 results_data = []
                 for result in st.session_state.results:
                     for motif in result['motifs']:
@@ -973,27 +931,27 @@ with tab_dict["📥 Download & Export"]:
                 df = pd.DataFrame(results_data)
                 csv = df.to_csv(index=False)
                 st.download_button(
-                    label="💾 Download CSV",
+                    label="Download CSV",
                     data=csv,
                     file_name="nbdfinder_results.csv",
                     mime="text/csv"
                 )
             
             # Excel export
-            if st.button("📊 Download Results (Excel)"):
+            if st.button("Download Results (Excel)"):
                 st.info("Excel export functionality will be implemented.")
         
         with col2:
-            st.markdown("**🎨 Visualization Export**")
+            st.markdown("**Visualization Export**")
             
-            if st.button("📸 Download Plots (PNG)"):
+            if st.button("Download Plots (PNG)"):
                 st.info("Plot export functionality will be implemented.")
             
             if st.button("📄 Generate Analysis Report"):
                 st.info("PDF report generation will be implemented.")
         
         st.markdown("---")
-        st.markdown("**📁 Session Data**")
+        st.markdown("**Session Data**")
         
         # Session summary
         col1, col2, col3 = st.columns(3)
@@ -1008,13 +966,13 @@ with tab_dict["📥 Download & Export"]:
 # =====================================================
 # DOCUMENTATION PAGE
 # =====================================================
-with tab_dict["📚 Documentation"]:
+with tab_dict["Documentation"]:
     # Documentation subtabs
-    doc_subtabs = st.tabs(["🎯 Motif Definitions", "⚙️ Detection Algorithms", "📊 Scoring Systems", "📖 User Guide", "📚 References"])
+    doc_subtabs = st.tabs(["Motif Definitions", "Detection Algorithms", "Scoring Systems", "User Guide", "References"])
     
     # ---- MOTIF DEFINITIONS SUBTAB ----
     with doc_subtabs[0]:
-        st.markdown("### 🎯 Non-B DNA Motif Definitions")
+        st.markdown("### Non-B DNA Motif Definitions")
         
         motif_definitions = {
             "Curved DNA": "DNA sequences that adopt intrinsic curvature due to specific base arrangements",
@@ -1030,17 +988,17 @@ with tab_dict["📚 Documentation"]:
         }
         
         for motif, definition in motif_definitions.items():
-            with st.expander(f"🔍 {motif}"):
+            with st.expander(f"{motif}"):
                 st.write(definition)
                 st.info(f"Detailed information about {motif} detection algorithms and biological significance.")
     
     # ---- DETECTION ALGORITHMS SUBTAB ----
     with doc_subtabs[1]:
-        st.markdown("### ⚙️ Detection Algorithms")
+        st.markdown("### Detection Algorithms")
         
         st.markdown("""
         <div class="feature-card">
-            <h4>🔬 Algorithm Overview</h4>
+            <h4>Algorithm Overview</h4>
             <p>NBDFinder employs state-of-the-art computational algorithms for each motif type:</p>
             <ul>
                 <li><strong>Sequence-based detection:</strong> Pattern matching with biological constraints</li>
@@ -1053,11 +1011,11 @@ with tab_dict["📚 Documentation"]:
     
     # ---- SCORING SYSTEMS SUBTAB ----
     with doc_subtabs[2]:
-        st.markdown("### 📊 Scoring Systems")
+        st.markdown("### Scoring Systems")
         
         st.markdown("""
         <div class="feature-card">
-            <h4>📈 Motif Scoring Methodology</h4>
+            <h4>Motif Scoring Methodology</h4>
             <p>Each detected motif is assigned confidence scores based on:</p>
             <ul>
                 <li><strong>Sequence specificity:</strong> How well the sequence matches known patterns</li>
@@ -1070,11 +1028,11 @@ with tab_dict["📚 Documentation"]:
     
     # ---- USER GUIDE SUBTAB ----
     with doc_subtabs[3]:
-        st.markdown("### 📖 User Guide")
+        st.markdown("### User Guide")
         
         st.markdown("""
         <div class="feature-card">
-            <h4>🚀 Quick Start Guide</h4>
+            <h4>Quick Start Guide</h4>
             <ol>
                 <li><strong>Upload Sequences:</strong> Use the Upload & Analyze tab to input your sequences</li>
                 <li><strong>Configure Parameters:</strong> Set motif classes and sensitivity in Parameter Settings</li>
@@ -1088,7 +1046,7 @@ with tab_dict["📚 Documentation"]:
     
     # ---- REFERENCES SUBTAB ----
     with doc_subtabs[4]:
-        st.markdown("### 📚 Scientific References")
+        st.markdown("### Scientific References")
         
         st.markdown("""
         <div class="feature-card">
@@ -1110,61 +1068,36 @@ with tab_dict["📚 Documentation"]:
 # =====================================================
 # SETTINGS PAGE
 # =====================================================
-with tab_dict["⚙️ Settings"]:
-    st.markdown("### ⚙️ Application Settings")
+with tab_dict["Settings"]:
+    st.markdown("### Application Settings")
     
     col1, col2 = st.columns(2)
     
     with col1:
-        st.markdown("**🎨 Theme & Appearance**")
+        st.markdown("**Theme & Appearance**")
         
         theme_mode = st.selectbox(
             "Color theme:",
             ["Auto", "Light", "Dark"],
             help="Choose your preferred color theme"
         )
-        
-        font_size = st.select_slider(
-            "Font size:",
-            options=["Small", "Medium", "Large"],
-            value="Medium"
-        )
-        
-        st.markdown("**♿ Accessibility**")
-        
-        high_contrast = st.checkbox("High contrast mode")
-        reduced_motion = st.checkbox("Reduce animations")
-        screen_reader = st.checkbox("Screen reader optimizations")
     
     with col2:
-        st.markdown("**🔬 Analysis Preferences**")
+        st.markdown("**Analysis Preferences**")
         
         default_sensitivity = st.selectbox(
             "Default sensitivity:",
             ["Low", "Medium", "High", "Maximum"],
             index=2
         )
-        
-        auto_save = st.checkbox("Auto-save results", value=True)
-        parallel_default = st.checkbox("Enable parallel processing by default", value=True)
-        
-        st.markdown("**📊 Export Preferences**")
-        
-        default_format = st.selectbox(
-            "Default export format:",
-            ["CSV", "Excel", "JSON"],
-            index=0
-        )
-        
-        include_metadata = st.checkbox("Include metadata in exports", value=True)
     
     st.markdown("---")
     
-    if st.button("💾 Save Settings"):
-        st.success("✅ Settings saved successfully!")
+    if st.button("Save Settings"):
+        st.success("Settings saved successfully!")
     
-    if st.button("🔄 Reset to Defaults"):
-        st.info("🔄 Settings reset to default values")
+    if st.button("Reset to Defaults"):
+        st.info("Settings reset to default values")
 
 # Footer
 st.markdown("---")
