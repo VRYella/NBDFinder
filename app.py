@@ -147,6 +147,134 @@ st.markdown("""
         box-shadow: 0 4px 12px rgba(30,58,138,0.3); transform: translateY(-2px);
     }
     
+    /* IMPROVED FORM CONTROLS */
+    .stSelectbox > div > div {
+        background: var(--surface); border: 2px solid var(--border); border-radius: var(--radius);
+        font-size: 1.125rem; font-weight: 500; transition: var(--transition);
+    }
+    .stSelectbox > div > div:focus-within {
+        border-color: var(--accent); box-shadow: 0 0 0 3px rgba(8,145,178,0.1);
+    }
+    
+    .stSlider > div > div > div > div {
+        background: linear-gradient(90deg, var(--accent) 0%, var(--primary) 100%);
+    }
+    
+    .stCheckbox > label {
+        font-size: 1.125rem; font-weight: 500; color: var(--text);
+    }
+    
+    .stRadio > div {
+        display: flex; gap: 16px; flex-wrap: wrap;
+    }
+    .stRadio > div > label {
+        background: var(--surface); border: 2px solid var(--border); border-radius: var(--radius);
+        padding: 12px 20px; margin: 4px; font-size: 1.125rem; font-weight: 500;
+        transition: var(--transition); cursor: pointer; min-width: 120px; text-align: center;
+    }
+    .stRadio > div > label:hover {
+        border-color: var(--accent); background: rgba(8,145,178,0.05);
+    }
+    .stRadio > div > label[data-checked="true"] {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+        color: white; border-color: var(--primary); font-weight: 600;
+    }
+    
+    /* ENHANCED DATAFRAMES AND TABLES */
+    .stDataFrame {
+        border: 2px solid var(--border); border-radius: 12px; overflow: hidden;
+        box-shadow: var(--shadow); margin: 16px 0;
+    }
+    
+    .stDataFrame table {
+        font-family: Inter, sans-serif; font-size: 0.95rem;
+    }
+    
+    .stDataFrame thead tr th {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+        color: white; font-weight: 700; font-size: 1rem; padding: 16px 12px;
+        text-align: left; border: none;
+    }
+    
+    .stDataFrame tbody tr:nth-child(even) {
+        background: rgba(248,250,252,0.8);
+    }
+    
+    .stDataFrame tbody tr:hover {
+        background: rgba(8,145,178,0.08); transition: background 0.2s ease;
+    }
+    
+    .stDataFrame tbody tr td {
+        padding: 14px 12px; border-bottom: 1px solid var(--border);
+        font-weight: 500; color: var(--text);
+    }
+    
+    /* ENHANCED BUTTONS */
+    .stButton > button {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+        color: white; border: none; border-radius: var(--radius); font-family: Inter, sans-serif;
+        font-weight: 600; font-size: 1.125rem; padding: 12px 24px; transition: var(--transition);
+        box-shadow: var(--shadow); cursor: pointer;
+    }
+    .stButton > button:hover {
+        transform: translateY(-2px); box-shadow: 0 6px 20px rgba(30,58,138,0.3);
+        background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);
+    }
+    
+    .stDownloadButton > button {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white; border: none; border-radius: var(--radius); font-family: Inter, sans-serif;
+        font-weight: 600; font-size: 1rem; padding: 10px 20px; transition: var(--transition);
+        box-shadow: var(--shadow);
+    }
+    .stDownloadButton > button:hover {
+        transform: translateY(-1px); box-shadow: 0 4px 16px rgba(16,185,129,0.3);
+    }
+    
+    /* ENHANCED METRICS */
+    .metric-card {
+        background: var(--surface); border: 2px solid var(--border); border-radius: 12px;
+        padding: 20px; margin: 8px 0; box-shadow: var(--shadow); transition: var(--transition);
+    }
+    .metric-card:hover {
+        transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        border-color: var(--accent);
+    }
+    
+    .metric-card h3 {
+        color: var(--primary); font-size: 2.5rem; font-weight: 700; margin: 0;
+        text-align: center;
+    }
+    .metric-card p {
+        color: var(--text-muted); font-size: 1.125rem; font-weight: 500; margin: 8px 0 0 0;
+        text-align: center;
+    }
+    
+    /* ENHANCED MESSAGES */
+    .stSuccess {
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        border: 2px solid #10b981; border-radius: var(--radius); padding: 16px;
+        font-family: Inter, sans-serif; font-weight: 500;
+    }
+    
+    .stError {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        border: 2px solid #ef4444; border-radius: var(--radius); padding: 16px;
+        font-family: Inter, sans-serif; font-weight: 500;
+    }
+    
+    .stWarning {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        border: 2px solid #f59e0b; border-radius: var(--radius); padding: 16px;
+        font-family: Inter, sans-serif; font-weight: 500;
+    }
+    
+    .stInfo {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        border: 2px solid #3b82f6; border-radius: var(--radius); padding: 16px;
+        font-family: Inter, sans-serif; font-weight: 500;
+    }
+    
     /* FORM CONTROLS */
     .stSelectbox > div, .stMultiSelect > div, .stTextInput > div, .stTextArea > div {
         background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); 
