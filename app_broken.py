@@ -1309,6 +1309,329 @@ with tab_dict["Documentation"]:
 # Footer
 st.markdown("---")
 st.markdown("""
+    
+    # ---- APPEARANCE SUBTAB ----
+    with settings_subtabs[0]:
+        st.markdown("#### Theme & Color Settings")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("**Color Theme**")
+            
+            theme_mode = st.selectbox(
+                "Color theme:",
+                ["Auto", "Light", "Dark", "High Contrast"],
+                help="Choose your preferred color theme"
+            )
+            
+            background_color = st.color_picker(
+                "Background color:",
+                value="#FFFFFF",
+                help="Set custom background color"
+            )
+            
+            primary_color = st.color_picker(
+                "Primary accent color:",
+                value="#1E3A8A",
+                help="Main accent color for buttons and highlights"
+            )
+        
+        with col2:
+            st.markdown("**Text Colors**")
+            
+            text_color = st.color_picker(
+                "Main text color:",
+                value="#1E3A8A",
+                help="Primary text color"
+            )
+            
+            muted_text_color = st.color_picker(
+                "Secondary text color:",
+                value="#64748B",
+                help="Color for secondary/muted text"
+            )
+            
+            border_color = st.color_picker(
+                "Border color:",
+                value="#E2E8F0",
+                help="Color for borders and dividers"
+            )
+    
+    # ---- TYPOGRAPHY SUBTAB ----
+    with settings_subtabs[1]:
+        st.markdown("#### Font & Typography Settings")
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.markdown("**Font Family**")
+            
+            font_family = st.selectbox(
+                "Primary font:",
+                ["Inter", "Arial", "Helvetica", "Times New Roman", "Georgia", "Verdana", "Roboto", "Open Sans"],
+                help="Choose the main font for the application"
+            )
+            
+            fallback_fonts = st.multiselect(
+                "Fallback fonts:",
+                ["Arial", "Helvetica", "Times New Roman", "Georgia", "Verdana", "sans-serif", "serif"],
+                default=["Arial", "sans-serif"],
+                help="Backup fonts if primary font fails to load"
+            )
+        
+        with col2:
+            st.markdown("**Text Sizes**")
+            
+            base_font_size = st.slider(
+                "Base text size (rem):",
+                min_value=0.8,
+                max_value=2.0,
+                value=1.25,
+                step=0.05,
+                help="Base font size for regular text"
+            )
+            
+            heading_scale = st.slider(
+                "Heading size multiplier:",
+                min_value=1.2,
+                max_value=3.0,
+                value=2.0,
+                step=0.1,
+                help="How much larger headings should be"
+            )
+            
+            label_font_size = st.slider(
+                "Label text size (rem):",
+                min_value=0.9,
+                max_value=1.5,
+                value=1.125,
+                step=0.025,
+                help="Font size for form labels"
+            )
+        
+        with col3:
+            st.markdown("**Text Styling**")
+            
+            line_height = st.slider(
+                "Line height:",
+                min_value=1.0,
+                max_value=2.5,
+                value=1.7,
+                step=0.1,
+                help="Spacing between lines of text"
+            )
+            
+            font_weight = st.selectbox(
+                "Text weight:",
+                ["300 (Light)", "400 (Normal)", "500 (Medium)", "600 (Semi-bold)", "700 (Bold)"],
+                index=1,
+                help="Default font weight"
+            )
+            
+            letter_spacing = st.slider(
+                "Letter spacing (em):",
+                min_value=-0.05,
+                max_value=0.1,
+                value=0.0,
+                step=0.005,
+                help="Space between letters"
+            )
+    
+    # ---- ANALYSIS DEFAULTS SUBTAB ----
+    with settings_subtabs[2]:
+        st.markdown("#### Default Analysis Settings")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("**Detection Parameters**")
+            
+            default_sensitivity = st.selectbox(
+                "Default sensitivity:",
+                ["Low", "Medium", "High", "Maximum"],
+                index=2,
+                help="Default sensitivity for motif detection"
+            )
+            
+            default_motif_classes = st.multiselect(
+                "Default motif classes:",
+                ["Curved DNA", "Slipped DNA", "Cruciform", "R-loop", "Triplex", 
+                 "G-Quadruplex", "i-motif", "Z-DNA", "Hybrid", "Disease-Associated"],
+                default=["G-Quadruplex", "i-motif", "Z-DNA"],
+                help="Motif classes to detect by default"
+            )
+            
+        with col2:
+            st.markdown("**Output Preferences**")
+            
+            default_export_format = st.selectbox(
+                "Default export format:",
+                ["Excel (.xlsx)", "CSV", "TSV", "JSON"],
+                help="Default format for data export"
+            )
+            
+            show_sequence_details = st.checkbox(
+                "Show sequence details by default",
+                value=True,
+                help="Display sequence information in results"
+            )
+            
+            auto_generate_visualizations = st.checkbox(
+                "Auto-generate visualizations",
+                value=False,
+                help="Automatically create plots after analysis"
+            )
+    
+    # ---- DATA EXPORT SUBTAB ----
+    with settings_subtabs[3]:
+        st.markdown("#### Data Export Settings")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("**File Naming**")
+            
+            filename_prefix = st.text_input(
+                "Default filename prefix:",
+                value="NBDFinder_Results",
+                help="Prefix for exported files"
+            )
+            
+            include_timestamp = st.checkbox(
+                "Include timestamp in filenames",
+                value=True,
+                help="Add timestamp to exported filenames"
+            )
+            
+        with col2:
+            st.markdown("**Export Options**")
+            
+            include_metadata = st.checkbox(
+                "Include analysis metadata",
+                value=True,
+                help="Include analysis parameters in export"
+            )
+            
+            compress_exports = st.checkbox(
+                "Compress large exports",
+                value=False,
+                help="Compress files larger than 10MB"
+            )
+    
+    st.markdown("---")
+    
+    # Action buttons
+    col1, col2, col3 = st.columns([1, 1, 1])
+    
+    with col1:
+        if st.button("💾 Save Settings", use_container_width=True):
+            # Store settings in session state
+            st.session_state.user_settings = {
+                'theme_mode': theme_mode,
+                'background_color': background_color,
+                'primary_color': primary_color,
+                'text_color': text_color,
+                'muted_text_color': muted_text_color,
+                'border_color': border_color,
+                'font_family': font_family,
+                'fallback_fonts': fallback_fonts,
+                'base_font_size': base_font_size,
+                'heading_scale': heading_scale,
+                'label_font_size': label_font_size,
+                'line_height': line_height,
+                'font_weight': font_weight,
+                'letter_spacing': letter_spacing,
+                'default_sensitivity': default_sensitivity,
+                'default_motif_classes': default_motif_classes,
+                'default_export_format': default_export_format,
+                'show_sequence_details': show_sequence_details,
+                'auto_generate_visualizations': auto_generate_visualizations,
+                'filename_prefix': filename_prefix,
+                'include_timestamp': include_timestamp,
+                'include_metadata': include_metadata,
+                'compress_exports': compress_exports
+            }
+            st.success("✅ Settings saved successfully!")
+    
+    with col2:
+        if st.button("🔄 Reset to Defaults", use_container_width=True):
+            if 'user_settings' in st.session_state:
+                del st.session_state.user_settings
+            st.info("🔄 Settings reset to default values")
+    
+    with col3:
+        if st.button("📥 Export Settings", use_container_width=True):
+            if 'user_settings' in st.session_state:
+                import json
+                settings_json = json.dumps(st.session_state.user_settings, indent=2)
+                st.download_button(
+                    label="⬇️ Download settings.json",
+                    data=settings_json,
+                    file_name="nbdfinder_settings.json",
+                    mime="application/json"
+                )
+            else:
+                st.warning("No custom settings to export")
+    
+    # Live preview section
+    st.markdown("---")
+    st.markdown("#### 🎨 Live Preview")
+    
+    # Apply custom CSS based on current settings
+    custom_css = f"""
+    <style>
+    :root {{
+        --custom-bg: {background_color};
+        --custom-primary: {primary_color};
+        --custom-text: {text_color};
+        --custom-muted: {muted_text_color};
+        --custom-border: {border_color};
+        --custom-font: {font_family};
+        --custom-base-size: {base_font_size}rem;
+        --custom-label-size: {label_font_size}rem;
+        --custom-line-height: {line_height};
+        --custom-letter-spacing: {letter_spacing}em;
+    }}
+    
+    .preview-card {{
+        background: var(--custom-bg);
+        border: 2px solid var(--custom-border);
+        border-radius: 8px;
+        padding: 20px;
+        font-family: var(--custom-font), {', '.join(fallback_fonts)};
+        color: var(--custom-text);
+        font-size: var(--custom-base-size);
+        line-height: var(--custom-line-height);
+        letter-spacing: var(--custom-letter-spacing);
+    }}
+    
+    .preview-card h3 {{
+        color: var(--custom-primary);
+        font-size: calc(var(--custom-base-size) * {heading_scale});
+        margin-top: 0;
+    }}
+    
+    .preview-card .label {{
+        color: var(--custom-muted);
+        font-size: var(--custom-label-size);
+        font-weight: {font_weight.split()[0]};
+    }}
+    </style>
+    
+    <div class="preview-card">
+        <h3>Sample Text Preview</h3>
+        <div class="label">Label text example</div>
+        <p>This is how regular paragraph text will appear with your current settings. The font family is {font_family} with a base size of {base_font_size}rem and line height of {line_height}.</p>
+        <p style="color: var(--custom-muted);">This is secondary text using the muted color you selected.</p>
+    </div>
+    """
+    
+    st.markdown(custom_css, unsafe_allow_html=True)
+
+# Footer
+st.markdown("---")
+st.markdown("""
 <div style="text-align: center; padding: 20px; color: #6b7280; font-size: 0.875rem;">
     <p><strong>NBDFinder v2.0</strong> | Developed by Dr. Venkata Rajesh Yella | 
     <a href="https://github.com/VRYella/NBDFinder" style="color: #0891b2;">GitHub</a> | 
