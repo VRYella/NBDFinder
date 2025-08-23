@@ -107,44 +107,57 @@ st.markdown("""
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     
     :root {
-        /* Professional color scheme as per requirements */
+        /* Enhanced professional color scheme with improved contrast */
         --primary: #1e3a8a;        /* Deep blue/navy for headings */
         --accent: #0891b2;         /* Teal for subheadings */
+        --secondary: #6366f1;      /* Indigo for highlights */
         --text: #1f2937;           /* Dark gray/black for primary text */
         --text-muted: #6b7280;     /* Gray for secondary text */
-        --bg: #f9fafb;             /* Light gray background */
+        --bg: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);  /* Subtle gradient background */
         --surface: #ffffff;        /* Off-white for surfaces */
         --border: #e5e7eb;         /* Light border color */
-        --radius: 8px;
-        --shadow: 0 2px 4px rgba(0,0,0,0.1); 
-        --transition: all 0.2s ease;
+        --border-accent: #d1d5db;  /* Slightly darker border for emphasis */
+        --success: #10b981;        /* Green for success states */
+        --warning: #f59e0b;        /* Orange for warnings */
+        --error: #ef4444;          /* Red for errors */
+        --radius: 12px;
+        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); 
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
     body, [data-testid="stAppViewContainer"], .main {
         background: var(--bg); font-family: Inter, sans-serif; color: var(--text); line-height: 1.6;
+        min-height: 100vh;
     }
     
-    /* TABS */
+    /* ENHANCED TABS WITH IMPROVED TYPOGRAPHY */
     .stTabs [data-baseweb="tab-list"] {
-        background: linear-gradient(135deg, var(--surface) 0%, var(--border) 100%);
-        border: 1px solid var(--border); border-radius: 12px; padding: 8px; margin-bottom: 24px;
-        box-shadow: var(--shadow); display: flex; gap: 4px; width: 100%;
+        background: linear-gradient(135deg, var(--surface) 0%, rgba(248,250,252,0.95) 100%);
+        border: 2px solid var(--border); border-radius: 16px; padding: 10px; margin-bottom: 28px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.08); display: flex; gap: 6px; width: 100%;
+        backdrop-filter: blur(10px);
     }
     .stTabs [data-baseweb="tab"] {
-        background: transparent; border: none; border-radius: var(--radius);
-        font-family: Inter, sans-serif; font-weight: 500; font-size: 1.125rem;
-        color: var(--text-muted); padding: 12px 24px; transition: var(--transition);
+        background: transparent; border: none; border-radius: 12px;
+        font-family: Inter, sans-serif; font-weight: 600; font-size: 1.375rem;
+        color: var(--text-muted); padding: 14px 28px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
-        white-space: nowrap; flex: 1;
+        white-space: nowrap; flex: 1; letter-spacing: -0.01em;
     }
     .stTabs [data-baseweb="tab"]:hover {
-        background: rgba(255,255,255,0.8); color: var(--primary); font-weight: 600;
-        transform: translateY(-1px); box-shadow: var(--shadow);
+        background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(248,250,252,0.95) 100%); 
+        color: var(--primary); font-weight: 700;
+        transform: translateY(-2px) scale(1.02); 
+        box-shadow: 0 6px 20px rgba(30,58,138,0.15);
+        border: 1px solid rgba(30,58,138,0.1);
     }
     .stTabs [aria-selected="true"] {
         background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-        color: white; font-weight: 700; font-size: 1.25rem;
-        box-shadow: 0 4px 12px rgba(30,58,138,0.3); transform: translateY(-2px);
+        color: white; font-weight: 800; font-size: 1.5rem;
+        box-shadow: 0 8px 24px rgba(30,58,138,0.4); transform: translateY(-3px) scale(1.05);
+        border: 2px solid rgba(255,255,255,0.2);
+        letter-spacing: -0.02em;
     }
     
     /* IMPROVED FORM CONTROLS */
@@ -389,10 +402,24 @@ if 'results' not in st.session_state:
     st.session_state.results = []
 if 'analysis_settings' not in st.session_state:
     st.session_state.analysis_settings = {}
+if 'ncbi_query' not in st.session_state:
+    st.session_state.ncbi_query = ""
 
 # Set up Entrez for NCBI access
 Entrez.email = "raazbiochem@gmail.com"
 Entrez.api_key = None
+
+# Famous NCBI examples for quick access
+FAMOUS_NCBI_EXAMPLES = {
+    "Human TERT Promoter": "NC_000005.10:1253147-1295047",
+    "Human c-MYC Promoter": "NG_007161.1",
+    "Human BCL2 Promoter": "NG_009361.1", 
+    "Fragile X FMR1 Gene": "NG_007529.1",
+    "Huntington HTT Gene": "NG_009378.1",
+    "Human Immunoglobulin Switch": "NG_001019.6",
+    "Human Alpha Globin": "NG_000006.1",
+    "Friedreich Ataxia FXN": "NG_008845.1"
+}
 
 # Example sequences
 EXAMPLE_SEQUENCES = {
@@ -412,6 +439,124 @@ EXAMPLE_SEQUENCES = {
         "description": "Frataxin GAA repeat expansion associated with Friedreich's ataxia"
     }
 }
+
+def ncbi_fetch(query):
+    """Fetch sequences from NCBI using Entrez with improved error handling and retry logic"""
+    import time
+    import requests
+    
+    # Test network connectivity first
+    try:
+        test_response = requests.get("https://www.ncbi.nlm.nih.gov", timeout=5)
+        if test_response.status_code != 200:
+            st.error("⚠️ **NCBI Connectivity Issue**: Cannot reach NCBI servers. Please try again later or use direct FASTA input.")
+            return [], []
+    except Exception as e:
+        st.error(f"⚠️ **Network Connectivity Issue**: {str(e)[:100]}... Please check your internet connection or use direct FASTA input.")
+        return [], []
+    
+    max_retries = 3
+    retry_delay = 2
+    
+    for attempt in range(max_retries):
+        try:
+            # Set email for NCBI Entrez (required for good practice)
+            Entrez.email = "raazbiochem@gmail.com"
+            
+            # Enhanced search logic with multiple strategies
+            if ':' in query and '-' in query:
+                # Handle genomic coordinate queries (e.g., NC_000005.10:1253147-1295047)
+                st.info(f"🧬 Genomic coordinate query detected: {query}")
+                handle = Entrez.efetch(db="nucleotide", id=query, rettype="fasta", retmode="text")
+            else:
+                # Regular accession or gene name query
+                st.info(f"🔍 Searching for: {query}")
+                
+                # First try direct fetch for accession numbers
+                try:
+                    handle = Entrez.efetch(db="nucleotide", id=query, rettype="fasta", retmode="text")
+                except Exception:
+                    # If direct fetch fails, try search first
+                    search_handle = Entrez.esearch(db="nucleotide", term=query, retmax=5)
+                    search_result = Entrez.read(search_handle)
+                    search_handle.close()
+                    
+                    if not search_result['IdList']:
+                        st.warning(f"⚠️ No results found for query: '{query}'. Try using a specific accession number.")
+                        return [], []
+                    
+                    # Fetch the first result
+                    first_id = search_result['IdList'][0]
+                    handle = Entrez.efetch(db="nucleotide", id=first_id, rettype="fasta", retmode="text")
+            
+            # Parse FASTA content
+            content = handle.read()
+            handle.close()
+            
+            seqs = []
+            names = []
+            
+            # Parse multi-FASTA content
+            cur_seq = ""
+            cur_name = ""
+            
+            for line in content.split('\n'):
+                line = line.strip()
+                if line.startswith('>'):
+                    # Save previous sequence if exists
+                    if cur_seq:
+                        cleaned_seq = parse_fasta(cur_seq)
+                        if len(cleaned_seq) > 10:
+                            seqs.append(cleaned_seq)
+                            display_name = cur_name[:100] + "..." if len(cur_name) > 100 else cur_name
+                            names.append(display_name if display_name else f"Sequence_{len(seqs)}")
+                    
+                    # Start new sequence
+                    cur_name = line[1:]  # Remove '>'
+                    cur_seq = ""
+                elif line:
+                    cur_seq += line
+            
+            # Add the last sequence
+            if cur_seq:
+                cleaned_seq = parse_fasta(cur_seq)
+                if len(cleaned_seq) > 10:
+                    seqs.append(cleaned_seq)
+                    display_name = cur_name[:100] + "..." if len(cur_name) > 100 else cur_name
+                    names.append(display_name if display_name else f"Sequence_{len(seqs)}")
+            
+            if not seqs:
+                st.warning("⚠️ No valid sequences found (sequences must be >10 bp).")
+                return [], []
+            
+            st.success(f"✅ Successfully retrieved {len(seqs)} sequence(s) from NCBI!")
+            return seqs, names
+            
+        except Exception as e:
+            error_msg = str(e)
+            if attempt == max_retries - 1:  # Last attempt
+                if "HTTP Error 429" in error_msg:
+                    st.error("⚠️ **NCBI Rate Limit**: Too many requests. Please wait 1-2 minutes and try again.")
+                elif "URLError" in error_msg or "timeout" in error_msg.lower() or "NameResolutionError" in error_msg:
+                    st.error("⚠️ **Network Issue**: Cannot connect to NCBI. Please check your internet connection or try again later.")
+                elif "XML" in error_msg or "parse" in error_msg.lower():
+                    st.error("⚠️ **NCBI Service Issue**: The service may be temporarily unavailable. Please try again later.")
+                else:
+                    st.error(f"⚠️ **NCBI Fetch Failed**: {error_msg[:200]}...")
+                
+                # Provide helpful suggestions
+                st.info("💡 **Alternative Options:**\\n"
+                       "- Try using direct FASTA sequence input instead\\n"
+                       "- Check that your accession number is correct (e.g., 'NC_000001.11')\\n"
+                       "- Use one of the provided example sequences\\n"
+                       "- Try again in a few minutes if this is a temporary service issue")
+                return [], []
+            else:
+                # Wait before retry
+                time.sleep(retry_delay * (attempt + 1))
+                continue
+    
+    return [], []
 
 # ---- MAIN APPLICATION ----
 
@@ -701,31 +846,93 @@ with tab_dict["Upload & Analyze"]:
         elif input_method == "NCBI Fetch":
             st.markdown("""
             <div class="feature-card">
-                <h4>NCBI Database Fetch</h4>
-                <p>Retrieve sequences directly from NCBI databases</p>
+                <h4>🧬 NCBI Database Fetch</h4>
+                <p>Retrieve sequences directly from NCBI databases with advanced error handling</p>
             </div>
             """, unsafe_allow_html=True)
             
-            accession = st.text_input(
-                "Enter NCBI Accession Number:",
-                help="Format: NG_123456.1, NM_123456.1, etc.",
-                placeholder="NG_123456.1"
+            # Example chips for famous sequences
+            st.markdown("**🔬 Quick Examples (Click to Auto-fill):**")
+            if len(FAMOUS_NCBI_EXAMPLES) > 4:
+                # Split into rows if we have many examples
+                chip_rows = [list(FAMOUS_NCBI_EXAMPLES.items())[i:i+4] for i in range(0, len(FAMOUS_NCBI_EXAMPLES), 4)]
+                for row_idx, row in enumerate(chip_rows):
+                    chip_cols = st.columns(len(row))
+                    for i, (gene, accession) in enumerate(row):
+                        with chip_cols[i]:
+                            if st.button(f"🧬 {gene}", key=f"chip_{row_idx}_{i}", 
+                                       help=f"Auto-fill: {accession}",
+                                       use_container_width=True):
+                                st.session_state.ncbi_query = accession
+                                st.rerun()
+            else:
+                chip_cols = st.columns(len(FAMOUS_NCBI_EXAMPLES))
+                for i, (gene, accession) in enumerate(FAMOUS_NCBI_EXAMPLES.items()):
+                    with chip_cols[i]:
+                        if st.button(f"🧬 {gene}", key=f"chip_{i}", 
+                                   help=f"Auto-fill: {accession}",
+                                   use_container_width=True):
+                            st.session_state.ncbi_query = accession
+                            st.rerun()
+            
+            # Enhanced query input with validation
+            ncbi_query = st.text_input(
+                "Enter NCBI Query:",
+                value=st.session_state.get('ncbi_query', ''),
+                help="Enter NCBI accession number (e.g., NG_007161.1) or gene name. Supports genomic coordinates (e.g., NC_000005.10:1253147-1295047)",
+                placeholder="NG_007161.1 or NC_000005.10:1253147-1295047 or human c-MYC promoter",
+                key="ncbi_query_input"
             )
             
-            if accession and st.button("Fetch Sequence"):
-                try:
-                    with st.spinner("Fetching sequence from NCBI..."):
-                        handle = Entrez.efetch(db="nucleotide", id=accession, rettype="fasta", retmode="text")
-                        fasta_content = handle.read()
-                        handle.close()
-                        
-                        seqs, names = parse_fasta(fasta_content)
-                        if seqs:
-                            st.success(f"Successfully fetched: {names[0]}")
-                        else:
-                            st.error("❌ No sequence data found")
-                except Exception as e:
-                    st.error(f"❌ Error fetching sequence: {e}")
+            # Inline validation for NCBI query
+            if ncbi_query:
+                import re
+                # Pattern for common NCBI accession formats
+                accession_patterns = [
+                    r'^[A-Z]{1,2}_\d{6,9}\.\d{1,2}$',  # e.g., NG_007161.1, NM_007294.3
+                    r'^[A-Z]{1,2}\d{6,9}\.\d{1,2}$',   # e.g., NM007294.3
+                    r'^[A-Z]{1,2}_\d{6,9}\.\d{1,2}:\d+-\d+$',  # e.g., NC_000005.10:1253147-1295047
+                ]
+                
+                is_accession = any(re.match(pattern, ncbi_query.strip()) for pattern in accession_patterns)
+                
+                if is_accession:
+                    st.success(f"✓ Valid accession format detected: {ncbi_query}")
+                else:
+                    st.info(f"Free-text query: '{ncbi_query}' - will search NCBI database")
+            
+            if ncbi_query:
+                if st.button("🚀 Fetch from NCBI", type="primary", use_container_width=True):
+                    with st.spinner("Fetching sequences from NCBI..."):
+                        try:
+                            seqs, names = ncbi_fetch(ncbi_query)
+                            if seqs:
+                                # Store in session state for persistence
+                                st.session_state.seqs = seqs
+                                st.session_state.names = names
+                                st.success(f"🎉 Successfully fetched {len(seqs)} sequence(s) from NCBI!")
+                                # Show preview of fetched sequences
+                                with st.expander("📋 Preview Fetched Sequences"):
+                                    for i, (seq, name) in enumerate(zip(seqs[:3], names[:3])):  # Show first 3
+                                        st.text(f"{i+1}. {name} ({len(seq)} bp)")
+                                        if i == 0:  # Show snippet of first sequence
+                                            st.code(f"{seq[:100]}..." if len(seq) > 100 else seq)
+                            else:
+                                st.error("❌ No sequences retrieved. Please check your query and try again.")
+                        except Exception as e:
+                            st.error(f"❌ Unexpected error: {str(e)[:150]}...")
+            
+            # Display current sequences in session state if any
+            if st.session_state.get('seqs'):
+                st.markdown("### 📊 Current Sequences in Memory")
+                for i, (seq, name) in enumerate(zip(st.session_state.seqs, st.session_state.names)):
+                    with st.expander(f"Sequence {i+1}: {name[:50]}..."):
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            st.metric("Length", f"{len(seq):,} bp")
+                        with col2:
+                            st.metric("GC Content", f"{gc_content(seq):.1f}%")
+                        st.text_area("Sequence Preview:", seq[:200] + "..." if len(seq) > 200 else seq, height=100, key=f"preview_{i}")
         
         # Store sequences in session state
         if seqs:
