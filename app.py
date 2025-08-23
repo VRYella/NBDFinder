@@ -107,22 +107,29 @@ st.markdown("""
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     
     :root {
-        /* Enhanced professional color scheme with improved contrast */
+        /* Enhanced professional color scheme with vibrant accents */
         --primary: #1e3a8a;        /* Deep blue/navy for headings */
         --accent: #0891b2;         /* Teal for subheadings */
         --secondary: #6366f1;      /* Indigo for highlights */
+        --tertiary: #7c3aed;       /* Purple for special elements */
+        --quaternary: #059669;     /* Emerald for success states */
         --text: #1f2937;           /* Dark gray/black for primary text */
         --text-muted: #6b7280;     /* Gray for secondary text */
-        --bg: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);  /* Subtle gradient background */
+        --bg: linear-gradient(135deg, #f8fafc 0%, #ffffff 50%, #fef3c7 100%);  /* Subtle gradient background */
         --surface: #ffffff;        /* Off-white for surfaces */
         --border: #e5e7eb;         /* Light border color */
         --border-accent: #d1d5db;  /* Slightly darker border for emphasis */
         --success: #10b981;        /* Green for success states */
         --warning: #f59e0b;        /* Orange for warnings */
         --error: #ef4444;          /* Red for errors */
+        --info: #3b82f6;           /* Blue for info */
+        --purple: #8b5cf6;         /* Purple accent */
+        --pink: #ec4899;           /* Pink accent */
+        --orange: #f97316;         /* Orange accent */
         --radius: 12px;
         --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); 
         --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        --shadow-colored: 0 10px 25px -5px rgba(30, 58, 138, 0.25);
         --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
@@ -134,16 +141,16 @@ st.markdown("""
     /* ENHANCED TABS WITH IMPROVED TYPOGRAPHY */
     .stTabs [data-baseweb="tab-list"] {
         background: linear-gradient(135deg, var(--surface) 0%, rgba(248,250,252,0.95) 100%);
-        border: 2px solid var(--border); border-radius: 16px; padding: 10px; margin-bottom: 28px;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.08); display: flex; gap: 6px; width: 100%;
+        border: 2px solid var(--border); border-radius: 16px; padding: 12px; margin-bottom: 32px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.08); display: flex; gap: 8px; width: 100%;
         backdrop-filter: blur(10px);
     }
     .stTabs [data-baseweb="tab"] {
         background: transparent; border: none; border-radius: 12px;
-        font-family: Inter, sans-serif; font-weight: 600; font-size: 1.375rem;
-        color: var(--text-muted); padding: 14px 28px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-family: Inter, sans-serif; font-weight: 600; font-size: 1.5rem;
+        color: var(--text-muted); padding: 18px 32px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
-        white-space: nowrap; flex: 1; letter-spacing: -0.01em;
+        white-space: nowrap; flex: 1; letter-spacing: -0.01em; margin: 4px;
     }
     .stTabs [data-baseweb="tab"]:hover {
         background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(248,250,252,0.95) 100%); 
@@ -154,7 +161,7 @@ st.markdown("""
     }
     .stTabs [aria-selected="true"] {
         background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-        color: white; font-weight: 800; font-size: 1.5rem;
+        color: white; font-weight: 800; font-size: 1.625rem;
         box-shadow: 0 8px 24px rgba(30,58,138,0.4); transform: translateY(-3px) scale(1.05);
         border: 2px solid rgba(255,255,255,0.2);
         letter-spacing: -0.02em;
@@ -193,19 +200,19 @@ st.markdown("""
         color: white; border-color: var(--primary); font-weight: 600;
     }
     
-    /* ENHANCED DATAFRAMES AND TABLES */
+    /* ENHANCED DATAFRAMES AND TABLES WITH IMPROVED SPACING */
     .stDataFrame {
-        border: 2px solid var(--border); border-radius: 12px; overflow: hidden;
-        box-shadow: var(--shadow); margin: 16px 0;
+        border: 2px solid var(--border); border-radius: 16px; overflow: hidden;
+        box-shadow: var(--shadow-lg); margin: 20px 0;
     }
     
     .stDataFrame table {
-        font-family: Inter, sans-serif; font-size: 0.95rem;
+        font-family: Inter, sans-serif; font-size: 1.05rem;
     }
     
     .stDataFrame thead tr th {
         background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-        color: white; font-weight: 700; font-size: 1rem; padding: 16px 12px;
+        color: white; font-weight: 700; font-size: 1.125rem; padding: 18px 16px;
         text-align: left; border: none;
     }
     
@@ -218,15 +225,15 @@ st.markdown("""
     }
     
     .stDataFrame tbody tr td {
-        padding: 14px 12px; border-bottom: 1px solid var(--border);
+        padding: 16px 14px; border-bottom: 1px solid var(--border);
         font-weight: 500; color: var(--text);
     }
     
-    /* ENHANCED BUTTONS */
+    /* ENHANCED BUTTONS WITH LARGER TEXT */
     .stButton > button {
         background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
         color: white; border: none; border-radius: var(--radius); font-family: Inter, sans-serif;
-        font-weight: 600; font-size: 1.125rem; padding: 12px 24px; transition: var(--transition);
+        font-weight: 600; font-size: 1.25rem; padding: 16px 32px; transition: var(--transition);
         box-shadow: var(--shadow); cursor: pointer;
     }
     .stButton > button:hover {
@@ -244,22 +251,26 @@ st.markdown("""
         transform: translateY(-1px); box-shadow: 0 4px 16px rgba(16,185,129,0.3);
     }
     
-    /* ENHANCED METRICS */
+    /* ENHANCED METRICS WITH COLORFUL DESIGN */
     .metric-card {
-        background: var(--surface); border: 2px solid var(--border); border-radius: 12px;
-        padding: 20px; margin: 8px 0; box-shadow: var(--shadow); transition: var(--transition);
+        background: linear-gradient(135deg, var(--surface) 0%, rgba(248,250,252,0.9) 100%); 
+        border: 2px solid var(--border); border-radius: 16px;
+        padding: 24px; margin: 12px 0; box-shadow: var(--shadow-lg); transition: var(--transition);
     }
     .metric-card:hover {
-        transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        transform: translateY(-4px); box-shadow: var(--shadow-colored);
         border-color: var(--accent);
+        background: linear-gradient(135deg, rgba(8,145,178,0.05) 0%, rgba(30,58,138,0.05) 100%);
     }
     
     .metric-card h3 {
-        color: var(--primary); font-size: 2.5rem; font-weight: 700; margin: 0;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        background-clip: text; font-size: 3rem; font-weight: 800; margin: 0;
         text-align: center;
     }
     .metric-card p {
-        color: var(--text-muted); font-size: 1.125rem; font-weight: 500; margin: 8px 0 0 0;
+        color: var(--text-muted); font-size: 1.25rem; font-weight: 500; margin: 12px 0 0 0;
         text-align: center;
     }
     
@@ -308,42 +319,42 @@ st.markdown("""
     .stButton > button:hover { background: #1e3a8a; box-shadow: var(--shadow); }
     .stButton > button:active { transform: translateY(1px); }
     
-    /* LAYOUT */
-    .main .block-container { padding: 1.5rem 2rem; max-width: none; width: 100%; }
+    /* ENHANCED LAYOUT WITH IMPROVED SPACING */
+    .main .block-container { padding: 2rem 3rem; max-width: none; width: 100%; }
     .stApp > .main { width: 100%; max-width: none; }
     [data-testid="stAppViewContainer"] { width: 100%; max-width: none; }
 
-    /* TYPOGRAPHY */
+    /* ENHANCED TYPOGRAPHY WITH LARGER FONTS */
     h1, h2, h3, h4, h5, h6 {
         font-family: Inter, sans-serif; font-weight: 700; letter-spacing: -0.025em;
-        line-height: 1.1; margin: 1.5rem 0 1rem; color: var(--primary);
+        line-height: 1.1; margin: 2rem 0 1.5rem; color: var(--primary);
         background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
         -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         background-clip: text;
     }
-    h1 { font-size: 3.5rem; font-weight: 900; letter-spacing: -0.04em; margin-bottom: 1.5rem; }
-    h2 { font-size: 2.75rem; font-weight: 800; letter-spacing: -0.03em; }
-    h3 { font-size: 2.25rem; font-weight: 750; letter-spacing: -0.025em; }
-    h4 { font-size: 1.875rem; font-weight: 700; letter-spacing: -0.02em; }
-    h5 { font-size: 1.5rem; font-weight: 650; }
-    h6 { font-size: 1.375rem; font-weight: 600; }
+    h1 { font-size: 4.5rem; font-weight: 900; letter-spacing: -0.04em; margin-bottom: 2rem; }
+    h2 { font-size: 3.25rem; font-weight: 800; letter-spacing: -0.03em; }
+    h3 { font-size: 2.75rem; font-weight: 750; letter-spacing: -0.025em; }
+    h4 { font-size: 2.25rem; font-weight: 700; letter-spacing: -0.02em; }
+    h5 { font-size: 1.875rem; font-weight: 650; }
+    h6 { font-size: 1.625rem; font-weight: 600; }
     
     .stMarkdown, .markdown-text-container, .stText, p, span, label, input {
-        font-family: Inter, sans-serif; font-size: 1.25rem; line-height: 1.7; 
+        font-family: Inter, sans-serif; font-size: 1.375rem; line-height: 1.75; 
         color: var(--text); font-weight: 400;
     }
-    .stMarkdown p { margin-bottom: 1.25rem; font-size: 1.25rem; }
+    .stMarkdown p { margin-bottom: 1.5rem; font-size: 1.375rem; }
     
     /* Better readability for all text elements */
     .stSelectbox label, .stMultiSelect label, .stTextInput label, .stTextArea label,
     .stSlider label, .stRadio label, .stCheckbox label {
-        font-size: 1.125rem !important; font-weight: 500;
+        font-size: 1.25rem !important; font-weight: 500;
     }
     
     /* Form inputs with larger text */
     .stSelectbox div[data-baseweb="select"] > div, 
     .stTextInput input, .stTextArea textarea {
-        font-size: 1.125rem !important;
+        font-size: 1.25rem !important;
     }
     
     /* EXPANDERS */
@@ -409,7 +420,7 @@ if 'ncbi_query' not in st.session_state:
 Entrez.email = "raazbiochem@gmail.com"
 Entrez.api_key = None
 
-# Famous NCBI examples for quick access
+# Famous NCBI examples for quick access - Enhanced with more diverse examples
 FAMOUS_NCBI_EXAMPLES = {
     "Human TERT Promoter": "NC_000005.10:1253147-1295047",
     "Human c-MYC Promoter": "NG_007161.1",
@@ -418,7 +429,15 @@ FAMOUS_NCBI_EXAMPLES = {
     "Huntington HTT Gene": "NG_009378.1",
     "Human Immunoglobulin Switch": "NG_001019.6",
     "Human Alpha Globin": "NG_000006.1",
-    "Friedreich Ataxia FXN": "NG_008845.1"
+    "Friedreich Ataxia FXN": "NG_008845.1",
+    "Human BRCA1 Gene": "NG_005905.2",
+    "Human BRCA2 Gene": "NG_012772.3",
+    "Human TP53 Tumor Suppressor": "NG_017013.2",
+    "Human EGFR Oncogene": "NG_007726.3",
+    "Human CFTR (Cystic Fibrosis)": "NG_016465.4",
+    "Human DMD (Duchenne MD)": "NG_012232.1",
+    "Human APOE (Alzheimer's)": "NG_007991.1",
+    "Human SOD1 (ALS)": "NG_008689.1"
 }
 
 # Example sequences
@@ -851,16 +870,41 @@ with tab_dict["Upload & Analyze"]:
             </div>
             """, unsafe_allow_html=True)
             
-            # Example chips for famous sequences
-            st.markdown("**🔬 Quick Examples (Click to Auto-fill):**")
+            # Enhanced example chips with color coding for famous sequences
+            st.markdown("**🔬 Quick Examples - Disease & Cancer Related Genes (Click to Auto-fill):**")
+            
+            # Add color legend
+            st.markdown("""
+            <div style='background: linear-gradient(135deg, #f8fafc 0%, #e5e7eb 100%); 
+                        padding: 12px; border-radius: 8px; margin: 8px 0 16px 0; 
+                        border: 1px solid #d1d5db;'>
+                <div style='display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;'>
+                    <span style='font-size: 0.95rem;'><span style='font-size: 1.2rem;'>🔴</span> Cancer/Oncogenes</span>
+                    <span style='font-size: 0.95rem;'><span style='font-size: 1.2rem;'>🟠</span> Disease Genes</span>
+                    <span style='font-size: 0.95rem;'><span style='font-size: 1.2rem;'>🟢</span> Promoter Regions</span>
+                    <span style='font-size: 0.95rem;'><span style='font-size: 1.2rem;'>🔵</span> Other Important Genes</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
             if len(FAMOUS_NCBI_EXAMPLES) > 4:
-                # Split into rows if we have many examples
+                # Split into rows if we have many examples with improved styling
                 chip_rows = [list(FAMOUS_NCBI_EXAMPLES.items())[i:i+4] for i in range(0, len(FAMOUS_NCBI_EXAMPLES), 4)]
                 for row_idx, row in enumerate(chip_rows):
                     chip_cols = st.columns(len(row))
                     for i, (gene, accession) in enumerate(row):
                         with chip_cols[i]:
-                            if st.button(f"🧬 {gene}", key=f"chip_{row_idx}_{i}", 
+                            # Color code different types of genes
+                            if any(keyword in gene.lower() for keyword in ['cancer', 'tumor', 'brca', 'tp53', 'egfr', 'bcl', 'myc']):
+                                button_emoji = "🔴"  # Red for cancer genes
+                            elif any(keyword in gene.lower() for keyword in ['disease', 'fragile', 'huntington', 'friedreich', 'cftr', 'dmd', 'als', 'alzheimer']):
+                                button_emoji = "🟠"  # Orange for disease genes  
+                            elif any(keyword in gene.lower() for keyword in ['promoter', 'tert']):
+                                button_emoji = "🟢"  # Green for promoters
+                            else:
+                                button_emoji = "🔵"  # Blue for other genes
+                            
+                            if st.button(f"{button_emoji} {gene}", key=f"chip_{row_idx}_{i}", 
                                        help=f"Auto-fill: {accession}",
                                        use_container_width=True):
                                 st.session_state.ncbi_query = accession
@@ -869,7 +913,17 @@ with tab_dict["Upload & Analyze"]:
                 chip_cols = st.columns(len(FAMOUS_NCBI_EXAMPLES))
                 for i, (gene, accession) in enumerate(FAMOUS_NCBI_EXAMPLES.items()):
                     with chip_cols[i]:
-                        if st.button(f"🧬 {gene}", key=f"chip_{i}", 
+                        # Color code different types of genes (fallback case)
+                        if any(keyword in gene.lower() for keyword in ['cancer', 'tumor', 'brca', 'tp53', 'egfr', 'bcl', 'myc']):
+                            button_emoji = "🔴"  # Red for cancer genes
+                        elif any(keyword in gene.lower() for keyword in ['disease', 'fragile', 'huntington', 'friedreich', 'cftr', 'dmd', 'als', 'alzheimer']):
+                            button_emoji = "🟠"  # Orange for disease genes  
+                        elif any(keyword in gene.lower() for keyword in ['promoter', 'tert']):
+                            button_emoji = "🟢"  # Green for promoters
+                        else:
+                            button_emoji = "🔵"  # Blue for other genes
+                        
+                        if st.button(f"{button_emoji} {gene}", key=f"chip_{i}", 
                                    help=f"Auto-fill: {accession}",
                                    use_container_width=True):
                             st.session_state.ncbi_query = accession
