@@ -140,6 +140,8 @@ LEGACY_TO_OFFICIAL_MAPPING = {
     
     "i-Motif": "i-motif family",
     "Canonical_iMotif": "Canonical i-motif",
+    "LongLoop_iMotif": "Relaxed i-motif",  # Map long loop to relaxed
+    "Other_iMotif": "Relaxed i-motif",     # Map other to relaxed instead of unknown
     "Relaxed_iMotif": "Relaxed i-motif",
     "AC-Motif": "i-motif family",
     "AC_Motif": "AC-motif",
@@ -150,7 +152,10 @@ LEGACY_TO_OFFICIAL_MAPPING = {
     "CGG_Expansion": "eGZ (Extruded-G) DNA",
     
     "Hybrid": "Hybrid",
-    "Non-B_Clusters": "Non-B DNA cluster regions"
+    "Non-B_Clusters": "Non-B DNA cluster regions",
+    
+    # Handle any potential 'Other' fallbacks
+    "Other": "Relaxed i-motif"  # Default fallback to prevent "Unknown"
 }
 
 # G4 family priority enforcement
