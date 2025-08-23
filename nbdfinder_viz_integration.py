@@ -90,7 +90,7 @@ class NBDFinderVisualizationHub:
         if 'Length' not in df.columns:
             df['Length'] = df['End'] - df['Start']
         
-        # Ensure numeric columns are properly typed
+        # Ensure numeric columns are properly typed and fill NaN with appropriate defaults
         numeric_columns = ['Start', 'End', 'Length']
         for col in numeric_columns:
             if col in df.columns:
@@ -100,12 +100,88 @@ class NBDFinderVisualizationHub:
         if 'Score' in df.columns:
             df['Score'] = pd.to_numeric(df['Score'], errors='coerce').fillna(0)
         
+        # Fill N/A values in all numeric columns with appropriate defaults
+        numeric_fill_defaults = {
+            'Kadane_Score': 0.0,
+            'Unified_Score': 0.0,
+            'Structural_Factor': 1.0,
+            'GC_Content': 0.5,
+            'GC_CG_Dinucleotides': 0,
+            'Conservation_Score': 0.0,
+            'Conservation_P_Value': 1.0,
+            'G_Run_Count': 0,
+            'C_Run_Count': 0,
+            'G_Run_Sum': 0,
+            'C_Run_Sum': 0,
+            'G_Content': 0.0,
+            'C_Fraction': 0.0,
+            'iMotif_Mean': 0.0,
+            'OverlapDegree': 0.0,
+            'InteractionStrength': 0.0,
+            'ClusterSize': 1,
+            'DiversityIndex': 0.0,
+            'HotspotScore': 0.0,
+            'Density': 0.0,
+            'Span': 0,
+            'Complexity': 0.0,
+            'PatternScore': 0.0,
+            'StabilityScore': 0.0,
+            'Entropy': 0.0,
+            'RegionScore': 0.0,
+            'Distance': 0,
+            'Proximity': 0.0,
+            'Centrality': 0.0
+        }
+        
+        for col, default_val in numeric_fill_defaults.items():
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors='coerce').fillna(default_val)
+        
+        # Fill N/A values in string columns with appropriate defaults
+        string_fill_defaults = {
+            'Conservation_Significance': 'Unknown',
+            'MotifClasses': 'Single',
+            'ClassBreakdown': 'N/A',
+            'SubclassBreakdown': 'N/A',
+            'SubclassDetail': 'N/A',
+            'ContributingMotifs': 'N/A',
+            'ScoreMethod': 'Standard',
+            'Arms/Repeat Unit/Copies': '',
+            'Spacer': '',
+            'Loop_Lengths': '[]',
+            'ClusterType': 'Simple',
+            'ClusterMotifs': 'N/A',
+            'HotspotType': 'None',
+            'RegionType': 'Standard',
+            'StructuralClass': 'Standard',
+            'FunctionalCategory': 'Unknown',
+            'EvolutionaryConservation': 'Unknown',
+            'TherapeuticTarget': 'Unknown',
+            'BiologicalContext': 'Unknown',
+            'PatternType': 'Standard',
+            'Topology': 'Linear',
+            'Stability': 'Medium',
+            'Environment': 'Nuclear'
+        }
+        
+        for col, default_val in string_fill_defaults.items():
+            if col in df.columns:
+                df[col] = df[col].fillna(default_val)
+        
         # Add clinical significance if not present (for demo purposes)
         if 'Clinical_Significance' not in df.columns:
             # Assign based on class for demonstration
             clinical_map = {
+                'G-Quadruplex Family': ['Likely Benign', 'VUS', 'Likely Pathogenic'],
+                'Triplex': ['Benign', 'VUS', 'Pathogenic'],
+                'Slipped DNA': ['VUS', 'Likely Pathogenic', 'Pathogenic'],
+                'Z-DNA': ['VUS', 'Likely Benign', 'Benign'],
+                'i-motif family': ['VUS', 'Likely Benign', 'Benign'],
+                'Cruciform DNA': ['Benign', 'VUS', 'Likely Pathogenic'],
+                'R-loop': ['VUS', 'Pathogenic', 'Likely Pathogenic'],
+                'Curved DNA': ['Benign', 'Likely Benign', 'VUS'],
+                'Hybrid': ['Benign', 'VUS', 'Likely Pathogenic'],
                 'Disease-Associated Motif': ['Pathogenic', 'Likely Pathogenic', 'VUS'],
-                'G-Quadruplex Family': ['Benign', 'Likely Benign', 'VUS'],
                 'Default': ['VUS', 'Benign']
             }
             
@@ -118,6 +194,15 @@ class NBDFinderVisualizationHub:
                 return options[hash_val]
             
             df['Clinical_Significance'] = df.apply(assign_clinical, axis=1)
+        
+        # Final pass: Fill any remaining N/A values
+        # For numeric columns, fill with 0
+        numeric_cols = df.select_dtypes(include=[np.number]).columns
+        df[numeric_cols] = df[numeric_cols].fillna(0)
+        
+        # For object/string columns, fill with appropriate defaults
+        object_cols = df.select_dtypes(include=['object']).columns
+        df[object_cols] = df[object_cols].fillna('N/A')
         
         return df
     
