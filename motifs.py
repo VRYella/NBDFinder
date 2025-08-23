@@ -1537,9 +1537,9 @@ def find_imotif(seq):
             if loops and all(1 <= l <= 7 for l in loops):
                 subtype = "Canonical_iMotif"
             elif loops and any(8 <= l <= 12 for l in loops):
-                subtype = "LongLoop_iMotif"
+                subtype = "Relaxed_iMotif"  # Use Relaxed instead of LongLoop
             else:
-                subtype = "Other_iMotif"
+                subtype = "Relaxed_iMotif"  # Use Relaxed instead of Other
             
             # Calculate conservation score
             conservation_result = calculate_conservation_score(motif_seq, "i-Motif")
