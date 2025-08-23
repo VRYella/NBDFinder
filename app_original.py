@@ -338,78 +338,112 @@ def get_basic_stats(seq, motifs=None):
     return stats
 
 def ncbi_fetch(query):
-    """Fetch sequences from NCBI using Entrez with improved error handling"""
+    """Fetch sequences from NCBI using Entrez with improved error handling and retry logic"""
+    import time
+    import requests
+    
+    # Test network connectivity first
     try:
-        # Set email for NCBI Entrez (required for good practice)
-        Entrez.email = "user@example.com"
-        
-        # Search for the query with better parameters
-        handle = Entrez.esearch(db="nucleotide", term=query, retmax=5, usehistory="y")
-        search_results = Entrez.read(handle)
-        handle.close()
-        
-        if not search_results['IdList']:
-            st.warning(f"No sequences found for query: '{query}'. Try a different search term.")
+        test_response = requests.get("https://www.ncbi.nlm.nih.gov", timeout=5)
+        if test_response.status_code != 200:
+            st.error("⚠️ **NCBI Connectivity Issue**: Cannot reach NCBI servers. Please try again later or use direct FASTA input.")
             return [], []
-        
-        # Fetch sequences with better error handling
-        ids = search_results['IdList']
-        st.info(f"Found {len(ids)} sequence(s). Fetching data...")
-        
-        handle = Entrez.efetch(db="nucleotide", id=ids, rettype="fasta", retmode="text")
-        fasta_content = handle.read()
-        handle.close()
-        
-        if not fasta_content.strip():
-            st.error("Empty response from NCBI. Try again later.")
-            return [], []
-        
-        # Parse FASTA content with better validation
-        seqs, names = [], []
-        cur_seq, cur_name = "", ""
-        for line in fasta_content.splitlines():
-            line = line.strip()
-            if not line:
-                continue
-            if line.startswith(">"):
-                if cur_seq:
-                    cleaned_seq = parse_fasta(cur_seq)
-                    if len(cleaned_seq) > 10:  # Only include sequences > 10 bp
-                        seqs.append(cleaned_seq)
-                        # Clean up the name for better display
-                        display_name = cur_name[:100] + "..." if len(cur_name) > 100 else cur_name
-                        names.append(display_name if display_name else f"Sequence_{len(seqs)}")
-                cur_name = line.lstrip(">").strip()
-                cur_seq = ""
-            else:
-                cur_seq += line
-        
-        # Add the last sequence
-        if cur_seq:
-            cleaned_seq = parse_fasta(cur_seq)
-            if len(cleaned_seq) > 10:
-                seqs.append(cleaned_seq)
-                display_name = cur_name[:100] + "..." if len(cur_name) > 100 else cur_name
-                names.append(display_name if display_name else f"Sequence_{len(seqs)}")
-        
-        if not seqs:
-            st.warning("No valid sequences found (sequences must be >10 bp).")
-            return [], []
-        
-        return seqs, names
-        
     except Exception as e:
-        error_msg = str(e)
-        if "HTTP Error 429" in error_msg:
-            st.error("NCBI rate limit exceeded. Please wait a moment and try again.")
-        elif "URLError" in error_msg or "timeout" in error_msg.lower():
-            st.error("Network connection issue. Please check your internet connection and try again.")
-        elif "XML" in error_msg or "parse" in error_msg.lower():
-            st.error("NCBI response parsing error. The service may be temporarily unavailable.")
-        else:
-            st.error(f"NCBI fetch failed: {error_msg}")
-        
+        st.error(f"⚠️ **Network Connectivity Issue**: {str(e)[:100]}... Please check your internet connection or use direct FASTA input.")
         return [], []
+    
+    max_retries = 3
+    retry_delay = 2
+    
+    for attempt in range(max_retries):
+        try:
+            # Set email for NCBI Entrez (required for good practice)
+            Entrez.email = "user@example.com"
+            Entrez.api_key = None  # Set to None to avoid key requirements
+            
+            # Add progress indicator
+            with st.spinner(f'🔍 Searching NCBI (attempt {attempt + 1}/{max_retries})...'):
+                # Search for the query with better parameters
+                handle = Entrez.esearch(db="nucleotide", term=query, retmax=5, usehistory="y")
+                search_results = Entrez.read(handle)
+                handle.close()
+            
+            if not search_results['IdList']:
+                st.warning(f"❌ No sequences found for query: '{query}'. Try a different search term or check the accession number format.")
+                return [], []
+            
+            # Fetch sequences with better error handling
+            ids = search_results['IdList']
+            st.success(f"✅ Found {len(ids)} sequence(s). Fetching data...")
+            
+            with st.spinner('📥 Downloading sequence data...'):
+                handle = Entrez.efetch(db="nucleotide", id=ids, rettype="fasta", retmode="text")
+                fasta_content = handle.read()
+                handle.close()
+            
+            if not fasta_content.strip():
+                st.error("❌ Empty response from NCBI. Try again later.")
+                return [], []
+            
+            # Parse FASTA content with better validation
+            seqs, names = [], []
+            cur_seq, cur_name = "", ""
+            for line in fasta_content.splitlines():
+                line = line.strip()
+                if not line:
+                    continue
+                if line.startswith(">"):
+                    if cur_seq:
+                        cleaned_seq = parse_fasta(cur_seq)
+                        if len(cleaned_seq) > 10:  # Only include sequences > 10 bp
+                            seqs.append(cleaned_seq)
+                            # Clean up the name for better display
+                            display_name = cur_name[:100] + "..." if len(cur_name) > 100 else cur_name
+                            names.append(display_name if display_name else f"Sequence_{len(seqs)}")
+                    cur_name = line.lstrip(">").strip()
+                    cur_seq = ""
+                else:
+                    cur_seq += line
+            
+            # Add the last sequence
+            if cur_seq:
+                cleaned_seq = parse_fasta(cur_seq)
+                if len(cleaned_seq) > 10:
+                    seqs.append(cleaned_seq)
+                    display_name = cur_name[:100] + "..." if len(cur_name) > 100 else cur_name
+                    names.append(display_name if display_name else f"Sequence_{len(seqs)}")
+            
+            if not seqs:
+                st.warning("⚠️ No valid sequences found (sequences must be >10 bp).")
+                return [], []
+            
+            st.success(f"✅ Successfully retrieved {len(seqs)} sequence(s) from NCBI!")
+            return seqs, names
+            
+        except Exception as e:
+            error_msg = str(e)
+            if attempt == max_retries - 1:  # Last attempt
+                if "HTTP Error 429" in error_msg:
+                    st.error("⚠️ **NCBI Rate Limit**: Too many requests. Please wait 1-2 minutes and try again.")
+                elif "URLError" in error_msg or "timeout" in error_msg.lower() or "NameResolutionError" in error_msg:
+                    st.error("⚠️ **Network Issue**: Cannot connect to NCBI. Please check your internet connection or try again later.")
+                elif "XML" in error_msg or "parse" in error_msg.lower():
+                    st.error("⚠️ **NCBI Service Issue**: The service may be temporarily unavailable. Please try again later.")
+                else:
+                    st.error(f"⚠️ **NCBI Fetch Failed**: {error_msg[:200]}...")
+                
+                # Provide helpful suggestions
+                st.info("💡 **Alternative Options:**\n"
+                       "- Try using direct FASTA sequence input instead\n"
+                       "- Check that your accession number is correct (e.g., 'NC_000001.11')\n"
+                       "- Wait a few minutes and try again\n"
+                       "- Use the example sequences provided")
+                return [], []
+            else:
+                # Retry with exponential backoff
+                st.warning(f"⚠️ Attempt {attempt + 1} failed. Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+                retry_delay *= 2  # Exponential backoff
 
 def create_progress_tracker():
     """Create an enhanced real-time progress tracking container with time estimation"""
@@ -1584,12 +1618,145 @@ with tab_pages["Results"]:
                 all_motifs_flat.extend(motifs)
                 
             if all_motifs_flat:
-                # Prepare comprehensive data table
+                # Helper functions for enhanced scoring (consistent with Download tab)
+                def get_normalized_confidence_score(score, motif_class):
+                    """Normalize scores to unified 1.0-3.0 scale for consistency"""
+                    try:
+                        score_val = float(score)
+                        
+                        # Define motif-specific thresholds and normalizations
+                        thresholds = {
+                            # G4 Family (already normalized 1.0-3.0)
+                            'Canonical G4': {'min': 1.0, 'high': 2.0, 'optimal': 3.0},
+                            'Relaxed G4': {'min': 1.0, 'high': 2.0, 'optimal': 2.5},
+                            'Bulged G4': {'min': 1.0, 'high': 2.0, 'optimal': 2.5},
+                            'Imperfect G4': {'min': 1.0, 'high': 1.5, 'optimal': 2.0},
+                            'Bipartite G4': {'min': 20.0, 'high': 60.0, 'optimal': 100.0},
+                            'Multimeric G4': {'min': 30.0, 'high': 90.0, 'optimal': 150.0},
+                            'G-Triplex intermediate': {'min': 15.0, 'high': 65.0, 'optimal': 120.0},
+                            'G-Quadruplex Family': {'min': 1.0, 'high': 2.0, 'optimal': 3.0},
+                            
+                            # Alternative DNA Structures
+                            'Z-DNA': {'min': 50.0, 'high': 200.0, 'optimal': 500.0},
+                            'Curved DNA': {'min': 15.0, 'high': 100.0, 'optimal': 200.0},
+                            'eGZ': {'min': 10.0, 'high': 55.0, 'optimal': 100.0},
+                            'Extruded-G': {'min': 10.0, 'high': 55.0, 'optimal': 100.0},
+                            'eGZ (Extruded-G)': {'min': 10.0, 'high': 55.0, 'optimal': 100.0},
+                            
+                            # i-motif Family
+                            'i-motif family': {'min': 15.0, 'high': 55.0, 'optimal': 100.0},
+                            'Canonical i-motif': {'min': 15.0, 'high': 55.0, 'optimal': 100.0},
+                            'Relaxed i-motif': {'min': 12.0, 'high': 45.0, 'optimal': 80.0},
+                            'AC-motif': {'min': 10.0, 'high': 40.0, 'optimal': 75.0},
+                            
+                            # Repeat-based Structures
+                            'Slipped_DNA': {'min': 15.0, 'high': 80.0, 'optimal': 150.0},
+                            'Slipped DNA': {'min': 15.0, 'high': 80.0, 'optimal': 150.0},
+                            'R-Loop': {'min': 20.0, 'high': 150.0, 'optimal': 300.0},
+                            'RLFS': {'min': 20.0, 'high': 150.0, 'optimal': 300.0},
+                            
+                            # Junction Structures
+                            'Cruciform': {'min': 25.0, 'high': 100.0, 'optimal': 200.0},
+                            'Triplex': {'min': 20.0, 'high': 100.0, 'optimal': 180.0},
+                            'H-DNA': {'min': 20.0, 'high': 100.0, 'optimal': 180.0},
+                            'Triplex_DNA': {'min': 20.0, 'high': 100.0, 'optimal': 180.0},
+                            
+                            # Other Structures
+                            'Sticky_DNA': {'min': 10.0, 'high': 45.0, 'optimal': 80.0},
+                            'Sticky DNA': {'min': 10.0, 'high': 45.0, 'optimal': 80.0},
+                            'G-Triplex': {'min': 15.0, 'high': 65.0, 'optimal': 120.0},
+                        }
+                        
+                        # Get thresholds for this motif class
+                        if motif_class in thresholds:
+                            thresh = thresholds[motif_class]
+                            
+                            # Normalize to 1.0-3.0 scale
+                            if score_val >= thresh['optimal']:
+                                normalized_score = 3.0
+                            elif score_val >= thresh['high']:
+                                # Linear interpolation between high and optimal
+                                normalized_score = 2.0 + (score_val - thresh['high']) / (thresh['optimal'] - thresh['high'])
+                            elif score_val >= thresh['min']:
+                                # Linear interpolation between min and high  
+                                normalized_score = 1.0 + (score_val - thresh['min']) / (thresh['high'] - thresh['min'])
+                            else:
+                                # Below minimum threshold
+                                normalized_score = max(0.1, score_val / thresh['min'])
+                            
+                            return min(3.0, max(0.1, normalized_score))
+                        else:
+                            # Default handling for unknown motif types
+                            return 1.0
+                            
+                    except (ValueError, TypeError):
+                        return 1.0
+                
+                def get_significance_category(normalized_score, conservation_p_value=None):
+                    """Determine significance category based on normalized score and conservation"""
+                    try:
+                        # Primary significance based on normalized score
+                        if normalized_score >= 2.5:
+                            base_significance = "High"
+                        elif normalized_score >= 2.0:
+                            base_significance = "Moderate-High"
+                        elif normalized_score >= 1.0:
+                            base_significance = "Moderate"
+                        else:
+                            base_significance = "Low"
+                        
+                        # Enhance with conservation if available
+                        if conservation_p_value is not None:
+                            try:
+                                p_val = float(conservation_p_value)
+                                if p_val < 0.001:
+                                    conservation_level = "***"
+                                elif p_val < 0.01:
+                                    conservation_level = "**"
+                                elif p_val < 0.05:
+                                    conservation_level = "*"
+                                else:
+                                    conservation_level = ""
+                                
+                                return f"{base_significance}{conservation_level}"
+                            except (ValueError, TypeError):
+                                pass
+                        
+                        return base_significance
+                        
+                    except (ValueError, TypeError):
+                        return "Unknown"
+
+                # Prepare comprehensive data table with all required fields
                 all_data = []
                 for seq_name, motifs in st.session_state.results:
                     for motif in motifs:
                         motif_copy = motif.copy()
-                        motif_copy['Sequence Name'] = seq_name
+                        
+                        # Add/update required fields with proper naming
+                        motif_copy['Sequence_Name'] = seq_name
+                        motif_copy['Motif_Class'] = motif_copy.get('Class', 'Unknown')
+                        motif_copy['Motif_Subclass'] = motif_copy.get('Subtype', 'Unknown')
+                        motif_copy['Start_Position'] = motif_copy.get('Start', 0)
+                        motif_copy['End_Position'] = motif_copy.get('End', 0)
+                        motif_copy['Scoring_System'] = motif_copy.get('ScoreMethod', 'Unknown')
+                        
+                        # Calculate normalized score and significance
+                        original_score = motif_copy.get('Score', 0)
+                        motif_class = motif_copy.get('Class', '')
+                        normalized_score = get_normalized_confidence_score(original_score, motif_class)
+                        motif_copy['Normalized_Score_1_to_3'] = round(normalized_score, 2)
+                        
+                        # Determine significance
+                        conservation_p_val = motif_copy.get('Conservation_P_Value', None)
+                        significance = get_significance_category(normalized_score, conservation_p_val)
+                        motif_copy['Significance'] = significance
+                        
+                        # Ensure conservation fields exist with proper names
+                        motif_copy['Conservation_Score'] = motif_copy.get('Conservation_Score', 0.0)
+                        motif_copy['Conservation_P_Value'] = motif_copy.get('Conservation_P_Value', 1.0)
+                        motif_copy['Conservation_Significance'] = motif_copy.get('Conservation_Significance', 'Not significant')
+                        
                         all_data.append(motif_copy)
                 
                 df_comprehensive = pd.DataFrame(all_data)
@@ -1599,27 +1766,28 @@ with tab_pages["Results"]:
                 
                 with col1:
                     # Class filter
-                    available_classes = sorted(df_comprehensive['Class'].unique()) if 'Class' in df_comprehensive.columns else []
+                    available_classes = sorted(df_comprehensive['Motif_Class'].unique()) if 'Motif_Class' in df_comprehensive.columns else []
                     selected_class = st.selectbox(
                         "Motif Class:",
                         options=["All Classes"] + available_classes
                     )
                 
                 with col2:
-                    # Score filter slider
-                    if 'Score' in df_comprehensive.columns:
-                        score_values = pd.to_numeric(df_comprehensive['Score'], errors='coerce').dropna()
-                        if len(score_values) > 0:
-                            min_score = st.slider(
-                                "Minimum Score:",
-                                min_value=float(score_values.min()),
-                                max_value=float(score_values.max()),
-                                value=float(score_values.min())
+                    # Normalized score filter slider
+                    if 'Normalized_Score_1_to_3' in df_comprehensive.columns:
+                        normalized_values = pd.to_numeric(df_comprehensive['Normalized_Score_1_to_3'], errors='coerce').dropna()
+                        if len(normalized_values) > 0:
+                            min_normalized_score = st.slider(
+                                "Minimum Normalized Score (1-3):",
+                                min_value=1.0,
+                                max_value=3.0,
+                                value=1.0,
+                                step=0.1
                             )
                         else:
-                            min_score = 0
+                            min_normalized_score = 1.0
                     else:
-                        min_score = 0
+                        min_normalized_score = 1.0
                 
                 with col3:
                     # Length filter
@@ -1640,11 +1808,11 @@ with tab_pages["Results"]:
                 # Apply filters
                 filtered_df = df_comprehensive.copy()
                 if selected_class != "All Classes":
-                    filtered_df = filtered_df[filtered_df['Class'] == selected_class]
+                    filtered_df = filtered_df[filtered_df['Motif_Class'] == selected_class]
                 
-                if 'Score' in filtered_df.columns:
-                    score_numeric = pd.to_numeric(filtered_df['Score'], errors='coerce')
-                    filtered_df = filtered_df[score_numeric >= min_score]
+                if 'Normalized_Score_1_to_3' in filtered_df.columns:
+                    normalized_numeric = pd.to_numeric(filtered_df['Normalized_Score_1_to_3'], errors='coerce')
+                    filtered_df = filtered_df[normalized_numeric >= min_normalized_score]
                 
                 if 'Length' in filtered_df.columns:
                     length_numeric = pd.to_numeric(filtered_df['Length'], errors='coerce')
@@ -1653,9 +1821,33 @@ with tab_pages["Results"]:
                 # Display summary
                 st.markdown(f"**Showing {len(filtered_df)} of {len(df_comprehensive)} total motifs**")
                 
-                # Display the table with professional styling
-                key_columns = ['Sequence Name', 'Class', 'Subtype', 'Start', 'End', 'Length', 'Score']
+                # Display the table with all required fields
+                key_columns = [
+                    'Sequence_Name', 'Motif_Class', 'Motif_Subclass', 'Start_Position', 'End_Position', 
+                    'Length', 'Score', 'Scoring_System', 'Normalized_Score_1_to_3', 'Significance',
+                    'Conservation_Score', 'Conservation_P_Value', 'Conservation_Significance'
+                ]
                 display_columns = [col for col in key_columns if col in filtered_df.columns]
+                
+                # Show column selection for user customization
+                st.markdown("**Column Display Options:**")
+                col_select_col1, col_select_col2 = st.columns(2)
+                
+                with col_select_col1:
+                    show_all_fields = st.checkbox("Show All Required Fields", value=True)
+                    
+                with col_select_col2:
+                    show_conservation = st.checkbox("Include Conservation Data", value=True)
+                
+                if not show_all_fields:
+                    # Basic view
+                    display_columns = ['Sequence_Name', 'Motif_Class', 'Motif_Subclass', 'Start_Position', 'End_Position', 'Length', 'Score', 'Normalized_Score_1_to_3', 'Significance']
+                    display_columns = [col for col in display_columns if col in filtered_df.columns]
+                
+                if not show_conservation:
+                    # Remove conservation columns
+                    conservation_cols = ['Conservation_Score', 'Conservation_P_Value', 'Conservation_Significance']
+                    display_columns = [col for col in display_columns if col not in conservation_cols]
                 
                 st.dataframe(
                     filtered_df[display_columns] if display_columns else filtered_df, 
@@ -1966,10 +2158,19 @@ with tab_pages["Download"]:
             for j, m in enumerate(motifs):
                 if isinstance(m, dict):  # Ensure m is a dictionary
                     m = m.copy()  # Create a copy to avoid modifying original
-                    m['Sequence Name'] = st.session_state.names[i]
+                    
+                    # Add all required fields with proper naming
+                    m['Sequence_Name'] = st.session_state.names[i]
                     m['S.No'] = j + 1  # Add serial number starting from 1
+                    m['Motif_Class'] = m.get('Class', 'Unknown')
+                    m['Motif_Subclass'] = m.get('Subtype', 'Unknown')
+                    m['Start_Position'] = m.get('Start', 0)
+                    m['End_Position'] = m.get('End', 0)
+                    m['Scoring_System'] = m.get('ScoreMethod', 'Unknown')
+                    
+                    # Handle special eGZ classification
                     if m.get('Class') == "Z-DNA" and m.get("Subclass", "") == "eGZ (Extruded-G)":
-                        m['Class'] = "eGZ (Extruded-G)"
+                        m['Motif_Class'] = "eGZ (Extruded-G)"
                     
                     # Add normalized confidence scoring (consistent with Results tab)
                     def get_normalized_confidence_score(score, motif_class):
@@ -2049,10 +2250,56 @@ with tab_pages["Download"]:
                         else:
                             return "Low (<1.0)"
                     
-                    # Add normalized scoring
+                    # Add normalized scoring and significance
                     normalized_score = get_normalized_confidence_score(m.get('Score', 0), m.get('Class', ''))
-                    m['Normalized Score'] = f"{normalized_score:.2f}"
-                    m['Confidence Level'] = get_confidence_label(normalized_score)
+                    m['Normalized_Score_1_to_3'] = round(normalized_score, 2)
+                    
+                    # Determine significance
+                    conservation_p_val = m.get('Conservation_P_Value', None)
+                    
+                    def get_significance_category(normalized_score, conservation_p_value=None):
+                        """Determine significance category based on normalized score and conservation"""
+                        try:
+                            # Primary significance based on normalized score
+                            if normalized_score >= 2.5:
+                                base_significance = "High"
+                            elif normalized_score >= 2.0:
+                                base_significance = "Moderate-High"
+                            elif normalized_score >= 1.0:
+                                base_significance = "Moderate"
+                            else:
+                                base_significance = "Low"
+                            
+                            # Enhance with conservation if available
+                            if conservation_p_value is not None:
+                                try:
+                                    p_val = float(conservation_p_value)
+                                    if p_val < 0.001:
+                                        conservation_level = "***"
+                                    elif p_val < 0.01:
+                                        conservation_level = "**"
+                                    elif p_val < 0.05:
+                                        conservation_level = "*"
+                                    else:
+                                        conservation_level = ""
+                                    
+                                    return f"{base_significance}{conservation_level}"
+                                except (ValueError, TypeError):
+                                    pass
+                            
+                            return base_significance
+                            
+                        except (ValueError, TypeError):
+                            return "Unknown"
+                    
+                    significance = get_significance_category(normalized_score, conservation_p_val)
+                    m['Significance'] = significance
+                    
+                    # Ensure conservation fields exist with proper names
+                    m['Conservation_Score'] = m.get('Conservation_Score', 0.0)
+                    m['Conservation_P_Value'] = m.get('Conservation_P_Value', 1.0)
+                    m['Conservation_Significance'] = m.get('Conservation_Significance', 'Not significant')
+                    
                     df_all.append(m)
         
         df_all = pd.DataFrame(df_all)
