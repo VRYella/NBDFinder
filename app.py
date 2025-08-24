@@ -1372,13 +1372,29 @@ with tab_dict["Results & Visualization"]:
                 
                 # Position table
                 st.markdown("#### 📋 Detailed Position Table")
-                position_df = pd.DataFrame({
-                    'Motif Type': types,
-                    'Class': classes,
-                    'Start Position': positions,
-                    'End Position': [motif.get('End', motif.get('Start', 0)) for motif in result['motifs']],
-                    'Length': [motif.get('End', motif.get('Start', 0)) - motif.get('Start', 0) + 1 for motif in result['motifs']]
-                })
+                
+                # Prepare data for position table following the standard format
+                position_data = []
+                for motif in result['motifs']:
+                    # Ensure motif has proper subtype
+                    motif = ensure_subtype(motif)
+                    
+                    # Get official classification
+                    legacy_class = motif.get('Class', motif.get('Motif', 'Unknown'))
+                    legacy_subtype = motif.get('Subtype', '')
+                    official_class, official_subtype = get_official_classification(legacy_class, legacy_subtype)
+                    
+                    position_data.append({
+                        'Sequence': result['sequence_name'],
+                        'Class': official_class,
+                        'Subclass': official_subtype,
+                        'Start': motif.get('Start', 0),
+                        'End': motif.get('End', 0),
+                        'Length': motif.get('End', 0) - motif.get('Start', 0) + 1,
+                        'Score': motif.get('Score', 'N/A')
+                    })
+                
+                position_df = pd.DataFrame(position_data)
                 st.dataframe(position_df, use_container_width=True)
         
         # ---- DETAILED RESULT TABLES SUBTAB ----
