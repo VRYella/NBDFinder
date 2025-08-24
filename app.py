@@ -1400,16 +1400,12 @@ with tab_dict["Results & Visualization"]:
                     
                     all_motifs_details.append({
                         'Sequence': result['sequence_name'],
-                        'Motif_ID': f"M{seq_idx+1}_{motif_idx+1}",
-                        'Official_Class': official_class,
-                        'Official_Subclass': official_subtype,
-                        'Legacy_Type': motif.get('Motif', 'Unknown'),
+                        'Class': official_class,
+                        'Subclass': official_subtype,
                         'Start': motif.get('Start', 0),
                         'End': motif.get('End', 0),
                         'Length': motif.get('End', 0) - motif.get('Start', 0) + 1,
-                        'Score': motif.get('Score', 'N/A'),
-                        'Strand': motif.get('Strand', 'N/A'),
-                        'Sequence_Context': motif.get('Sequence', 'N/A')
+                        'Score': motif.get('Score', 'N/A')
                     })
             
             if all_motifs_details:
@@ -1421,8 +1417,8 @@ with tab_dict["Results & Visualization"]:
                 with col1:
                     selected_classes = st.multiselect(
                         "Filter by Class:",
-                        options=details_df['Official_Class'].unique(),
-                        default=list(details_df['Official_Class'].unique())
+                        options=details_df['Class'].unique(),
+                        default=list(details_df['Class'].unique())
                     )
                 
                 with col2:
@@ -1437,7 +1433,7 @@ with tab_dict["Results & Visualization"]:
                 
                 # Apply filters
                 filtered_df = details_df[
-                    (details_df['Official_Class'].isin(selected_classes)) &
+                    (details_df['Class'].isin(selected_classes)) &
                     (details_df['Sequence'].isin(selected_sequences))
                 ]
                 
@@ -1549,13 +1545,22 @@ with tab_dict["Download & Export"]:
                 results_data = []
                 for result in st.session_state.results:
                     for motif in result['motifs']:
+                        # Ensure motif has proper subtype
+                        motif = ensure_subtype(motif)
+                        
+                        # Get official classification
+                        legacy_class = motif.get('Class', motif.get('Motif', 'Unknown'))
+                        legacy_subtype = motif.get('Subtype', '')
+                        official_class, official_subtype = get_official_classification(legacy_class, legacy_subtype)
+                        
                         results_data.append({
-                            'Sequence_Name': result['sequence_name'],
-                            'Motif_Type': motif.get('Motif', 'Unknown'),
-                            'Start_Position': motif.get('Start', 0),
-                            'End_Position': motif.get('End', 0),
-                            'Score': motif.get('Score', 0),
-                            'Strand': motif.get('Strand', '+')
+                            'Sequence': result['sequence_name'],
+                            'Class': official_class,
+                            'Subclass': official_subtype,
+                            'Start': motif.get('Start', 0),
+                            'End': motif.get('End', 0),
+                            'Length': motif.get('End', 0) - motif.get('Start', 0) + 1,
+                            'Score': motif.get('Score', 0)
                         })
                 
                 df = pd.DataFrame(results_data)
