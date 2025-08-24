@@ -142,15 +142,15 @@ st.markdown("""
     .stTabs [data-baseweb="tab-list"] {
         background: linear-gradient(135deg, var(--surface) 0%, rgba(248,250,252,0.95) 100%);
         border: 2px solid var(--border); border-radius: 16px; padding: 12px; margin-bottom: 32px;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.08); display: flex; gap: 8px; width: 100%;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.08); display: flex; gap: 2px; width: 100%; /* Reduced gap from 8px to 2px for closer tab grouping */
         backdrop-filter: blur(10px);
     }
     .stTabs [data-baseweb="tab"] {
         background: transparent; border: none; border-radius: 12px;
-        font-family: Inter, sans-serif; font-weight: 600; font-size: 1.5rem;
+        font-family: Inter, sans-serif; font-weight: 600; font-size: 1.25rem; /* Set to 20px (1.25rem) for optimal readability */
         color: var(--text-muted); padding: 18px 32px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
-        white-space: nowrap; flex: 1; letter-spacing: -0.01em; margin: 4px;
+        white-space: nowrap; flex: 1; letter-spacing: -0.01em; margin: 1px; /* Reduced margin from 4px to 1px for tighter spacing */
     }
     .stTabs [data-baseweb="tab"]:hover {
         background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(248,250,252,0.95) 100%); 
@@ -161,7 +161,7 @@ st.markdown("""
     }
     .stTabs [aria-selected="true"] {
         background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-        color: white; font-weight: 800; font-size: 1.625rem;
+        color: white; font-weight: 800; font-size: 1.25rem; /* Consistent 20px font size for selected tabs */
         box-shadow: 0 8px 24px rgba(30,58,138,0.4); transform: translateY(-3px) scale(1.05);
         border: 2px solid rgba(255,255,255,0.2);
         letter-spacing: -0.02em;
