@@ -114,10 +114,11 @@ LEGACY_TO_OFFICIAL_MAPPING = {
     "STR": "Slipped DNA [STR]",
     
     "Cruciform": "Cruciform DNA", 
-    "Cruciform_IR": "Cruciform DNA [IR]/HairPin [IR]",
+    "Cruciform_IR": "Cruciform DNA",
     
     "R-Loop": "R-loop",
     "RLFS": "R-loop",
+    "R-loop": "R-loop",  # Also map the official name to ensure subtype
     
     "Mirror_Repeat": "Triplex",
     "Triplex_Motif": "Triplex",
@@ -154,8 +155,8 @@ LEGACY_TO_OFFICIAL_MAPPING = {
     "Hybrid": "Hybrid",
     "Non-B_Clusters": "Non-B DNA cluster regions",
     
-    # Handle any potential 'Other' fallbacks
-    "Other": "Relaxed i-motif"  # Default fallback to prevent "Unknown"
+    # Add mapping for subtypes that should map to official subtypes
+    "Cruciform_IR": "Cruciform DNA [IR]/HairPin [IR]",
 }
 
 # G4 family priority enforcement
@@ -180,11 +181,42 @@ def get_official_classification(legacy_class, legacy_subtype):
     Returns:
         tuple: (official_class, official_subtype)
     """
-    # Map legacy class to official class
+    # First try to map the legacy_class to find the official class
     official_class = LEGACY_TO_OFFICIAL_MAPPING.get(legacy_class, legacy_class)
     
-    # Map legacy subtype to official subtype
+    # Then try to map the legacy_subtype to find the official subtype
     official_subtype = LEGACY_TO_OFFICIAL_MAPPING.get(legacy_subtype, legacy_subtype)
+    
+    # Special handling for G4 family - if we get a G4 subtype as the class, 
+    # map it to the G-Quadruplex Family class
+    g4_subtypes = ["Canonical G4", "Relaxed G4", "Bulged G4", "Bipartite G4", 
+                   "Multimeric G4", "Imperfect G4", "G-Triplex intermediate"]
+    
+    if official_class in g4_subtypes:
+        # The legacy_class was actually a subtype
+        official_subtype = official_class
+        official_class = "G-Quadruplex Family"
+    elif official_subtype in g4_subtypes and official_class != "G-Quadruplex Family":
+        # Make sure G4 subtypes get the right class
+        official_class = "G-Quadruplex Family"
+    
+    # Special handling for single-subtype classes where class=subtype
+    single_subtype_classes = {
+        "R-loop": "R-loop",
+        "Z-DNA": "Z-DNA",
+        "Cruciform DNA": "Cruciform DNA [IR]/HairPin [IR]"
+    }
+    
+    # Special handling for cases where legacy type maps directly to subtype
+    subtype_mappings = {
+        "Cruciform_IR": ("Cruciform DNA", "Cruciform DNA [IR]/HairPin [IR]")
+    }
+    
+    # Check if this is a special subtype mapping case
+    if legacy_class in subtype_mappings:
+        official_class, official_subtype = subtype_mappings[legacy_class]
+    elif official_class in single_subtype_classes and not official_subtype:
+        official_subtype = single_subtype_classes[official_class]
     
     return official_class, official_subtype
 

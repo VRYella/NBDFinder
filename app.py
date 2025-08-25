@@ -396,7 +396,7 @@ MOTIF_COLORS = {
 MAIN_PAGES = {
     "Home": "Home / Welcome",
     "Upload & Analyze": "Sequence Upload and Analysis",
-    "Results & Visualization": "Analysis Results and Publication-Ready Visualizations",
+    "Results & Visualization": "Analysis Results and Professional Visualizations",
     "Clinical/Disease": "Disease Annotation and Clinical Data",
     "Download & Export": "Download Results and Export Data",
     "Documentation": "Scientific Documentation & References"
@@ -588,7 +588,7 @@ st.markdown("""
     <h1 style='color: #1e3a8a; font-family: Inter, sans-serif; font-weight: 700; margin-bottom: 8px; font-size: 2.5rem;'>
         NBDFinder: Non-B DNA Analysis Platform
     </h1>
-    <p style='color: #64748b; font-size: 1.125rem; margin: 0;'>Publication-ready computational framework for genome-wide detection and analysis of non-B DNA structural motifs</p>
+    <p style='color: #64748b; font-size: 1.125rem; margin: 0;'>Professional computational framework for genome-wide detection and analysis of non-B DNA structural motifs</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -738,7 +738,7 @@ with tab_dict["Home"]:
             <p>High-performance analysis platform for non-canonical DNA structures with:</p>
             <ul style="font-size: 0.9rem;">
                 <li>Real-time detection algorithms</li>
-                <li>Publication-quality visualizations</li>
+                <li>Professional-quality visualizations</li>
                 <li>Clinical disease annotations</li>
                 <li>Multi-format data export</li>
             </ul>
@@ -1143,7 +1143,7 @@ with tab_dict["Results & Visualization"]:
             "Motif Class/Subclass Distribution", 
             "Genomic Position Plots", 
             "Detailed Result Tables", 
-            "Publication-Ready Figures"
+            "Professional Figures"
         ])
         
         # ---- OVERVIEW/SUMMARY SUBTAB ----
@@ -1471,9 +1471,9 @@ with tab_dict["Results & Visualization"]:
                     mime="text/csv"
                 )
         
-        # ---- PUBLICATION-READY FIGURES SUBTAB ----
+        # ---- PROFESSIONAL FIGURES SUBTAB ----
         with combined_subtabs[4]:
-            st.markdown("### 📖 Publication-Ready Figures")
+            st.markdown("### 📖 Professional Figures")
             
             col1, col2 = st.columns(2)
             with col1:
@@ -1486,8 +1486,8 @@ with tab_dict["Results & Visualization"]:
                 color_scheme = st.selectbox("Color scheme:", ["Professional", "Colorblind-friendly", "Grayscale"])
                 include_title = st.checkbox("Include title", value=True)
             
-            if st.button("🚀 Generate Publication Figure"):
-                st.info("Publication figure generation functionality will be implemented here.")
+            if st.button("🚀 Generate Professional Figure"):
+                st.info("Professional figure generation functionality will be implemented here.")
             
             # Additional visualization options
             if ADVANCED_VIZ_AVAILABLE:
@@ -1689,7 +1689,7 @@ with tab_dict["Documentation"]:
                 <li><strong>Configure Parameters:</strong> Set motif classes and sensitivity in Parameter Settings</li>
                 <li><strong>Run Analysis:</strong> Execute the analysis and monitor progress</li>
                 <li><strong>View Results:</strong> Explore comprehensive results in the Results tab</li>
-                <li><strong>Generate Visualizations:</strong> Create publication-ready figures</li>
+                <li><strong>Generate Visualizations:</strong> Create professional figures</li>
                 <li><strong>Download Data:</strong> Export results in multiple formats</li>
             </ol>
         </div>

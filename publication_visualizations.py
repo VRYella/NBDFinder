@@ -1,8 +1,8 @@
 """
-Comprehensive Publication-Ready Visualizations for NBDFinder
+Comprehensive Professional Visualizations for NBDFinder
 ============================================================
 
-This module implements all 10 major visualization types for publication-ready
+This module implements all 10 major visualization types for professional
 outputs as specified in the requirements:
 
 1. Bar Plots and Stacked Bar Plots
@@ -17,7 +17,7 @@ outputs as specified in the requirements:
 10. Sankey Diagrams
 
 All visualizations support high-resolution export (SVG, PDF, PNG ≥300 DPI)
-and are designed for publication quality with accessibility considerations.
+and are designed for professional quality with accessibility considerations.
 
 Author: Dr. Venkata Rajesh Yella
 License: Academic Use
@@ -100,18 +100,18 @@ SUBCLASS_COLORS = [
 
 class PublicationVisualizer:
     """
-    Comprehensive publication-ready visualization engine for NBDFinder.
+    Comprehensive professional visualization engine for NBDFinder.
     
     Implements all 10 required visualization types with high-resolution export
-    capabilities and publication-quality styling.
+    capabilities and professional-quality styling.
     """
     
     def __init__(self):
-        """Initialize the visualization engine with publication settings."""
+        """Initialize the visualization engine with professional settings."""
         self.colors = PUBLICATION_COLORS
         self.subclass_colors = SUBCLASS_COLORS
         
-        # Set publication-quality matplotlib defaults
+        # Set professional-quality matplotlib defaults
         plt.rcParams.update({
             'figure.dpi': 300,
             'savefig.dpi': 300,
@@ -135,7 +135,7 @@ class PublicationVisualizer:
     def create_bar_plots(self, data: pd.DataFrame, plot_type: str = 'count', 
                         stacked: bool = False, **kwargs) -> Dict[str, Union[go.Figure, plt.Figure]]:
         """
-        Create publication-ready bar plots and stacked bar plots.
+        Create professional bar plots and stacked bar plots.
         
         Args:
             data: DataFrame with motif data
@@ -1376,7 +1376,7 @@ class PublicationVisualizer:
     def export_all_formats(self, fig_plotly: go.Figure = None, fig_matplotlib: plt.Figure = None,
                           filename: str = "nbdfinder_plot", **kwargs) -> Dict[str, bytes]:
         """
-        Export figures in all publication formats (PNG 300+ DPI, PDF, SVG).
+        Export figures in all professional formats (PNG 300+ DPI, PDF, SVG).
         
         Args:
             fig_plotly: Plotly figure to export
@@ -1438,7 +1438,7 @@ class PublicationVisualizer:
 
 def create_comprehensive_publication_suite(data: pd.DataFrame, sequence_length: int = None) -> Dict[str, Dict]:
     """
-    Create a comprehensive suite of all publication-ready visualizations.
+    Create a comprehensive suite of all professional visualizations.
     
     Args:
         data: DataFrame with motif data
