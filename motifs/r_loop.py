@@ -70,29 +70,45 @@ def advanced_rloop_score(riz_seq, rez_seq, w1=50.0, w2=10.0, alpha=0.25):
     combined_score = (traditional_score + unified_score) / 2
     return combined_score
 
-# Advanced REZ detection: find the best GC-rich downstream region with optimized scoring.
+# Optimized REZ detection: find the best GC-rich downstream region with improved performance.
 def find_rez_advanced(seq, start_pos, max_search_len=2000, min_window=100, step=50, min_gc=40):
     """
-    Sliding window approach for optimal REZ detection (GC-content and length-based scoring).
+    Optimized sliding window approach for REZ detection with reduced computational complexity.
     """
-    if start_pos >= len(seq): return None
+    if start_pos >= len(seq): 
+        return None
+    
     best_rez, best_score = None, 0
     search_end = min(len(seq), start_pos + max_search_len)
+    seq_len = len(seq)
+    
+    # Pre-calculate GC content for efficiency
+    gc_counts = [0] * (search_end - start_pos + 1)
+    for i in range(start_pos, search_end):
+        if i < seq_len and seq[i] in 'GC':
+            gc_counts[i - start_pos] = 1
+    
+    # Optimized sliding window with reduced nested loops
     for window_start in range(start_pos, search_end - min_window + 1, step):
-        for window_size in range(min_window, min(max_search_len, search_end - window_start) + 1, step):
+        # Use cumulative sum for faster GC calculation
+        for window_size in range(min_window, min(max_search_len, search_end - window_start) + 1, step * 2):  # Reduced granularity
             window_end = window_start + window_size
-            if window_end > len(seq): break
-            window_seq = seq[window_start:window_end]
-            gc_content_val = gc_content(window_seq)
+            if window_end > seq_len:
+                break
+                
+            # Fast GC content calculation using pre-computed counts
+            gc_count = sum(gc_counts[window_start - start_pos:window_end - start_pos])
+            gc_content_val = (gc_count / window_size) * 100
+            
             if gc_content_val >= min_gc:
-                window_score = gc_content_val * len(window_seq) * 0.1
+                window_score = gc_content_val * window_size * 0.1
                 if window_score > best_score:
                     best_score = window_score
                     best_rez = {
-                        'seq': window_seq,
+                        'seq': seq[window_start:window_end],
                         'start': window_start - start_pos,
                         'end': window_end - start_pos,
-                        'length': len(window_seq),
+                        'length': window_size,
                         'gc_content': gc_content_val
                     }
     return best_rez

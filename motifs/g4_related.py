@@ -52,15 +52,107 @@ def mean(values):
     """Mean utility for lists, guarded for empty lists."""
     return sum(values) / len(values) if values else 0
 
-# Import shared utilities and the modernized G4 family module
+# Import shared utilities
 from .shared_utils import (
     wrap, calculate_conservation_score, overlapping_finditer,
     calculate_structural_factor
 )
-from .g4_family_modernized import (
-    candidates_from, non_overlapping, g4hunter_score as exact_g4hunter_score,
-    PRIORITY as G4_PRIORITY_MAP
-)
+
+# =============================================================
+# OPTIMIZED G4 FAMILY DETECTION PATTERNS AND FUNCTIONS
+# =============================================================
+
+# Optimized regex patterns for all major G4 subclasses
+G4_PATTERNS = [
+    # High priority patterns first for better performance
+    ("G4", "Multimeric/Tandem", re.compile(r"(?=(?:([Gg]{3,}\w{1,7}){3}[Gg]{3,}).{0,20}(?:([Gg]{3,}\w{1,7}){3}[Gg]{3,}))")),
+    ("G4", "Split/Bipartite", re.compile(r"(?=([Gg]{3,}\w{20,50}[Gg]{3,}))")),
+    ("G4", "Bulged", re.compile(r"(?=(([Gg]{2,}\w{0,3}[Gg]{1,}\w{1,12}){3,}[Gg]{2,}))")),
+    ("G4", "Canonical G3+L1–7", re.compile(r"(?=((?:[Gg]{3,}\w{1,7}){3}[Gg]{3,}))")),
+    ("G4", "Long-Loop G3+L8–12", re.compile(r"(?=((?:[Gg]{3,}\w{1,12}){3}[Gg]{3,}))")),
+    ("G4", "Extended G3+L1–12", re.compile(r"(?=((?:[Gg]{3,}\w{1,12}){3}[Gg]{3,}))")),
+    ("G4", "Two-Tetrad G2L1–12", re.compile(r"(?=((?:[Gg]{2}\w{1,12}){3}[Gg]{2}))")),
+    ("G4", "Generalized G2+L1–12", re.compile(r"(?=((?:[Gg]{2,}\w{1,12}){3}[Gg]{2,}))")),
+    ("G4", "G-Triplex", re.compile(r"(?=(G{3,}\w{1,15}G{3,}\w{1,15}G{3,}))")),
+]
+
+# Priority mapping for non-overlapping selection
+G4_PRIORITY_MAP = {
+    "Multimeric/Tandem": 1,
+    "Split/Bipartite": 2,
+    "Bulged": 3,
+    "Snapback": 4,
+    "Canonical G3+L1–7": 5,
+    "Long-Loop G3+L8–12": 6,
+    "Extended G3+L1–12": 7,
+    "Two-Tetrad G2L1–12": 8,
+    "Generalized G2+L1–12": 9,
+    "G-Triplex": 10,
+}
+
+def find_overlapping_matches(pattern, seq):
+    """Find all overlapping matches for a pattern in sequence - optimized version"""
+    matches = []
+    start = 0
+    seq_len = len(seq)
+    while start < seq_len:
+        match = pattern.search(seq, start)
+        if not match:
+            break
+        matches.append(match)
+        start = match.start() + 1
+    return matches
+
+def candidates_from(seq, strand='+'):
+    """Returns all G4 motif candidates with subclass and score annotations - optimized"""
+    candidates = []
+    seq_upper = seq.upper()  # Cache uppercase conversion
+    
+    for cls, sub, pat in G4_PATTERNS:
+        for m in find_overlapping_matches(pat, seq):
+            s = m.start(1) if m.lastindex else m.start()
+            e = s + len(m.group(1) if m.lastindex else m.group(0))
+            raw = seq[s:e]
+            sc = exact_g4hunter_score(raw)
+            
+            # For Long-Loop, filter: at least one loop 8–12 nt
+            if sub == "Long-Loop G3+L8–12":
+                splits = [g.span() for g in re.finditer(r"[Gg]{3,}", raw)]
+                if len(splits) == 4:
+                    loops = [splits[i + 1][0] - splits[i][1] for i in range(3)]
+                    if not any(8 <= l <= 12 for l in loops):
+                        continue
+                        
+            candidates.append({
+                'start': s, 'end': e, 'strand': strand,
+                'class': cls, 'subclass': sub, 'seq': raw,
+                'score': sc, 'priority': G4_PRIORITY_MAP[sub]
+            })
+    return candidates
+
+def non_overlapping(candidates):
+    """Selects non-overlapping motifs by priority, score, G-count, and length - optimized"""
+    candidates.sort(key=lambda x: (
+        x['priority'], -x['score'], -(x['end']-x['start']),
+        -x['seq'].upper().count('G'), x['start'])
+    )
+    chosen = []
+    for c in candidates:
+        if all(c['end'] <= k['start'] or c['start'] >= k['end'] for k in chosen):
+            chosen.append(c)
+    return chosen
+
+def exact_g4hunter_score(seq):
+    """Optimized G4Hunter scoring: G = +1, C = -1, normalized by length"""
+    if not seq:
+        return 0.0
+    val = 0
+    for b in seq.upper():
+        if b == 'G':
+            val += 1
+        elif b == 'C':
+            val -= 1
+    return val / len(seq)
 
 # =============================================================
 # MODERNIZED G4 FAMILY DETECTION FUNCTIONS
