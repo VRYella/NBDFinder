@@ -17,7 +17,7 @@ The harmonized computational pipeline consists of four main components:
 SCIENTIFIC ACCURACY PRESERVATION:
 ---------------------------------
 - G4: Maintains G4Hunter scoring methodology, formation classification, and structural factor calculations.
-- R-Loop: Preserves RLFS+REZ bipartite detection and stability scoring.
+- R-loop: Preserves RLFS+REZ bipartite detection and stability scoring.
 - Z-DNA: Maintains dinucleotide weight calculations and Kadane's algorithm for optimal region detection.
 
 REFERENCES:
@@ -165,7 +165,7 @@ def _get_motif_kmers(seq, motif_type):
     elif motif_type in ["Cruciform", "Slipped DNA"]:
         k = min(8, max(4, n // 4))
         core_kmers = {seq[i:i+k] for i in range(n - k + 1)}
-    elif motif_type in ["R-Loop", "RLFS"]:
+    elif motif_type in ["R-loop", "RLFS"]:
         k = min(8, max(4, n // 4))
         core_kmers = {seq[i:i+k] for i in range(n - k + 1) if seq[i:i+k].count('G') / k >= 0.4}
     elif motif_type in ["Curved DNA"]:

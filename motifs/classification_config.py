@@ -125,17 +125,17 @@ LEGACY_TO_OFFICIAL_MAPPING = {
     
     "G-Triplex": "G-Quadruplex Family",
     "G_Triplex": "G-Triplex intermediate",
-    "Canonical G4": "G-Quadruplex Family",
+    "Canonical G4": "Canonical G4",  # Map to correct subtype name
     "G4_Canonical": "Canonical G4",
-    "Relaxed G4": "G-Quadruplex Family", 
+    "Relaxed G4": "Relaxed G4",  # Map to correct subtype name
     "G4_Relaxed": "Relaxed G4",
-    "Bulged G4": "G-Quadruplex Family",
+    "Bulged G4": "Bulged G4",  # Map to correct subtype name
     "G4_Bulged": "Bulged G4",
-    "Bipartite G4": "G-Quadruplex Family",
+    "Bipartite G4": "Bipartite G4",  # Map to correct subtype name
     "G4_Bipartite": "Bipartite G4",
-    "Multimeric G4": "G-Quadruplex Family",
+    "Multimeric G4": "Multimeric G4",  # Map to correct subtype name
     "G4_Multimeric": "Multimeric G4",
-    "Imperfect G4": "G-Quadruplex Family", 
+    "Imperfect G4": "Imperfect G4",  # Map to correct subtype name
     "G4_Imperfect": "Imperfect G4",
     
     "i-Motif": "i-motif family",
