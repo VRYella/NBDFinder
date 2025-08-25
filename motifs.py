@@ -1902,6 +1902,9 @@ def all_motifs(seq, nonoverlap=False, report_hotspots=False, sequence_name="Sequ
         return []
     seq = seq.upper()
     
+    # Import the modernized G4 detection
+    from motifs.g4_related import find_all_g4_motifs
+    
     # Core motif detection in specified order
     motif_list = (
         find_curved_DNA(seq) +          # 1. Curved DNA
@@ -1910,13 +1913,7 @@ def all_motifs(seq, nonoverlap=False, report_hotspots=False, sequence_name="Sequ
         find_rlfs(seq) +                # 4. R-loop
         find_hdna(seq) +                # 5. Triplex
         find_sticky_dna(seq) +          #    (part of Triplex)
-        find_multimeric_gquadruplex(seq) +  # 6. G-Quadruplex Family
-        find_gquadruplex(seq) +
-        find_relaxed_gquadruplex(seq) +
-        find_bulged_gquadruplex(seq) +
-        find_bipartite_gquadruplex(seq) +
-        find_imperfect_gquadruplex(seq) +
-        find_gtriplex(seq) +
+        find_all_g4_motifs(seq, use_non_overlapping=False) +  # 6. G-Quadruplex Family (Modernized)
         find_imotif(seq) +              # 7. i-motif family
         find_ac_motifs(seq) +
         find_zdna(seq) +                # 8. Z-DNA
