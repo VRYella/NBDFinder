@@ -206,10 +206,10 @@ def select_best_nonoverlapping_motifs(motifs: list, motif_priority: list = None)
     """
     if motif_priority is None:
         motif_priority = [
-            'Multimeric_G4', 'Bipartite_G4', 'Imperfect_G4', 'Canonical_G4',
-            'Relaxed_G4', 'Bulged_G4', 'G-Triplex', 'i-Motif', 'AC-Motif',
-            'Z-DNA', 'eGZ (Extruded-G)', 'Curved_DNA', 'Cruciform', 'Slipped_DNA',
-            'Triplex_DNA', 'R-Loop', 'Sticky_DNA', 'Hybrid', 'Non-B DNA Clusters'
+            'Multimeric G4', 'Bipartite G4', 'Imperfect G4', 'Canonical G4',
+            'Relaxed G4', 'Bulged G4', 'G-Triplex intermediate', 'Canonical i-motif', 'AC-motif',
+            'Z-DNA', 'eGZ (Extruded-G) DNA', 'Curved DNA', 'Cruciform DNA', 'Slipped DNA',
+            'Triplex', 'R-loop', 'sticky DNA', 'Hybrid', 'Non-B DNA cluster regions'
         ]
     
     # Create priority mapping

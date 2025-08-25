@@ -115,12 +115,12 @@ def find_rlfs(seq, models=("m1", "m2"), min_total_length=100):
                 if total_length >= min_total_length:
                     score = advanced_rloop_score(riz_seq, rez['seq'])
                     full_rloop_seq = riz_seq + rez['seq']
-                    conservation_result = calculate_conservation_score(full_rloop_seq, "R-Loop")
+                    conservation_result = calculate_conservation_score(full_rloop_seq, "R-loop")
                     conservation_score = conservation_result["enrichment_score"]
                     results.append({
                         "Sequence Name": "",
                         "Class": "R-loop",
-                        "Subtype": f"RLFS_{model_name}",
+                        "Subtype": "R-loop",
                         "Start": m.start() + 1,
                         "End": riz_end_pos + rez['end'],
                         "Length": total_length,

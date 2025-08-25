@@ -108,7 +108,7 @@ def find_zdna(seq, threshold=50, min_length=12, **kwargs):
             gc_cg_dinucs = sum(1 for i in range(len(motif_seq)-1) if motif_seq[i:i+2] in ['GC', 'CG'])
             conservation_result = calculate_conservation_score(motif_seq, "Z-DNA")
             motifs.append({
-                "Sequence Name": "", "Class": "Z-DNA", "Subtype": "Z-Seeker_Kadane",
+                "Sequence Name": "", "Class": "Z-DNA", "Subtype": "Z-DNA",
                 "Start": seq_start + 1, "End": seq_end + 1, "Length": len(motif_seq),
                 "Sequence": wrap(motif_seq), "ScoreMethod": "Kadane_UnifiedFramework_raw", 
                 "Score": float(combined_score), "Kadane_Score": float(raw_score),
