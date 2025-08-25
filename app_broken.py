@@ -1161,12 +1161,12 @@ with tab_dict["Download & Export"]:
                 for result in st.session_state.results:
                     for motif in result['motifs']:
                         results_data.append({
-                            'Sequence_Name': result['sequence_name'],
-                            'Motif_Type': motif.get('Motif', 'Unknown'),
-                            'Start_Position': motif.get('Start', 0),
-                            'End_Position': motif.get('End', 0),
-                            'Score': motif.get('Score', 0),
-                            'Strand': motif.get('Strand', '+')
+                            'Sequence': result['sequence_name'],
+                            'Class': motif.get('Class', motif.get('Motif', 'Unknown')),
+                            'Subtype': motif.get('Subtype', 'Unknown'),
+                            'Start': motif.get('Start', 0),
+                            'End': motif.get('End', 0),
+                            'Score': motif.get('Score', 0)
                         })
                 
                 df = pd.DataFrame(results_data)
@@ -1279,7 +1279,7 @@ with tab_dict["Documentation"]:
                 <li><strong>Configure Parameters:</strong> Set motif classes and sensitivity in Parameter Settings</li>
                 <li><strong>Run Analysis:</strong> Execute the analysis and monitor progress</li>
                 <li><strong>View Results:</strong> Explore comprehensive results in the Results tab</li>
-                <li><strong>Generate Visualizations:</strong> Create publication-ready figures</li>
+                <li><strong>Generate Visualizations:</strong> Create professional figures</li>
                 <li><strong>Download Data:</strong> Export results in multiple formats</li>
             </ol>
         </div>

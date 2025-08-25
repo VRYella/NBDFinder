@@ -2,7 +2,7 @@
 NBDFinder Publication Visualization Integration
 ===============================================
 
-This module integrates the comprehensive publication-ready visualizations
+This module integrates the comprehensive professional visualizations
 with the existing NBDFinder web application, providing seamless access to
 all 10 major visualization types with high-resolution export capabilities.
 
@@ -475,7 +475,7 @@ class NBDFinderVisualizationHub:
             with st.expander("ℹ️ About Publication Versions"):
                 st.info("""
                 This visualization is available in both interactive (Plotly) and 
-                publication-ready (Matplotlib) versions. The publication version 
+                professional (Matplotlib) versions. The professional version 
                 uses journal-standard formatting and fonts optimized for print.
                 """)
     
