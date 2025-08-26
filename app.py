@@ -1787,7 +1787,12 @@ with tab_dict["Download & Export"]:
                             'Start': motif.get('Start', 0),
                             'End': motif.get('End', 0),
                             'Length': motif.get('End', 0) - motif.get('Start', 0) + 1,
-                            'Score': motif.get('Score', 0)
+                            'Score': motif.get('Score', 0),
+                            'Conservation_Score': motif.get('Conservation_Score', 'N/A'),
+                            'Conservation_P_Value': motif.get('Conservation_P_Value', 'N/A'),
+                            'Conservation_Significance': motif.get('Conservation_Significance', 'N/A'),
+                            'ScoreMethod': motif.get('ScoreMethod', 'N/A'),
+                            'Sequence_Fragment': motif.get('Sequence', 'N/A')
                         })
                 
                 df = pd.DataFrame(results_data)
@@ -1821,9 +1826,11 @@ with tab_dict["Download & Export"]:
                     summary_sheet['A4'] = f"Total Motifs: {sum(r['total_motifs'] for r in st.session_state.results)}"
                     summary_sheet['A5'] = f"Analysis Date: {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}"
                     
-                    # Detailed results sheet
+                    # Detailed results sheet with conservation analysis
                     results_sheet = workbook.create_sheet("Detailed_Results")
-                    headers = ['Sequence', 'Class', 'Subclass', 'Start', 'End', 'Length', 'Score']
+                    headers = ['Sequence', 'Class', 'Subclass', 'Start', 'End', 'Length', 'Score', 
+                              'Conservation_Score', 'Conservation_P_Value', 'Conservation_Significance',
+                              'ScoreMethod', 'Sequence_Fragment']
                     
                     for col, header in enumerate(headers, 1):
                         cell = results_sheet.cell(row=1, column=col, value=header)
@@ -1846,7 +1853,12 @@ with tab_dict["Download & Export"]:
                                 motif.get('Start', 0),
                                 motif.get('End', 0),
                                 motif.get('End', 0) - motif.get('Start', 0) + 1,
-                                motif.get('Score', 0)
+                                motif.get('Score', 0),
+                                motif.get('Conservation_Score', 'N/A'),
+                                motif.get('Conservation_P_Value', 'N/A'),
+                                motif.get('Conservation_Significance', 'N/A'),
+                                motif.get('ScoreMethod', 'N/A'),
+                                motif.get('Sequence', 'N/A')
                             ]
                             
                             for col, value in enumerate(data, 1):

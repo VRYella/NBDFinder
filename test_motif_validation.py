@@ -139,10 +139,10 @@ class MotifTestSequences:
                 "description": "Relaxed i-motif with longer loops"
             },
             "ac_motif": {
-                "sequence": "ACACACACACACACACACACACACACACACACACACAC",  # AC repeats
+                "sequence": "CCCACACACACACACACACACACACACCCC",  # C3+ anchor with AC repeats
                 "expected_class": "i-motif family",
                 "expected_subtype": "AC-motif",
-                "description": "AC-motif alternating pattern"
+                "description": "AC-motif with C3+ anchors and AC alternation"
             },
             
             # 8. Z-DNA (2 subclasses)
