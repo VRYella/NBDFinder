@@ -1,3 +1,8 @@
+# NBDFinder - Non-B DNA Analysis Platform 
+# ============================================
+# Compact, information-dense Streamlit interface
+# Optimized for professional dashboard-style usage
+
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -11,6 +16,7 @@ from Bio import Entrez, SeqIO
 import numpy as np
 from io import BytesIO
 
+# Core motif detection imports
 from motifs import (
     all_motifs, 
     find_hotspots,
@@ -18,10 +24,10 @@ from motifs import (
     select_best_nonoverlapping_motifs, wrap
 )
 
-# Import classification utilities  
+# Classification utilities for proper motif mapping
 from motifs.classification_config import get_official_classification
 
-# Import advanced visualization
+# Advanced visualization components (optional dependencies)
 try:
     from advanced_visualization import create_enhanced_dashboard, export_publication_figure
     ADVANCED_VIZ_AVAILABLE = True
@@ -29,7 +35,7 @@ except ImportError:
     ADVANCED_VIZ_AVAILABLE = False
     print("Advanced visualization not available. Install additional dependencies.")
 
-# Import comprehensive publication visualizations
+# Publication visualization integration (optional dependencies)  
 try:
     from nbdfinder_viz_integration import create_nbdfinder_visualization_interface
     PUBLICATION_VIZ_AVAILABLE = True
@@ -37,7 +43,8 @@ except ImportError:
     PUBLICATION_VIZ_AVAILABLE = False
     print("Publication visualization module not available")
 
-# ---------- ENHANCED PAGE CONFIGURATION ----------
+# ---------- STREAMLIT PAGE CONFIGURATION ----------
+# Wide layout for maximum information density
 st.set_page_config(
     page_title="NBDFinder - Non-B DNA Analysis Platform",
     page_icon="🧬",
@@ -50,22 +57,21 @@ st.set_page_config(
     }
 )
 
-# ---------- PATCH: Ensure every motif has Subtype ----------
+# ---------- MOTIF SUBTYPE VALIDATION UTILITY ----------
+# Ensures all motifs have proper classification for consistent display
 def ensure_subtype(motif):
     """Guarantee every motif has a string 'Subtype' using proper classification mapping"""
     from motifs.classification_config import get_official_classification, LEGACY_TO_OFFICIAL_MAPPING
     
     if isinstance(motif, dict):
         if 'Subtype' not in motif or motif['Subtype'] is None or motif['Subtype'] == '':
-            # Try to get proper classification based on Class
+            # Map legacy classifications to official system
             motif_class = motif.get('Class', '')
             if motif_class in LEGACY_TO_OFFICIAL_MAPPING:
-                # Use proper subtype from mapping
                 official_class, official_subtype = get_official_classification(motif_class, '')
                 motif['Subtype'] = official_subtype if official_subtype else 'Canonical'
             else:
-                # Generic fallback that's more meaningful than 'Other'
-                motif['Subtype'] = 'Canonical'
+                motif['Subtype'] = 'Canonical'  # Default fallback
         return motif
     else:
         # Handle non-dict motifs gracefully
