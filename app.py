@@ -71,130 +71,138 @@ def ensure_subtype(motif):
         # Handle non-dict motifs gracefully
         return {'Subtype': 'Canonical', 'Motif': motif}
 
-# ---------- FLOATING COMPONENTS ----------
+# ---------- COMPACT FLOATING COMPONENTS ----------
 def add_floating_back_to_top():
-    """Add floating back to top button"""
+    """Add compact floating back to top button"""
     st.markdown("""
-    <div id="back-to-top" style="
-        position: fixed; 
-        bottom: 20px; 
-        right: 20px; 
-        background: linear-gradient(135deg, #1e3a8a 0%, #0891b2 100%);
-        color: white; 
-        padding: 12px 16px; 
-        border-radius: 50px; 
-        cursor: pointer; 
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        z-index: 1000;
-        font-weight: 600;
-        font-size: 14px;
-        transition: all 0.3s ease;
-        border: none;
-        backdrop-filter: blur(10px);
-    " onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+    <div id="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
         ↑ Top
     </div>
-    
-    <style>
-    #back-to-top:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0,0,0,0.2);
-    }
-    </style>
     """, unsafe_allow_html=True)
 
 
 
-# ---------- DESIGN SYSTEM ----------
+# ---------- CONSOLIDATED COMPACT DESIGN SYSTEM ----------
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     
     :root {
-        /* Enhanced professional color scheme with vibrant accents */
-        --primary: #1e3a8a;        /* Deep blue/navy for headings */
-        --accent: #0891b2;         /* Teal for subheadings */
-        --secondary: #6366f1;      /* Indigo for highlights */
-        --tertiary: #7c3aed;       /* Purple for special elements */
-        --quaternary: #059669;     /* Emerald for success states */
-        --text: #1f2937;           /* Dark gray/black for primary text */
-        --text-muted: #6b7280;     /* Gray for secondary text */
-        --bg: linear-gradient(135deg, #f8fafc 0%, #ffffff 50%, #fef3c7 100%);  /* Subtle gradient background */
-        --surface: #ffffff;        /* Off-white for surfaces */
-        --border: #e5e7eb;         /* Light border color */
-        --border-accent: #d1d5db;  /* Slightly darker border for emphasis */
-        --success: #10b981;        /* Green for success states */
-        --warning: #f59e0b;        /* Orange for warnings */
-        --error: #ef4444;          /* Red for errors */
-        --info: #3b82f6;           /* Blue for info */
-        --purple: #8b5cf6;         /* Purple accent */
-        --pink: #ec4899;           /* Pink accent */
-        --orange: #f97316;         /* Orange accent */
-        --radius: 12px;
-        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); 
-        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        --shadow-colored: 0 10px 25px -5px rgba(30, 58, 138, 0.25);
-        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        /* Professional color scheme optimized for compact interface */
+        --primary: #1e3a8a;
+        --accent: #0891b2;
+        --secondary: #6366f1;
+        --tertiary: #7c3aed;
+        --quaternary: #059669;
+        --text: #1f2937;
+        --text-muted: #6b7280;
+        --bg: linear-gradient(135deg, #f8fafc 0%, #ffffff 50%, #fef3c7 100%);
+        --surface: #ffffff;
+        --border: #e5e7eb;
+        --border-accent: #d1d5db;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --error: #ef4444;
+        --info: #3b82f6;
+        --purple: #8b5cf6;
+        --pink: #ec4899;
+        --orange: #f97316;
+        --radius: 6px;  /* Reduced from 12px for compactness */
+        --shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.06); 
+        --shadow-lg: 0 4px 8px -2px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.05);
+        --shadow-colored: 0 4px 12px -2px rgba(30, 58, 138, 0.25);
+        --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);  /* Faster transitions */
     }
     
+    /* GLOBAL LAYOUT - COMPACT SPACING */
     body, [data-testid="stAppViewContainer"], .main {
-        background: var(--bg); font-family: Inter, sans-serif; color: var(--text); line-height: 1.6;
-        min-height: 100vh;
+        background: var(--bg); font-family: Inter, sans-serif; color: var(--text); 
+        line-height: 1.4; min-height: 100vh;  /* Reduced line-height from 1.6 */
     }
     
-    /* ENHANCED TABS WITH IMPROVED TYPOGRAPHY */
+    .main .block-container { 
+        padding: 1rem 1.5rem; max-width: none; width: 100%;  /* Reduced from 2rem 3rem */
+    }
+    .stApp > .main { width: 100%; max-width: none; }
+    [data-testid="stAppViewContainer"] { width: 100%; max-width: none; }
+
+    /* COMPACT TYPOGRAPHY */
+    h1, h2, h3, h4, h5, h6 {
+        font-family: Inter, sans-serif; font-weight: 600; letter-spacing: -0.015em;
+        line-height: 1.2; margin: 0.5rem 0 0.3rem; color: var(--primary);  /* Dramatically reduced margins */
+        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    h1 { font-size: 2.5rem; font-weight: 700; }  /* Reduced from 4.5rem */
+    h2 { font-size: 1.8rem; font-weight: 650; }  /* Reduced from 3.25rem */
+    h3 { font-size: 1.4rem; font-weight: 600; }  /* Reduced from 2.75rem */
+    h4 { font-size: 1.2rem; font-weight: 600; }  /* Reduced from 2.25rem */
+    h5 { font-size: 1.1rem; font-weight: 550; }  /* Reduced from 1.875rem */
+    h6 { font-size: 1rem; font-weight: 500; }    /* Reduced from 1.625rem */
+    
+    .stMarkdown, .markdown-text-container, .stText, p, span, label, input {
+        font-family: Inter, sans-serif; font-size: 1rem; line-height: 1.4;  /* Reduced from 1.375rem */
+        color: var(--text); font-weight: 400; margin-bottom: 0.5rem;  /* Reduced from 1.5rem */
+    }
+    .stMarkdown p { margin-bottom: 0.5rem; font-size: 1rem; }  /* Reduced from 1.375rem */
+    
+    /* COMPACT TABS */
     .stTabs [data-baseweb="tab-list"] {
         background: linear-gradient(135deg, var(--surface) 0%, rgba(248,250,252,0.95) 100%);
-        border: 2px solid var(--border); border-radius: 16px; padding: 12px; margin-bottom: 32px;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.08); display: flex; gap: 2px; width: 100%; /* Reduced gap from 8px to 2px for closer tab grouping */
+        border: 1px solid var(--border); border-radius: 8px; padding: 6px; margin-bottom: 1rem;  /* Reduced padding and margin */
+        box-shadow: var(--shadow); display: flex; gap: 1px; width: 100%;
         backdrop-filter: blur(10px);
     }
     .stTabs [data-baseweb="tab"] {
-        background: transparent; border: none; border-radius: 12px;
-        font-family: Inter, sans-serif; font-weight: 600; font-size: 1.25rem; /* Set to 20px (1.25rem) for optimal readability */
-        color: var(--text-muted); padding: 18px 32px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background: transparent; border: none; border-radius: 6px;
+        font-family: Inter, sans-serif; font-weight: 500; font-size: 0.9rem;  /* Reduced from 1.25rem */
+        color: var(--text-muted); padding: 8px 16px; transition: var(--transition);  /* Reduced from 18px 32px */
         cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
-        white-space: nowrap; flex: 1; letter-spacing: -0.01em; margin: 1px; /* Reduced margin from 4px to 1px for tighter spacing */
+        white-space: nowrap; flex: 1; letter-spacing: -0.01em; margin: 0;
     }
     .stTabs [data-baseweb="tab"]:hover {
         background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(248,250,252,0.95) 100%); 
-        color: var(--primary); font-weight: 700;
-        transform: translateY(-2px) scale(1.02); 
-        box-shadow: 0 6px 20px rgba(30,58,138,0.15);
+        color: var(--primary); font-weight: 600;
+        transform: translateY(-1px); box-shadow: var(--shadow);  /* Reduced transform */
         border: 1px solid rgba(30,58,138,0.1);
     }
     .stTabs [aria-selected="true"] {
         background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-        color: white; font-weight: 800; font-size: 1.25rem; /* Consistent 20px font size for selected tabs */
-        box-shadow: 0 8px 24px rgba(30,58,138,0.4); transform: translateY(-3px) scale(1.05);
-        border: 2px solid rgba(255,255,255,0.2);
-        letter-spacing: -0.02em;
+        color: white; font-weight: 600; font-size: 0.9rem;
+        box-shadow: var(--shadow-colored); transform: translateY(-1px);  /* Reduced transform */
+        border: 1px solid rgba(255,255,255,0.2);
     }
     
-    /* IMPROVED FORM CONTROLS */
-    .stSelectbox > div > div {
-        background: var(--surface); border: 2px solid var(--border); border-radius: var(--radius);
-        font-size: 1.125rem; font-weight: 500; transition: var(--transition);
+    /* COMPACT FORM CONTROLS */
+    .stSelectbox > div, .stMultiSelect > div, .stTextInput > div, .stTextArea > div {
+        background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); 
+        transition: var(--transition); margin-bottom: 0.5rem;  /* Added margin control */
     }
-    .stSelectbox > div > div:focus-within {
-        border-color: var(--accent); box-shadow: 0 0 0 3px rgba(8,145,178,0.1);
+    .stSelectbox > div:hover, .stMultiSelect > div:hover, .stTextInput > div:hover, .stTextArea > div:hover {
+        border-color: var(--accent);
     }
-    
-    .stSlider > div > div > div > div {
-        background: linear-gradient(90deg, var(--accent) 0%, var(--primary) 100%);
-    }
-    
-    .stCheckbox > label {
-        font-size: 1.125rem; font-weight: 500; color: var(--text);
+    .stSelectbox > div:focus-within, .stMultiSelect > div:focus-within, .stTextInput > div:focus-within, .stTextArea > div:focus-within {
+        border-color: var(--primary); box-shadow: 0 0 0 2px rgba(30,64,175,0.1);
     }
     
-    .stRadio > div {
-        display: flex; gap: 16px; flex-wrap: wrap;
+    .stSelectbox label, .stMultiSelect label, .stTextInput label, .stTextArea label,
+    .stSlider label, .stRadio label, .stCheckbox label {
+        font-size: 0.9rem !important; font-weight: 500;  /* Reduced from 1.25rem */
+        margin-bottom: 0.25rem !important;
     }
+    
+    .stSelectbox div[data-baseweb="select"] > div, .stTextInput input, .stTextArea textarea {
+        font-size: 0.9rem !important; padding: 6px 8px !important;  /* Reduced from 1.25rem */
+    }
+    
+    .stCheckbox > label { font-size: 0.9rem; font-weight: 500; color: var(--text); }
+    
+    .stRadio > div { display: flex; gap: 8px; flex-wrap: wrap; }  /* Reduced from 16px */
     .stRadio > div > label {
-        background: var(--surface); border: 2px solid var(--border); border-radius: var(--radius);
-        padding: 12px 20px; margin: 4px; font-size: 1.125rem; font-weight: 500;
-        transition: var(--transition); cursor: pointer; min-width: 120px; text-align: center;
+        background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+        padding: 6px 12px; margin: 2px; font-size: 0.9rem; font-weight: 500;  /* Reduced padding and margin */
+        transition: var(--transition); cursor: pointer; min-width: 80px; text-align: center;  /* Reduced min-width */
     }
     .stRadio > div > label:hover {
         border-color: var(--accent); background: rgba(8,145,178,0.05);
@@ -204,239 +212,159 @@ st.markdown("""
         color: white; border-color: var(--primary); font-weight: 600;
     }
     
-    /* ENHANCED DATAFRAMES AND TABLES WITH IMPROVED SPACING */
-    .stDataFrame {
-        border: 2px solid var(--border); border-radius: 16px; overflow: hidden;
-        box-shadow: var(--shadow-lg); margin: 20px 0;
-    }
-    
-    .stDataFrame table {
-        font-family: Inter, sans-serif; font-size: 1.05rem;
-    }
-    
-    .stDataFrame thead tr th {
-        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-        color: white; font-weight: 700; font-size: 1.125rem; padding: 18px 16px;
-        text-align: left; border: none;
-    }
-    
-    .stDataFrame tbody tr:nth-child(even) {
-        background: rgba(248,250,252,0.8);
-    }
-    
-    .stDataFrame tbody tr:hover {
-        background: rgba(8,145,178,0.08); transition: background 0.2s ease;
-    }
-    
-    .stDataFrame tbody tr td {
-        padding: 16px 14px; border-bottom: 1px solid var(--border);
-        font-weight: 500; color: var(--text);
-    }
-    
-    /* ENHANCED BUTTONS WITH LARGER TEXT */
+    /* COMPACT BUTTONS */
     .stButton > button {
         background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
         color: white; border: none; border-radius: var(--radius); font-family: Inter, sans-serif;
-        font-weight: 600; font-size: 1.25rem; padding: 16px 32px; transition: var(--transition);
-        box-shadow: var(--shadow); cursor: pointer;
+        font-weight: 500; font-size: 0.9rem; padding: 8px 16px; transition: var(--transition);  /* Reduced from 16px 32px */
+        box-shadow: var(--shadow); cursor: pointer; margin: 0.25rem 0;
     }
     .stButton > button:hover {
-        transform: translateY(-2px); box-shadow: 0 6px 20px rgba(30,58,138,0.3);
+        transform: translateY(-1px); box-shadow: var(--shadow-colored);  /* Reduced transform */
         background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);
     }
     
     .stDownloadButton > button {
         background: linear-gradient(135deg, #10b981 0%, #059669 100%);
         color: white; border: none; border-radius: var(--radius); font-family: Inter, sans-serif;
-        font-weight: 600; font-size: 1rem; padding: 10px 20px; transition: var(--transition);
+        font-weight: 500; font-size: 0.85rem; padding: 6px 12px; transition: var(--transition);  /* Reduced sizes */
         box-shadow: var(--shadow);
     }
     .stDownloadButton > button:hover {
-        transform: translateY(-1px); box-shadow: 0 4px 16px rgba(16,185,129,0.3);
+        transform: translateY(-1px); box-shadow: 0 2px 8px rgba(16,185,129,0.3);
     }
     
-    /* ENHANCED METRICS WITH COLORFUL DESIGN */
+    /* COMPACT DATA TABLES WITH SCROLLING */
+    .stDataFrame {
+        border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
+        box-shadow: var(--shadow); margin: 0.5rem 0; max-height: 400px; overflow-y: auto;  /* Added max-height and scrolling */
+    }
+    
+    .stDataFrame table { font-family: Inter, sans-serif; font-size: 0.85rem; }  /* Reduced from 1.05rem */
+    
+    .stDataFrame thead tr th {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+        color: white; font-weight: 600; font-size: 0.9rem; padding: 8px 12px;  /* Reduced from 18px 16px */
+        text-align: left; border: none; position: sticky; top: 0; z-index: 10;  /* Sticky headers */
+    }
+    
+    .stDataFrame tbody tr:nth-child(even) { background: rgba(248,250,252,0.8); }
+    .stDataFrame tbody tr:hover { background: rgba(8,145,178,0.08); transition: background 0.2s ease; }
+    
+    .stDataFrame tbody tr td {
+        padding: 6px 12px; border-bottom: 1px solid var(--border);  /* Reduced from 16px 14px */
+        font-weight: 400; color: var(--text); font-size: 0.85rem;
+    }
+    
+    /* COMPACT METRICS */
     .metric-card {
         background: linear-gradient(135deg, var(--surface) 0%, rgba(248,250,252,0.9) 100%); 
-        border: 2px solid var(--border); border-radius: 16px;
-        padding: 24px; margin: 12px 0; box-shadow: var(--shadow-lg); transition: var(--transition);
+        border: 1px solid var(--border); border-radius: var(--radius);
+        padding: 12px; margin: 6px 0; box-shadow: var(--shadow); transition: var(--transition);  /* Reduced padding and margin */
     }
     .metric-card:hover {
-        transform: translateY(-4px); box-shadow: var(--shadow-colored);
+        transform: translateY(-2px); box-shadow: var(--shadow-colored);
         border-color: var(--accent);
-        background: linear-gradient(135deg, rgba(8,145,178,0.05) 0%, rgba(30,58,138,0.05) 100%);
     }
     
     .metric-card h3 {
         background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
         -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        background-clip: text; font-size: 3rem; font-weight: 800; margin: 0;
+        background-clip: text; font-size: 1.8rem; font-weight: 700; margin: 0;  /* Reduced from 3rem */
         text-align: center;
     }
     .metric-card p {
-        color: var(--text-muted); font-size: 1.25rem; font-weight: 500; margin: 12px 0 0 0;
+        color: var(--text-muted); font-size: 0.9rem; font-weight: 500; margin: 6px 0 0 0;  /* Reduced from 1.25rem */
         text-align: center;
     }
     
-    /* ENHANCED MESSAGES */
+    /* COMPACT MESSAGES */
+    .stSuccess, .stError, .stWarning, .stInfo {
+        border-radius: var(--radius); padding: 8px 12px; font-family: Inter, sans-serif; 
+        font-weight: 500; font-size: 0.9rem; box-shadow: var(--shadow); margin: 0.5rem 0;  /* Reduced padding */
+    }
+    
     .stSuccess {
         background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-        border: 2px solid #10b981; border-radius: var(--radius); padding: 16px;
-        font-family: Inter, sans-serif; font-weight: 500;
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
-        border-left: 6px solid #10b981;
+        border: 1px solid #10b981; border-left: 4px solid #10b981;  /* Reduced border width */
     }
     
     .stError {
         background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-        border: 2px solid #ef4444; border-radius: var(--radius); padding: 16px;
-        font-family: Inter, sans-serif; font-weight: 500;
-        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
-        border-left: 6px solid #ef4444;
+        border: 1px solid #ef4444; border-left: 4px solid #ef4444;
     }
     
     .stWarning {
         background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-        border: 2px solid #f59e0b; border-radius: var(--radius); padding: 16px;
-        font-family: Inter, sans-serif; font-weight: 500;
-        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
-        border-left: 6px solid #f59e0b;
+        border: 1px solid #f59e0b; border-left: 4px solid #f59e0b;
     }
     
     .stInfo {
         background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-        border: 2px solid #3b82f6; border-radius: var(--radius); padding: 16px;
-        font-family: Inter, sans-serif; font-weight: 500;
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
-        border-left: 6px solid #3b82f6;
+        border: 1px solid #3b82f6; border-left: 4px solid #3b82f6;
     }
     
-    /* ENHANCED PLOTS */
-    .js-plotly-plot {
-        border-radius: var(--radius); 
-        box-shadow: var(--shadow-lg);
-        border: 2px solid var(--border);
-        overflow: hidden;
-        margin: 20px 0;
-    }
-    
-    /* ENHANCED EXPANDERS */
+    /* COMPACT EXPANDERS */
     .streamlit-expanderHeader {
         background: linear-gradient(135deg, var(--surface) 0%, rgba(248,250,252,0.9) 100%);
-        border: 2px solid var(--border);
-        border-radius: var(--radius);
-        font-weight: 600;
-        font-size: 1.25rem;
-        padding: 16px;
-        margin: 12px 0;
+        border: 1px solid var(--border); border-radius: var(--radius);
+        font-weight: 500; font-size: 0.95rem; padding: 8px 12px; margin: 6px 0;  /* Reduced sizes */
         transition: var(--transition);
     }
     
     .streamlit-expanderHeader:hover {
-        border-color: var(--accent);
-        box-shadow: var(--shadow);
-        transform: translateY(-2px);
+        border-color: var(--accent); box-shadow: var(--shadow); transform: translateY(-1px);
     }
     
-    /* ANIMATED LOADING */
-    .stSpinner {
-        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-        border-radius: 50%;
-        animation: pulse 2s ease-in-out infinite;
+    .streamlit-expanderContent {
+        background: var(--surface); border: 1px solid var(--border); border-top: none;
+        border-radius: 0 0 var(--radius) var(--radius); padding: 8px 12px;  /* Added padding control */
     }
     
-    @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
+    /* COMPACT PLOTS */
+    .js-plotly-plot {
+        border-radius: var(--radius); box-shadow: var(--shadow);
+        border: 1px solid var(--border); overflow: hidden; margin: 0.5rem 0;  /* Reduced margin */
     }
     
-    /* ENHANCED PROGRESS BARS */
+    /* COMPACT SIDEBAR */
+    .css-1d391kg {
+        background: linear-gradient(180deg, var(--surface) 0%, rgba(248,250,252,0.95) 100%);
+        border-right: 1px solid var(--border);
+    }
+    
+    /* COMPACT PROGRESS AND SPINNERS */
     .stProgress .st-bo {
         background: linear-gradient(90deg, var(--accent) 0%, var(--primary) 100%);
         border-radius: var(--radius);
     }
     
-    /* SIDEBAR STYLING */
-    .css-1d391kg {
-        background: linear-gradient(180deg, var(--surface) 0%, rgba(248,250,252,0.95) 100%);
-        border-right: 2px solid var(--border);
-    }
-    
-    /* FORM CONTROLS */
-    .stSelectbox > div, .stMultiSelect > div, .stTextInput > div, .stTextArea > div {
-        background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); 
-        transition: var(--transition);
-    }
-    .stSelectbox > div:hover, .stMultiSelect > div:hover, .stTextInput > div:hover, .stTextArea > div:hover {
-        border-color: var(--accent);
-    }
-    .stSelectbox > div:focus-within, .stMultiSelect > div:focus-within, .stTextInput > div:focus-within, .stTextArea > div:focus-within {
-        border-color: var(--primary); box-shadow: 0 0 0 2px rgba(30,64,175,0.1);
-    }
-    
-    /* BUTTONS */
-    .stButton > button {
-        background: var(--primary); color: white; border: none; border-radius: var(--radius);
-        font-weight: 500; transition: var(--transition); cursor: pointer;
-    }
-    .stButton > button:hover { background: #1e3a8a; box-shadow: var(--shadow); }
-    .stButton > button:active { transform: translateY(1px); }
-    
-    /* ENHANCED LAYOUT WITH IMPROVED SPACING */
-    .main .block-container { padding: 2rem 3rem; max-width: none; width: 100%; }
-    .stApp > .main { width: 100%; max-width: none; }
-    [data-testid="stAppViewContainer"] { width: 100%; max-width: none; }
-
-    /* ENHANCED TYPOGRAPHY WITH LARGER FONTS */
-    h1, h2, h3, h4, h5, h6 {
-        font-family: Inter, sans-serif; font-weight: 700; letter-spacing: -0.025em;
-        line-height: 1.1; margin: 2rem 0 1.5rem; color: var(--primary);
+    .stSpinner {
         background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-    h1 { font-size: 4.5rem; font-weight: 900; letter-spacing: -0.04em; margin-bottom: 2rem; }
-    h2 { font-size: 3.25rem; font-weight: 800; letter-spacing: -0.03em; }
-    h3 { font-size: 2.75rem; font-weight: 750; letter-spacing: -0.025em; }
-    h4 { font-size: 2.25rem; font-weight: 700; letter-spacing: -0.02em; }
-    h5 { font-size: 1.875rem; font-weight: 650; }
-    h6 { font-size: 1.625rem; font-weight: 600; }
-    
-    .stMarkdown, .markdown-text-container, .stText, p, span, label, input {
-        font-family: Inter, sans-serif; font-size: 1.375rem; line-height: 1.75; 
-        color: var(--text); font-weight: 400;
-    }
-    .stMarkdown p { margin-bottom: 1.5rem; font-size: 1.375rem; }
-    
-    /* Better readability for all text elements */
-    .stSelectbox label, .stMultiSelect label, .stTextInput label, .stTextArea label,
-    .stSlider label, .stRadio label, .stCheckbox label {
-        font-size: 1.25rem !important; font-weight: 500;
+        border-radius: 50%; animation: pulse 2s ease-in-out infinite;
     }
     
-    /* Form inputs with larger text */
-    .stSelectbox div[data-baseweb="select"] > div, 
-    .stTextInput input, .stTextArea textarea {
-        font-size: 1.25rem !important;
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    
+    /* COMPACT FLOATING BACK TO TOP BUTTON */
+    #back-to-top {
+        position: fixed; bottom: 15px; right: 15px;  /* Reduced from 20px */
+        background: linear-gradient(135deg, #1e3a8a 0%, #0891b2 100%);
+        color: white; padding: 8px 12px; border-radius: 25px; cursor: pointer;  /* Reduced padding */
+        box-shadow: var(--shadow); z-index: 1000; font-weight: 600; font-size: 0.8rem;  /* Reduced font size */
+        transition: var(--transition); border: none; backdrop-filter: blur(10px);
+    }
+    #back-to-top:hover {
+        transform: translateY(-1px); box-shadow: var(--shadow-colored);  /* Reduced transform */
     }
     
-    /* EXPANDERS */
-    .streamlit-expanderHeader {
-        background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-        font-weight: 500; color: var(--text);
-    }
-    .streamlit-expanderContent {
-        background: var(--bg); border: 1px solid var(--border); border-top: none;
-        border-radius: 0 0 var(--radius) var(--radius);
-    }
-    
-    /* CUSTOM CARDS */
+    /* CUSTOM CARDS - COMPACT */
     .feature-card {
-        background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius);
-        padding: 24px; margin: 16px 0; box-shadow: var(--shadow); transition: var(--transition);
+        background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+        padding: 12px; margin: 8px 0; box-shadow: var(--shadow); transition: var(--transition);  /* Reduced padding and margin */
     }
     .feature-card:hover {
-        transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transform: translateY(-2px); box-shadow: var(--shadow-lg);
     }
     </style>
     """, unsafe_allow_html=True)
@@ -759,26 +687,22 @@ with tab_dict["Home"]:
     total_classes, total_fixed_subclasses = get_class_counts()
 
 # =====================================================
-# UPLOAD & ANALYZE PAGE
+# UPLOAD & ANALYZE PAGE - COMPACT VERSION
 # =====================================================
 with tab_dict["Upload & Analyze"]:
-    # Subtabs for Upload & Analyze
-    upload_subtabs = st.tabs(["Upload Sequence", "Parameter Settings", "Run Analysis"])
+    # Compact subtabs for Upload & Analyze
+    upload_subtabs = st.tabs(["📤 Upload", "⚙️ Settings", "▶️ Run"])
     
-    # ---- UPLOAD SEQUENCE SUBTAB ----
+    # ---- COMPACT UPLOAD SEQUENCE SUBTAB ----
     with upload_subtabs[0]:
-        st.markdown("""
-        <div style='background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 20px; margin-bottom: 24px;'>
-            <h3 style='color: #374151; margin-top: 0; margin-bottom: 12px;'>Sequence Input</h3>
-            <p style='margin-bottom: 0; color: #6b7280; font-size: 0.875rem;'>Choose your preferred method for sequence input. All formats support both single sequences and batch processing.</p>
-        </div>
-        """, unsafe_allow_html=True)
+        # Main input method selection - horizontal layout
+        col_method, col_action = st.columns([3, 1])
+        with col_method:
+            input_method = st.radio("Input Method:", 
+                                   ["📁 Upload FASTA", "📝 Paste Text", "🔬 Example", "🌐 NCBI"], 
+                                   horizontal=True)
         
-        input_method = st.radio("**Input Method:**", 
-                               ["Upload FASTA / Multi-FASTA File", "Paste Sequence(s)", "Example Sequence", "NCBI Fetch"], 
-                               horizontal=True)
-        
-        # Clear session state when switching methods
+        # Clear session state when switching methods  
         if 'last_input_method' not in st.session_state:
             st.session_state.last_input_method = input_method
         elif st.session_state.last_input_method != input_method:
@@ -789,50 +713,36 @@ with tab_dict["Upload & Analyze"]:
         
         seqs, names = [], []
         
-        if input_method == "Upload FASTA / Multi-FASTA File":
-            st.markdown("""
-            <div class="feature-card">
-                <h4>File Upload</h4>
-                <p>Drag & drop your FASTA files here</p>
-                <p style="font-size: 0.875rem; color: #6b7280;">Supports .fa, .fasta, .txt files • Single or Multi-FASTA format</p>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            fasta_file = st.file_uploader(
-                "Choose file", 
-                type=['fa', 'fasta', 'txt'],
-                help="Upload single or multi-FASTA files for analysis"
-            )
+        if input_method == "📁 Upload FASTA":
+            col_upload, col_preview = st.columns([1, 1])
+            with col_upload:
+                fasta_file = st.file_uploader(
+                    "Choose file", 
+                    type=['fa', 'fasta', 'txt'],
+                    help="Upload FASTA files (.fa, .fasta, .txt)"
+                )
             
             if fasta_file:
                 try:
                     content = fasta_file.read().decode('utf-8')
                     seqs, names = parse_fasta(content)
                     if seqs:
-                        st.success(f"Successfully loaded {len(seqs)} sequence(s)")
-                        for i, (name, seq) in enumerate(zip(names, seqs)):
-                            with st.expander(f"Sequence {i+1}: {name[:50]}..."):
-                                st.text(f"Length: {len(seq)} bp")
-                                st.text(f"GC Content: {gc_content(seq):.1f}%")
-                                st.text_area("Sequence:", seq[:200] + ("..." if len(seq) > 200 else ""), height=100)
+                        with col_preview:
+                            st.success(f"✓ {len(seqs)} sequence(s) loaded")
+                            # Compact sequence summary
+                            for i, (name, seq) in enumerate(zip(names[:3], seqs[:3])):  # Show max 3
+                                with st.expander(f"#{i+1}: {name[:30]}...", expanded=False):
+                                    st.text(f"Length: {len(seq):,} bp | GC: {gc_content(seq):.1f}%")
                     else:
-                        st.error("❌ No valid sequences found in file")
+                        st.error("❌ No valid sequences found")
                 except Exception as e:
-                    st.error(f"❌ Error reading file: {e}")
+                    st.error(f"❌ Error: {str(e)[:50]}...")
         
-        elif input_method == "Paste Sequence(s)":
-            st.markdown("""
-            <div class="feature-card">
-                <h4>📝 Manual Sequence Input</h4>
-                <p>Paste your sequence(s) in FASTA format or raw sequence</p>
-            </div>
-            """, unsafe_allow_html=True)
-            
+        elif input_method == "📝 Paste Text":
             sequence_input = st.text_area(
-                "Enter sequence(s):",
-                height=200,
-                help="Paste FASTA format sequences or raw DNA sequences",
-                placeholder=">My_Sequence_1\nATCGATCGATCG...\n>My_Sequence_2\nGCGCGCGCGCGC..."
+                "Paste sequence(s):",
+                height=150,  # Reduced from 200
+                placeholder=">Seq1\nATCGATCG...\n>Seq2\nGCGCGCGC..."
             )
             
             if sequence_input:
@@ -843,211 +753,115 @@ with tab_dict["Upload & Analyze"]:
                     cleaned_seq = ''.join(sequence_input.upper().split())
                     if all(c in 'ATCGRYSWKMBDHVN' for c in cleaned_seq):
                         seqs = [cleaned_seq]
-                        names = ["User_Input_Sequence"]
+                        names = ["User_Input"]
                     else:
-                        st.error("❌ Invalid sequence characters detected")
+                        st.error("❌ Invalid sequence characters")
                 
                 if seqs:
-                    st.success(f"Parsed {len(seqs)} sequence(s)")
+                    st.success(f"✓ {len(seqs)} sequence(s) parsed")
         
-        elif input_method == "Example Sequence":
-            st.markdown("""
-            <div class="feature-card">
-                <h4>Example Datasets</h4>
-                <p>Choose from pre-loaded example sequences for testing</p>
-            </div>
-            """, unsafe_allow_html=True)
+        elif input_method == "🔬 Example":
+            # Compact example selection
+            example_choice = st.selectbox("Select example:", 
+                                        list(EXAMPLE_SEQUENCES.keys()),
+                                        help="Pre-loaded sequences for testing")
             
-            selected_example = st.selectbox(
-                "Select example sequence:",
-                list(EXAMPLE_SEQUENCES.keys()),
-                help="Choose an example sequence to demonstrate NBDFinder capabilities"
-            )
-            
-            if selected_example:
-                example_data = EXAMPLE_SEQUENCES[selected_example]
-                st.info(f"**{selected_example}**: {example_data['description']}")
+            if st.button("Load Example", type="secondary"):
+                example_data = EXAMPLE_SEQUENCES[example_choice]
                 seqs = [example_data['sequence']]
                 names = [example_data['name']]
-                
-                with st.expander("View sequence details"):
-                    st.text(f"Length: {len(seqs[0])} bp")
-                    st.text(f"GC Content: {gc_content(seqs[0]):.1f}%")
-                    st.text_area("Sequence:", seqs[0], height=100)
+                st.success(f"✓ Loaded: {names[0]} ({len(seqs[0]):,} bp)")
         
-        elif input_method == "NCBI Fetch":
-            st.markdown("""
-            <div class="feature-card">
-                <h4>🧬 NCBI Database Fetch</h4>
-                <p>Retrieve sequences directly from NCBI databases with advanced error handling</p>
-            </div>
-            """, unsafe_allow_html=True)
+        elif input_method == "🌐 NCBI":
+            # Compact NCBI section with simplified examples
+            col_examples, col_input = st.columns([2, 3])
             
-            # Enhanced example chips with color coding for famous sequences
-            st.markdown("**🔬 Quick Examples - Disease & Cancer Related Genes (Click to Auto-fill):**")
-            
-            # Add color legend
-            st.markdown("""
-            <div style='background: linear-gradient(135deg, #f8fafc 0%, #e5e7eb 100%); 
-                        padding: 12px; border-radius: 8px; margin: 8px 0 16px 0; 
-                        border: 1px solid #d1d5db;'>
-                <div style='display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;'>
-                    <span style='font-size: 0.95rem;'><span style='font-size: 1.2rem;'>🔴</span> Cancer/Oncogenes</span>
-                    <span style='font-size: 0.95rem;'><span style='font-size: 1.2rem;'>🟠</span> Disease Genes</span>
-                    <span style='font-size: 0.95rem;'><span style='font-size: 1.2rem;'>🟢</span> Promoter Regions</span>
-                    <span style='font-size: 0.95rem;'><span style='font-size: 1.2rem;'>🔵</span> Other Important Genes</span>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            if len(FAMOUS_NCBI_EXAMPLES) > 4:
-                # Split into rows if we have many examples with improved styling
-                chip_rows = [list(FAMOUS_NCBI_EXAMPLES.items())[i:i+4] for i in range(0, len(FAMOUS_NCBI_EXAMPLES), 4)]
-                for row_idx, row in enumerate(chip_rows):
-                    chip_cols = st.columns(len(row))
-                    for i, (gene, accession) in enumerate(row):
-                        with chip_cols[i]:
-                            # Color code different types of genes
-                            if any(keyword in gene.lower() for keyword in ['cancer', 'tumor', 'brca', 'tp53', 'egfr', 'bcl', 'myc']):
-                                button_emoji = "🔴"  # Red for cancer genes
-                            elif any(keyword in gene.lower() for keyword in ['disease', 'fragile', 'huntington', 'friedreich', 'cftr', 'dmd', 'als', 'alzheimer']):
-                                button_emoji = "🟠"  # Orange for disease genes  
-                            elif any(keyword in gene.lower() for keyword in ['promoter', 'tert']):
-                                button_emoji = "🟢"  # Green for promoters
-                            else:
-                                button_emoji = "🔵"  # Blue for other genes
-                            
-                            if st.button(f"{button_emoji} {gene}", key=f"chip_{row_idx}_{i}", 
-                                       help=f"Auto-fill: {accession}",
-                                       use_container_width=True):
-                                st.session_state.ncbi_query = accession
-                                st.rerun()
-            else:
-                chip_cols = st.columns(len(FAMOUS_NCBI_EXAMPLES))
-                for i, (gene, accession) in enumerate(FAMOUS_NCBI_EXAMPLES.items()):
-                    with chip_cols[i]:
-                        # Color code different types of genes (fallback case)
-                        if any(keyword in gene.lower() for keyword in ['cancer', 'tumor', 'brca', 'tp53', 'egfr', 'bcl', 'myc']):
-                            button_emoji = "🔴"  # Red for cancer genes
-                        elif any(keyword in gene.lower() for keyword in ['disease', 'fragile', 'huntington', 'friedreich', 'cftr', 'dmd', 'als', 'alzheimer']):
-                            button_emoji = "🟠"  # Orange for disease genes  
-                        elif any(keyword in gene.lower() for keyword in ['promoter', 'tert']):
-                            button_emoji = "🟢"  # Green for promoters
-                        else:
-                            button_emoji = "🔵"  # Blue for other genes
-                        
-                        if st.button(f"{button_emoji} {gene}", key=f"chip_{i}", 
-                                   help=f"Auto-fill: {accession}",
-                                   use_container_width=True):
+            with col_examples:
+                st.write("**Quick Examples:**")
+                # Simplified example buttons in grid
+                example_cols = st.columns(2)
+                examples = list(FAMOUS_NCBI_EXAMPLES.items())[:4]  # Show only first 4
+                for i, (gene, accession) in enumerate(examples):
+                    with example_cols[i % 2]:
+                        if st.button(f"{gene}", key=f"ex_{i}", use_container_width=True):
                             st.session_state.ncbi_query = accession
                             st.rerun()
             
-            # Enhanced query input with validation
-            ncbi_query = st.text_input(
-                "Enter NCBI Query:",
-                value=st.session_state.get('ncbi_query', ''),
-                help="Enter NCBI accession number (e.g., NG_007161.1) or gene name. Supports genomic coordinates (e.g., NC_000005.10:1253147-1295047)",
-                placeholder="NG_007161.1 or NC_000005.10:1253147-1295047 or human c-MYC promoter",
-                key="ncbi_query_input"
-            )
-            
-            # Inline validation for NCBI query
-            if ncbi_query:
-                import re
-                # Pattern for common NCBI accession formats
-                accession_patterns = [
-                    r'^[A-Z]{1,2}_\d{6,9}\.\d{1,2}$',  # e.g., NG_007161.1, NM_007294.3
-                    r'^[A-Z]{1,2}\d{6,9}\.\d{1,2}$',   # e.g., NM007294.3
-                    r'^[A-Z]{1,2}_\d{6,9}\.\d{1,2}:\d+-\d+$',  # e.g., NC_000005.10:1253147-1295047
-                ]
+            with col_input:
+                ncbi_query = st.text_input(
+                    "NCBI Query:",
+                    value=st.session_state.get('ncbi_query', ''),
+                    placeholder="NG_007161.1 or gene name"
+                )
                 
-                is_accession = any(re.match(pattern, ncbi_query.strip()) for pattern in accession_patterns)
-                
-                if is_accession:
-                    st.success(f"✓ Valid accession format detected: {ncbi_query}")
-                else:
-                    st.info(f"Free-text query: '{ncbi_query}' - will search NCBI database")
-            
-            if ncbi_query:
-                if st.button("🚀 Fetch from NCBI", type="primary", use_container_width=True):
-                    with st.spinner("Fetching sequences from NCBI..."):
-                        try:
-                            seqs, names = ncbi_fetch(ncbi_query)
-                            if seqs:
-                                # Store in session state for persistence
-                                st.session_state.seqs = seqs
-                                st.session_state.names = names
-                                st.success(f"🎉 Successfully fetched {len(seqs)} sequence(s) from NCBI!")
-                                # Show preview of fetched sequences
-                                with st.expander("📋 Preview Fetched Sequences"):
-                                    for i, (seq, name) in enumerate(zip(seqs[:3], names[:3])):  # Show first 3
-                                        st.text(f"{i+1}. {name} ({len(seq)} bp)")
-                                        if i == 0:  # Show snippet of first sequence
-                                            st.code(f"{seq[:100]}..." if len(seq) > 100 else seq)
-                            else:
-                                st.error("❌ No sequences retrieved. Please check your query and try again.")
-                        except Exception as e:
-                            st.error(f"❌ Unexpected error: {str(e)[:150]}...")
-            
-            # Display current sequences in session state if any
-            if st.session_state.get('seqs'):
-                st.markdown("### 📊 Current Sequences in Memory")
-                for i, (seq, name) in enumerate(zip(st.session_state.seqs, st.session_state.names)):
-                    with st.expander(f"Sequence {i+1}: {name[:50]}..."):
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            st.metric("Length", f"{len(seq):,} bp")
-                        with col2:
-                            st.metric("GC Content", f"{gc_content(seq):.1f}%")
-                        st.text_area("Sequence Preview:", seq[:200] + "..." if len(seq) > 200 else seq, height=100, key=f"preview_{i}")
+                if ncbi_query:
+                    if st.button("🚀 Fetch", type="primary"):
+                        with st.spinner("Fetching..."):
+                            try:
+                                seqs, names = ncbi_fetch(ncbi_query)
+                                if seqs:
+                                    st.session_state.seqs = seqs
+                                    st.session_state.names = names
+                                    st.success(f"✓ Fetched {len(seqs)} sequence(s)")
+                                else:
+                                    st.error("❌ No sequences found")
+                            except Exception as e:
+                                st.error(f"❌ Error: {str(e)[:100]}...")
         
         # Store sequences in session state
         if seqs:
             st.session_state.seqs = seqs
             st.session_state.names = names
-    
-    # ---- PARAMETER SETTINGS SUBTAB ----
-    with upload_subtabs[1]:
-        st.markdown("""
-        <div style='background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 20px; margin-bottom: 24px;'>
-            <h3 style='color: #374151; margin-top: 0; margin-bottom: 12px;'>Analysis Parameters</h3>
-            <p style='margin-bottom: 0; color: #6b7280; font-size: 0.875rem;'>Configure motif detection settings and sensitivity thresholds</p>
-        </div>
-        """, unsafe_allow_html=True)
         
-        col1, col2 = st.columns(2)
+        # Compact current sequences display
+        if st.session_state.get('seqs'):
+            with st.expander(f"📊 Current: {len(st.session_state.seqs)} sequence(s)", expanded=False):
+                for i, (seq, name) in enumerate(zip(st.session_state.seqs[:3], st.session_state.names[:3])):
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("Seq", f"#{i+1}")
+                    with col2:
+                        st.metric("Length", f"{len(seq):,}")
+                    with col3:
+                        st.metric("GC%", f"{gc_content(seq):.1f}")
+                if len(st.session_state.seqs) > 3:
+                    st.write(f"... and {len(st.session_state.seqs) - 3} more")
+    
+    # ---- COMPACT PARAMETER SETTINGS SUBTAB ----
+    with upload_subtabs[1]:
+        # Compact parameter layout using multiple columns
+        col1, col2, col3 = st.columns(3)
         
         with col1:
-            st.markdown("**Motif Classes Selection**")
+            st.write("**Motif Classes**")
             motif_classes = st.multiselect(
-                "Select motif classes to analyze:",
+                "Select classes:",
                 list(MOTIF_COLORS.keys()),
                 default=list(MOTIF_COLORS.keys()),
-                help="Choose which non-B DNA motif types to detect"
+                help="Choose motif types to detect"
             )
             
-            st.markdown("**Sensitivity Settings**")
             sensitivity = st.select_slider(
-                "Detection sensitivity:",
-                options=["Low", "Medium", "High", "Maximum"],
+                "Sensitivity:",
+                options=["Low", "Medium", "High", "Max"],
                 value="High",
-                help="Higher sensitivity detects more motifs but may include false positives"
+                help="Detection sensitivity level"
             )
         
         with col2:
-            st.markdown("**Advanced Options**")
-            with st.expander("Advanced Detection Parameters"):
-                min_motif_length = st.number_input("Minimum motif length (bp):", 
-                                                 min_value=3, max_value=100, value=10)
-                max_motif_length = st.number_input("Maximum motif length (bp):", 
-                                                 min_value=10, max_value=1000, value=200)
-                overlap_threshold = st.slider("Overlap threshold (%):", 
-                                             min_value=0, max_value=100, value=50)
-                quality_filter = st.checkbox("Apply quality filtering", value=True)
-                
-            with st.expander("Performance Settings"):
-                parallel_processing = st.checkbox("Enable parallel processing", value=True)
-                memory_optimization = st.checkbox("Memory optimization", value=True)
+            st.write("**Size Limits**")
+            min_motif_length = st.number_input("Min length (bp):", 
+                                             min_value=3, max_value=100, value=10)
+            max_motif_length = st.number_input("Max length (bp):", 
+                                             min_value=10, max_value=1000, value=200)
+            overlap_threshold = st.slider("Overlap %:", 
+                                         min_value=0, max_value=100, value=50)
+        
+        with col3:
+            st.write("**Options**")
+            quality_filter = st.checkbox("Quality filter", value=True)
+            parallel_processing = st.checkbox("Parallel processing", value=True)
+            memory_optimization = st.checkbox("Memory optimization", value=True)
         
         # Store settings in session state
         st.session_state.analysis_settings = {
@@ -1061,118 +875,110 @@ with tab_dict["Upload & Analyze"]:
             'memory_optimization': memory_optimization
         }
     
-    # ---- RUN ANALYSIS SUBTAB ----
+    # ---- COMPACT RUN ANALYSIS SUBTAB ----
     with upload_subtabs[2]:
-        st.markdown("""
-        <div style='background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 20px; margin-bottom: 24px;'>
-            <h3 style='color: #374151; margin-top: 0; margin-bottom: 12px;'>Analysis Execution</h3>
-            <p style='margin-bottom: 0; color: #6b7280; font-size: 0.875rem;'>Review settings and launch motif detection analysis</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Settings summary
-        col1, col2 = st.columns(2)
+        # Analysis summary in compact layout
+        col1, col2, col3 = st.columns(3)
         
         with col1:
-            st.markdown("**Analysis Summary**")
             if st.session_state.seqs:
-                st.success(f"{len(st.session_state.seqs)} sequence(s) loaded")
-                for i, name in enumerate(st.session_state.names):
-                    st.text(f"• {name[:50]}... ({len(st.session_state.seqs[i])} bp)")
+                st.metric("Sequences", len(st.session_state.seqs))
+                st.metric("Total Length", f"{sum(len(s) for s in st.session_state.seqs):,} bp")
             else:
-                st.warning("No sequences loaded. Please upload sequences first.")
+                st.warning("⚠️ No sequences loaded")
         
         with col2:
-            st.markdown("**Current Settings**")
-            if 'analysis_settings' in st.session_state:
+            if hasattr(st.session_state, 'analysis_settings'):
                 settings = st.session_state.analysis_settings
-                st.text(f"• Motif classes: {len(settings.get('motif_classes', []))} selected")
-                st.text(f"• Sensitivity: {settings.get('sensitivity', 'High')}")
-                st.text(f"• Length range: {settings.get('min_motif_length', 10)}-{settings.get('max_motif_length', 200)} bp")
-                st.text(f"• Quality filter: {'✓' if settings.get('quality_filter', True) else '✗'}")
+                st.metric("Motif Classes", len(settings.get('motif_classes', [])))
+                st.metric("Sensitivity", settings.get('sensitivity', 'High'))
+            else:
+                st.info("ℹ️ Configure settings first")
         
-        st.markdown("---")
+        with col3:
+            if st.session_state.seqs and hasattr(st.session_state, 'analysis_settings'):
+                if st.button("▶️ Start Analysis", type="primary", use_container_width=True):
+                    # Define run_analysis function inline
+                    def run_analysis():
+                        st.session_state.analysis_running = True
+                        st.rerun()
+                    
+                    run_analysis()
+            else:
+                st.button("▶️ Start Analysis", disabled=True, use_container_width=True)
+                st.caption("Need sequences and settings")
         
-        # Analysis button
-        if st.session_state.seqs and not st.session_state.get('analysis_running', False):
-            if st.button("Start Analysis", type="primary", use_container_width=True):
-                st.session_state.analysis_running = True
-                st.rerun()
-        
-        # Analysis progress
+        # Analysis progress - compact version
         if st.session_state.get('analysis_running', False):
-            st.markdown("**Analysis in Progress**")
-            progress_bar = st.progress(0)
-            status_text = st.empty()
-            
-            # Simulate analysis process
-            for i in range(101):
-                time.sleep(0.02)  # Simulate processing time
-                progress_bar.progress(i)
-                if i < 20:
-                    status_text.text("Initializing analysis...")
-                elif i < 40:
-                    status_text.text("Processing sequences...")
-                elif i < 70:
-                    status_text.text("Detecting motifs...")
-                elif i < 90:
-                    status_text.text("Generating results...")
-                else:
-                    status_text.text("Finalizing analysis...")
-            
-            # Run actual analysis (placeholder - integrate with existing motif detection)
-            try:
-                results = []
-                for seq, name in zip(st.session_state.seqs, st.session_state.names):
-                    # This would call the actual motif detection functions
-                    motifs = all_motifs(seq)  # Using existing function
-                    results.append({
-                        'sequence_name': name,
-                        'sequence': seq,
-                        'motifs': motifs,
-                        'total_motifs': len(motifs),
-                        'sequence_length': len(seq)
-                    })
+            with st.spinner("Analyzing sequences..."):
+                progress_bar = st.progress(0)
                 
-                st.session_state.results = results
-                st.session_state.analysis_running = False
-                st.success("Analysis completed successfully!")
-                st.balloons()
-                
-            except Exception as e:
-                st.session_state.analysis_running = False
-                st.error(f"❌ Analysis failed: {e}")
+                # Run actual analysis
+                try:
+                    results = []
+                    for i, (seq, name) in enumerate(zip(st.session_state.seqs, st.session_state.names)):
+                        progress_bar.progress((i + 1) / len(st.session_state.seqs))
+                        motifs = all_motifs(seq)  # Using existing function
+                        results.append({
+                            'sequence_name': name,
+                            'sequence': seq,
+                            'motifs': motifs,
+                            'total_motifs': len(motifs),
+                            'sequence_length': len(seq)
+                        })
+                    
+                    st.session_state.results = results
+                    st.session_state.analysis_running = False
+                    st.success("✓ Analysis completed!")
+                    
+                except Exception as e:
+                    st.session_state.analysis_running = False
+                    st.error(f"❌ Analysis failed: {e}")
 
-# =====================================================
-# RESULTS & VISUALIZATION PAGE (MERGED)
+# RESULTS & VISUALIZATION PAGE - COMPACT VERSION
 # =====================================================
 with tab_dict["Results & Visualization"]:
     if not st.session_state.results:
-        st.info("No analysis results available. Please run an analysis first.")
+        st.info("ℹ️ No results available. Run analysis first.")
     else:
-        # Combined Results & Visualization subtabs
-        combined_subtabs = st.tabs([
-            "Overview/Summary", 
-            "Motif Class/Subclass Distribution", 
-            "Genomic Position Plots", 
-            "Detailed Result Tables", 
-            "Professional Figures"
-        ])
+        # Compact combined results subtabs
+        result_tabs = st.tabs(["📊 Overview", "📈 Distribution", "🗺️ Genomic", "📋 Tables", "🖼️ Figures"])
         
-        # ---- OVERVIEW/SUMMARY SUBTAB ----
-        with combined_subtabs[0]:
-            st.markdown("### 📊 Analysis Overview & Summary")
-            
-            # Summary metrics
+        # ---- COMPACT OVERVIEW SUBTAB ----
+        with result_tabs[0]:
+            # Compact summary metrics in 4 columns
             total_sequences = len(st.session_state.results)
             total_motifs = sum(r['total_motifs'] for r in st.session_state.results)
             
             col1, col2, col3, col4 = st.columns(4)
             with col1:
-                st.metric("Total Sequences", total_sequences)
+                st.metric("Sequences", total_sequences)
             with col2:
-                st.metric("Total Motifs Found", total_motifs)
+                st.metric("Total Motifs", total_motifs)
             with col3:
+                avg_motifs = total_motifs / total_sequences if total_sequences > 0 else 0
+                st.metric("Avg/Seq", f"{avg_motifs:.1f}")
+            with col4:
+                total_bp = sum(r['sequence_length'] for r in st.session_state.results)
+                st.metric("Total Length", f"{total_bp:,} bp")
+            
+            # Compact motif class distribution
+            motif_counts = {}
+            for result in st.session_state.results:
+                for motif in result['motifs']:
+                    motif_class = motif.get('Class', 'Unknown')
+                    motif_counts[motif_class] = motif_counts.get(motif_class, 0) + 1
+            
+            if motif_counts:
+                # Create compact distribution chart
+                fig = px.pie(
+                    values=list(motif_counts.values()),
+                    names=list(motif_counts.keys()),
+                    title="Motif Class Distribution",
+                    height=400
+                )
+                fig.update_layout(margin=dict(t=40, b=20, l=20, r=20))
+                st.plotly_chart(fig, use_container_width=True)
                 st.metric("Average Motifs/Sequence", f"{total_motifs/total_sequences:.1f}" if total_sequences > 0 else "0")
             with col4:
                 # Calculate unique motif classes found
