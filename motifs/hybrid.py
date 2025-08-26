@@ -109,3 +109,48 @@ def find_hybrids(motifs, seq):
                     })
             active.discard(idx)
     return results
+
+def analyze_longest_hybrid(hybrid_motifs, all_motifs):
+    """
+    Analyze hybrid motifs to find the longest region with highest overlap count.
+    
+    Biological significance: Longer hybrid regions with more overlaps indicate complex
+    regulatory hotspots with potential for enhanced genomic instability and function.
+    
+    Parameters:
+    hybrid_motifs (list): List of detected hybrid motifs
+    all_motifs (list): All detected motifs for overlap calculation
+    
+    Returns:
+    dict: Analysis results with longest hybrid details or None if no hybrids
+    """
+    if not hybrid_motifs: return None
+    
+    best_hybrid = None; max_length = 0; max_overlap_count = 0
+    
+    for hybrid in hybrid_motifs:
+        length = hybrid.get('Length', 0); overlap_count = 0
+        h_start, h_end = hybrid.get('Start', 0), hybrid.get('End', 0)
+        
+        # Count overlapping motifs (excluding hybrid class to avoid self-counting)
+        for motif in all_motifs:
+            if motif.get('Class') == 'Hybrid': continue
+            m_start, m_end = motif.get('Start', 0), motif.get('End', 0)
+            if max(h_start, m_start) <= min(h_end, m_end): overlap_count += 1
+        
+        # Select based on length first, then overlap count as tiebreaker
+        if length > max_length or (length == max_length and overlap_count > max_overlap_count):
+            best_hybrid = hybrid; max_length = length; max_overlap_count = overlap_count
+    
+    if not best_hybrid: return None
+    
+    return {
+        'hybrid': best_hybrid,
+        'length': max_length,
+        'overlap_count': max_overlap_count,
+        'sequence_name': best_hybrid.get('Sequence Name', ''),
+        'start': best_hybrid.get('Start', 0),
+        'end': best_hybrid.get('End', 0),
+        'classes': best_hybrid.get('MotifClasses', []),
+        'summary': f"Length={max_length}bp, Overlaps={max_overlap_count}, Classes={'+'.join(best_hybrid.get('MotifClasses', []))}"
+    }
