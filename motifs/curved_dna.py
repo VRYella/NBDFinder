@@ -178,12 +178,7 @@ def find_curved_DNA(seq: str) -> list:
     """
     Main function to detect curved DNA structures.
     Returns both global (phased arrays) and local (isolated tracts) curvature calls.
-    Enhancements:
-      1. Phasing-aware scoring for global arrays (target ~10.5 bp).
-      2. Deterministic length/tract-count terms for reproducibility.
-      3. Final non-overlap selection across global and local calls for high-confidence intervals.
+    Enhancements: 1) Phasing-aware scoring for global arrays; 2) Deterministic length/tract-count terms; 3) Non-overlap selection
     """
-    global_results, apr_regions = find_global_curved_polyA_polyT(seq)
-    local_results = find_local_curved_polyA_polyT(seq, apr_regions)
-    # Merge and retain only top-scoring, non-overlapping intervals
-    return _non_overlap_selection(global_results + local_results)
+    global_results, apr_regions = find_global_curved_polyA_polyT(seq); local_results = find_local_curved_polyA_polyT(seq, apr_regions)
+    return _non_overlap_selection(global_results + local_results)  # Merge and retain top-scoring, non-overlapping intervals

@@ -194,9 +194,9 @@ def validate_motif(motif, seq_length):
 
 def all_motifs(seq, nonoverlap=False, report_hotspots=False, sequence_name="Sequence"):
     """
-    COMPLETE PERFORMANCE MODE: Detect all non-B DNA motifs in specified order
+    COMPLETE PERFORMANCE MODE: Detect all non-B DNA motifs with comprehensive logging
     
-    This function runs each class one after another in the exact order specified:
+    Enhanced Detection Pipeline with granular logging and export validation:
     1. Curved DNA
     2. Slipped DNA  
     3. Cruciform DNA
@@ -215,17 +215,25 @@ def all_motifs(seq, nonoverlap=False, report_hotspots=False, sequence_name="Sequ
         sequence_name: Name for the sequence
     
     Returns:
-        List of motif dictionaries
+        List of motif dictionaries with comprehensive metadata
     """
     import re
+    import logging
+    
+    # Configure detection logging
+    logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+    logger = logging.getLogger('NBDFinder')
     
     if not seq or not re.match("^[ATGC]+$", seq, re.IGNORECASE):
+        logger.warning(f"Invalid sequence provided: length={len(seq) if seq else 0}")
         return []
     seq = seq.upper()
     
     motif_list = []
     processed_classes = []
+    detection_failures = []
     
+    logger.info(f"Starting Non-B DNA detection for sequence '{sequence_name}' of length {len(seq)}")
     print(f"Starting Non-B DNA detection for sequence of length {len(seq)}")
     
     # 1. Curved DNA
@@ -235,9 +243,12 @@ def all_motifs(seq, nonoverlap=False, report_hotspots=False, sequence_name="Sequ
         curved_motifs = find_curved_DNA(seq)
         motif_list += curved_motifs
         processed_classes.append(f"Curved DNA: {len(curved_motifs)} motifs found")
+        logger.info(f"Curved DNA detection: {len(curved_motifs)} motifs found")
         print(f"   Found {len(curved_motifs)} Curved DNA motifs")
     except (ImportError, AttributeError) as e:
+        detection_failures.append(f"Curved DNA: {str(e)}")
         processed_classes.append("Curved DNA: not found in result")
+        logger.error(f"Curved DNA detection failed: {e}")
         print(f"   Curved DNA: not found in result ({e})")
     
     # 2. Slipped DNA
@@ -421,6 +432,37 @@ def all_motifs(seq, nonoverlap=False, report_hotspots=False, sequence_name="Sequ
     g4_filtered_count = original_count - len(motif_list)
     if g4_filtered_count > 0:
         print(f"   Applied G4 priority filtering: removed {g4_filtered_count} overlapping G4 motifs")
+    
+    # Export validation: ensure all detected motifs have required fields
+    export_issues = []
+    for i, motif in enumerate(motif_list):
+        required_fields = ["Sequence Name", "Class", "Subtype", "Start", "End", "Length", "Sequence", "Score"]
+        missing_fields = [field for field in required_fields if field not in motif or motif[field] == ""]
+        if missing_fields:
+            export_issues.append(f"Motif {i+1} missing fields: {missing_fields}")
+            # Fill in missing metadata to ensure export compatibility
+            for field in missing_fields:
+                if field == "Sequence Name":
+                    motif[field] = sequence_name
+                elif field in ["Arms/Repeat Unit/Copies", "Spacer"]:
+                    motif[field] = ""
+                elif field == "Score" and field not in motif:
+                    motif[field] = 0.0
+    
+    if export_issues:
+        logger.warning(f"Export validation found {len(export_issues)} issues")
+        for issue in export_issues:
+            logger.warning(f"  {issue}")
+    else:
+        logger.info("Export validation passed: all motifs have required metadata")
+    
+    # Detection summary logging
+    if detection_failures:
+        logger.warning(f"Detection failures occurred in {len(detection_failures)} modules:")
+        for failure in detection_failures:
+            logger.warning(f"  {failure}")
+    
+    logger.info(f"Detection completed: {len(motif_list)} total motifs from {len(processed_classes)} classes")
     
     # Print summary
     print(f"\nProcessing Summary:")
