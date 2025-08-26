@@ -1030,7 +1030,7 @@ with tab_dict["Results & Visualization"]:
                     st.text(f"Total analyzed: {np.sum(seq_lengths):,} bp")
         
         # ---- MOTIF CLASS/SUBCLASS DISTRIBUTION SUBTAB ----
-        with combined_subtabs[1]:
+        with result_tabs[1]:
             st.markdown("### 🧬 Complete Motif Class & Subclass Distribution")
             
             # Create comprehensive class/subclass analysis
@@ -1139,7 +1139,7 @@ with tab_dict["Results & Visualization"]:
                                                        sum(r['sequence_length'] for r in st.session_state.results))
         
         # ---- GENOMIC POSITION PLOTS SUBTAB ----
-        with combined_subtabs[2]:
+        with result_tabs[2]:
             st.markdown("### 🗺️ Genomic Position Analysis & Plots")
             
             # Sequence selection for detailed view
@@ -1223,7 +1223,7 @@ with tab_dict["Results & Visualization"]:
                 st.dataframe(position_df, use_container_width=True)
         
         # ---- DETAILED RESULT TABLES SUBTAB ----
-        with combined_subtabs[3]:
+        with result_tabs[3]:
             st.markdown("### 📊 Detailed Result Tables")
             
             # Comprehensive motif details table
@@ -1297,7 +1297,7 @@ with tab_dict["Results & Visualization"]:
                 )
         
         # ---- PROFESSIONAL FIGURES SUBTAB ----
-        with combined_subtabs[4]:
+        with result_tabs[4]:
             st.markdown("### 📖 Professional Figures")
             
             col1, col2 = st.columns(2)
