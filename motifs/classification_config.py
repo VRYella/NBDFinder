@@ -113,8 +113,7 @@ LEGACY_TO_OFFICIAL_MAPPING = {
     "Direct_Repeat": "Slipped DNA [Direct Repeat]",
     "STR": "Slipped DNA [STR]",
     
-    "Cruciform": "Cruciform DNA", 
-    "Cruciform_IR": "Cruciform DNA",
+    "Cruciform": "Cruciform DNA",
     
     "R-Loop": "R-loop",
     "RLFS": "R-loop",
@@ -149,7 +148,7 @@ LEGACY_TO_OFFICIAL_MAPPING = {
     
     "Z-DNA": "Z-DNA",
     "Z-Seeker_Kadane": "Z-DNA",
-    "eGZ": "Z-DNA",
+    "eGZ": "eGZ (Extruded-G) DNA",
     "CGG_Expansion": "eGZ (Extruded-G) DNA",
     
     "Hybrid": "Hybrid",

@@ -80,7 +80,7 @@ def find_hdna(seq):
                     results.append({
                         "Sequence Name": "",
                         "Class": "Triplex",
-                        "Subtype": "Triplex" if is_triplex else "Triplex",
+                        "Subtype": "Triplex",
                         "Start": mirror_start + 1,
                         "End": mirror_end,
                         "Length": len(full_seq),
