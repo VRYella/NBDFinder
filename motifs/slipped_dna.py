@@ -1,122 +1,149 @@
 """
-Category 3: Slipped DNA Detection Module
-======================================
-
-This module implements detection algorithms for slipped DNA structures,
-including direct repeats and short tandem repeats (STRs).
+Category 3:  Slipped DNA Detection Module
+=================================================
+This module implements detection algorithms for slipped DNA structures, including direct repeats and STRs
 
 Scientific Basis:
-- DNA slippage occurs during replication at direct repeats and STRs
-- Forms looped-out structures that can lead to genetic instability
-- AT-rich repeats are more prone to slippage due to lower melting temperature
+
+DNA slippage occurs during replication at direct repeats and STRs, creating looped-out slip-outs that can expand or contract repeat length.
+[Replication slippage overview: Viguera et al., EMBO J 2001; Slipped-strand mispairing concept]
+
+Slippage frequency scales with repeat copy number and is higher for shorter repeat units; perfect-identity detection with deterministic thresholds 
+yields reproducible catalogs. [STR mutation/copy-size dependence: Gymrek et al., PNAS 2022]
+
+Composition (AT/GC) is retained as annotation only; scoring emphasizes unit length, copy number, and total length to avoid composition bias 
+while remaining scientifically grounded. [Catalog-style non-B motif annotation: nBMST/Non-B DB]
 
 References:
-- Kunkel & Bebenek (2000) Annu Rev Biochem
-- Wells (2007) Trends Biochem Sci
+Kunkel & Bebenek (2000) Annu Rev Biochem — replication fidelity and slippage context.
+Wells (2007) Trends Biochem Sci — non-B DNA and genome instability overview.
+Viguera et al. (2001) EMBO J — polymerase pausing/dissociation in slippage between direct repeats.
+Non-B DNA Motif Search Tool/Non-B DB (Nucleic Acids Res, 2011/2010) — deterministic non-B motif cataloging.
+Gymrek et al. (2022) PNAS — STR mutation/selection processes (copy number, unit size effects).
 
-Author: Dr. Venkata Rajesh Yella
-Updated: 2024
+Internal deterministic scoring helpers
+Rationale (annotation):
+- Unit-length weight: shorter units are more slippage-prone; approximate with l^(-alpha) discretized
+for reproducibility (keeps scores small and comparable). [STR instability vs. unit size]
+- Copy-number bonus: monotonic, capped; higher copy number increases slippage likelihood. [STR copy effect]
+- Length thresholds (30/50/100 nt): simple, transparent steps capturing length-dependent instability
+observed across non-B motifs and repeats; avoids overfitting. [Catalog practice/length sensitivity]
 """
-
 from .shared_utils import wrap, calculate_conservation_score
 
-# Slipped DNA detection - optimized for performance and reduced overlaps
-def find_slipped_dna(seq):
-    """Find slipped DNA structures including direct repeats and STRs with enhanced scoring."""
-    results = []
-    min_len_dr, max_len_dr = 10, 300
-    min_score_threshold = 25.0  # Minimum score to avoid excessive low-quality matches
-    used_positions = set()  # Track used positions to prevent excessive overlap
-    
-    # Direct repeats - optimized to reduce overlapping matches
-    for i in range(len(seq) - min_len_dr * 2 + 1):
-        if i in used_positions: continue  # Skip if position already covered
-            
-        for l in range(min_len_dr, min(max_len_dr+1, (len(seq)-i)//2+1)):
+def find_slipped_dna_advanced(seq):
+    """
+    Detects slipped DNA motifs (DR, STR) in deterministic, mismatch-free fashion.
+    Each call is scored and annotated with composition and conservation metrics.
+    Returns: List of non-overlapping, catalog-compliant motif dictionaries.
+    """
+    results, preliminary = [], []; n = len(seq)
+    # --- DR parameters ---
+    min_len_dr, max_len_dr, max_spacer = 10, 300, 5
+    # --- STR parameters ---
+    min_unit_str, max_unit_str, min_len_str = 1, 6, 15
+    min_reps_by_unit = {1:6, 2:5, 3:4, 4:3, 5:3, 6:3}
+    min_score_threshold = 10.0
+
+    # --- Direct Repeats (DR) block: strict catalog-mismatch-free search ---
+    for i in range(0, max(0, n - min_len_dr * 2 + 1)):
+        if seq[i].lower() == 'n': continue  # skip ambiguous base
+        made_call = False
+        max_l_here = min(max_len_dr, (n - i) // 2)
+        for l in range(max_l_here, min_len_dr - 1, -1):
             repeat = seq[i:i+l]
-            if seq[i+l:i+2*l] == repeat:
-                # Enhanced scoring: unit_len × composition weight (AT-rich repeats more flexible)
-                at_frac = (repeat.count('A') + repeat.count('T')) / max(1, len(repeat))
-                score = 2*l * (1.0 + 0.5*at_frac)
-                
-                # Only keep high-scoring matches and prevent excessive overlap
+            if 'n' in repeat.lower(): continue
+            max_sp = min(max_spacer, n - (i + 2*l))
+            for sp in range(0, max_sp + 1):
+                j = i + l + sp
+                if j + l > n: continue
+                if seq[j:j+l] != repeat: continue
+                # Found DR; catalog extension logic
+                copies, remainder, end = 2, 0, j + l
+                if sp == 0:
+                    k = j + l
+                    while k + l <= n and seq[k:k+l] == repeat: copies += 1; k += l
+                    rs, re = i, k
+                    while re < n and seq[rs] == seq[re]: remainder += 1; rs += 1; re += 1
+                    end = k if remainder == 0 else re
+                else:
+                    rs, re = i, j + l
+                    while re < n and seq[rs] == seq[re]: remainder += 1; rs += 1; re += 1
+                    end = j + l if remainder == 0 else re
+                total_len = end - i
+                score = _score_DR(l, copies, total_len, sp)
                 if score >= min_score_threshold:
-                    current_positions = set(range(i, i+2*l))
-                    overlap_ratio = len(current_positions.intersection(used_positions)) / len(current_positions)
-                    
-                    if overlap_ratio < 0.3:  # Allow some overlap but not excessive
-                        conservation_result = calculate_conservation_score(repeat+repeat, "Slipped DNA")
-                        
-                        results.append({
-                            "Sequence Name": "", "Class": "Slipped DNA", "Subtype": "Slipped DNA [Direct Repeat]",
-                            "Start": i+1, "End": i+2*l, "Length": 2*l, "Sequence": wrap(repeat+repeat),
-                            "ScoreMethod": "DR_Composition_raw", "Score": float(score), "AT_Fraction": round(at_frac, 3),
-                            "Conservation_Score": float(conservation_result["enrichment_score"]),
-                            "Conservation_P_Value": float(conservation_result["p_value"]),
-                            "Conservation_Significance": conservation_result["significance"],
-                            "Arms/Repeat Unit/Copies": f"UnitLen={l};Copies=2", "Spacer": ""
-                        })
-                        used_positions.update(range(i, i+l))  # Mark core positions as used
-                        break  # Found a good match at this position, move to next
-    
-    # Short Tandem Repeats (STRs) - Enhanced algorithm
-    min_unit_str = 1
-    max_unit_str = 6
-    min_reps_str = 5
-    min_len_str = 15
+                    dr_seq = seq[i:end]
+                    conservation_result = calculate_conservation_score(dr_seq, "Slipped DNA")
+                    preliminary.append({
+                        "Sequence Name": "",
+                        "Class": "Slipped DNA",
+                        "Subtype": "Slipped DNA [Direct Repeat]",
+                        "Start": i+1,
+                        "End": end,
+                        "Length": total_len,
+                        "Sequence": wrap(dr_seq),
+                        "ScoreMethod": "DR_PerfectBlock_v1",
+                        "Score": float(score),
+                        "AT_Fraction": round((repeat.count('A')+repeat.count('T'))/max(1,len(repeat)), 3),
+                        "Conservation_Score": float(conservation_result.get("enrichment_score", 0.0)),
+                        "Conservation_P_Value": float(conservation_result.get("p_value", 1.0)),
+                        "Conservation_Significance": conservation_result.get("significance", ""),
+                        "Arms/Repeat Unit/Copies": f"UnitLen={l};Copies={copies}",
+                        "Spacer": str(sp)
+                    }); made_call = True; break
+            if made_call: break
+
+    # --- STR block: strict mismatch-free search with catalog copy/length threshold ---
     i = 0
-    n = len(seq)
-    
-    while i < n - min_unit_str * min_reps_str + 1:
+    while i <= n - min_len_str:
+        if seq[i].lower() == 'n': i += 1; continue
         found = False
         for unit in range(min_unit_str, max_unit_str+1):
-            if i + unit * min_reps_str > n:
-                continue
+            if i + unit > n: break
             repeat_unit = seq[i:i+unit]
-            if 'n' in repeat_unit.lower():
-                continue
-            reps = 1
-            while (i + reps*unit + unit <= n and seq[i + reps*unit:i + (reps+1)*unit] == repeat_unit):
-                reps += 1
-            if reps >= min_reps_str and reps*unit >= min_len_str:
-                remainder = 0
-                rs = i + reps*unit
-                re_idx = rs
-                while (re_idx < n and seq[re_idx] == repeat_unit[re_idx % unit]):
-                    remainder += 1
-                    re_idx += 1
-                full_len = reps*unit + remainder
-                gc_frac = (repeat_unit.count('G') + repeat_unit.count('C')) / max(1, len(repeat_unit))
-                score = full_len * (1.0 + 0.3*gc_frac) * (reps ** 0.5)
-                
-                # Calculate conservation score
-                str_seq = seq[i:i + full_len]
-                conservation_result = calculate_conservation_score(str_seq, "Slipped DNA")
-                conservation_score = conservation_result["enrichment_score"]
-                
-                results.append({
-                    "Sequence Name": "",
-                    "Class": "Slipped DNA",
-                    "Subtype": "Slipped DNA [STR]",
-                    "Start": i+1,
-                    "End": i + full_len,
-                    "Length": full_len,
-                    "Unit": repeat_unit,
-                    "Copies": reps,
-                    "Sequence": wrap(str_seq),
-                    "ScoreMethod": "STR_Enhanced_raw",
-                    "Score": float(score),
-                    "GC_Fraction": round(gc_frac, 3),
-                    "Conservation_Score": float(conservation_score),
-                    "Conservation_P_Value": float(conservation_result["p_value"]),
-                    "Conservation_Significance": conservation_result["significance"],
-                    "Arms/Repeat Unit/Copies": f"Unit={repeat_unit};Copies={reps}",
-                    "Spacer": ""
-                })
-                i = i + full_len - 1
-                found = True
-                break
-        if not found:
-            i += 1
-    
+            if 'n' in repeat_unit.lower(): continue
+            reps, j = 1, i+unit
+            while j + unit <= n and seq[j:j+unit] == repeat_unit: reps += 1; j += unit
+            remainder, rs, re_idx = 0, i, j
+            while re_idx < n and seq[rs] == seq[re_idx]: remainder += 1; rs += 1; re_idx += 1
+            full_len = reps*unit + remainder
+            if reps >= min_reps_by_unit.get(unit, 999) and full_len >= min_len_str:
+                str_seq = seq[i:i+full_len]
+                score = _score_STR(unit, reps, full_len)
+                if score >= min_score_threshold:
+                    conservation_result = calculate_conservation_score(str_seq, "Slipped DNA")
+                    results.append({
+                        "Sequence Name": "",
+                        "Class": "Slipped DNA",
+                        "Subtype": "Slipped DNA [STR]",
+                        "Start": i+1,
+                        "End": i+full_len,
+                        "Length": full_len,
+                        "Unit": repeat_unit,
+                        "Copies": reps,
+                        "Sequence": wrap(str_seq),
+                        "ScoreMethod": "STR_PerfectBlock_v1",
+                        "Score": float(score),
+                        "GC_Fraction": round((repeat_unit.count('G')+repeat_unit.count('C'))/max(1,len(repeat_unit)), 3),
+                        "Conservation_Score": float(conservation_result.get("enrichment_score", 0.0)),
+                        "Conservation_P_Value": float(conservation_result.get("p_value", 1.0)),
+                        "Conservation_Significance": conservation_result.get("significance", ""),
+                        "Arms/Repeat Unit/Copies": f"Unit={repeat_unit};Copies={reps}",
+                        "Spacer": ""
+                    })
+                i = i + max(full_len, unit); found = True; break
+        if not found: i += 1
+
+    # --- Global non-overlap: ensures one motif per region (catalog standard) ---
+    if preliminary:
+        all_hits = preliminary + results
+        results = _non_overlap_selection(all_hits)
     return results
+
+# --- Utility requirements (to be provided in same module or imported) ---
+# - wrap(seq): formats sequence for output (e.g. line breaks)
+# - calculate_conservation_score(seq, class_name): returns dict with enrichment_score, p_value, significance
+# - _score_DR(l, copies, total_len, spacer): scoring for DRs per catalog rules
+# - _score_STR(unit, reps, full_len): scoring for STRs per catalog rules
+# - _non_overlap_selection(hits): filters list to globally non-overlapping motif calls
