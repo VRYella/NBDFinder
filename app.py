@@ -1028,6 +1028,14 @@ with tab_dict["Results & Visualization"]:
                     st.text(f"Mean sequence length: {np.mean(seq_lengths):.0f} bp")
                     st.text(f"Median sequence length: {np.median(seq_lengths):.0f} bp")
                     st.text(f"Total analyzed: {np.sum(seq_lengths):,} bp")
+            
+            # Longest Hybrid Motif Analysis - identifies most significant regulatory hotspot
+            st.markdown("### 🧬 Longest Hybrid Motif Analysis")
+            from motifs.hybrid import analyze_longest_hybrid; hybrid_motifs = [m for result in st.session_state.results for m in result['motifs'] if m.get('Class') == 'Hybrid']; all_detected_motifs = [m for result in st.session_state.results for m in result['motifs']]; longest_analysis = analyze_longest_hybrid(hybrid_motifs, all_detected_motifs) if hybrid_motifs else None
+            if longest_analysis:
+                col1, col2 = st.columns(2); col1.metric("Sequence", longest_analysis['sequence_name']); col1.metric("Position", f"{longest_analysis['start']}-{longest_analysis['end']}"); col1.metric("Length", f"{longest_analysis['length']} bp"); col2.metric("Overlap Count", longest_analysis['overlap_count']); col2.metric("Involved Classes", " + ".join(longest_analysis['classes'])); col2.info("🔬 Biological significance: Longer hybrid regions with more overlaps indicate complex regulatory hotspots with enhanced potential for genomic instability and functional diversity.")
+            else:
+                st.info("ℹ️ No hybrid motifs detected in the analysis results.")
         
         # ---- MOTIF CLASS/SUBCLASS DISTRIBUTION SUBTAB ----
         with result_tabs[1]:

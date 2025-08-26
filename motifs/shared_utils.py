@@ -381,7 +381,7 @@ def all_motifs(seq, nonoverlap=False, report_hotspots=False, sequence_name="Sequ
     # 9. Hybrid (overlaps between any two or more)
     print("9. Processing Hybrid...")
     try:
-        from .hybrid import find_hybrids
+        from .hybrid import find_hybrids, analyze_longest_hybrid
         hybrid_motifs = find_hybrids(motif_list, seq)
         motif_list += hybrid_motifs
         processed_classes.append(f"Hybrid: {len(hybrid_motifs)} motifs found")
@@ -394,6 +394,9 @@ def all_motifs(seq, nonoverlap=False, report_hotspots=False, sequence_name="Sequ
                 if 'MotifClasses' in hybrid:
                     classes = hybrid['MotifClasses']
                     print(f"     - {hybrid.get('Subtype', 'Unknown')} (Classes: {', '.join(classes)})")
+            
+            # Longest hybrid analysis - identifies the most significant hybrid region
+            longest_hybrid = analyze_longest_hybrid(hybrid_motifs, motif_list); print(f"   Longest hybrid region: {longest_hybrid['summary'] if longest_hybrid else 'None detected'}")
     except (ImportError, AttributeError) as e:
         processed_classes.append("Hybrid: not found in result")
         print(f"   Hybrid: not found in result ({e})")
