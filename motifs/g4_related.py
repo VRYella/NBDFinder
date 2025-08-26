@@ -192,6 +192,23 @@ def _extract_candidates(seq, window=25, threshold=0.8):  # Lowered threshold for
                 "start": start, "end": end, "seq": sub, "subclass": subtype,
                 "g4h": g4h, "runs": runs, "loops": loops
             })
+    
+    # Bipartite G4 detection: look for 4 G-runs with one long central loop
+    for m in re.finditer(r"(G{3,})(.{1,12})(G{3,})(.{13,50})(G{3,})(.{1,12})(G{3,})", seq):
+        start, end = m.start(), m.end()
+        sub = seq[start:end]
+        runs = _find_g_runs(sub)
+        loops = _loop_lengths_from_runs(runs)
+        g4h = g4hunter_score(sub, window=window)
+        if g4h < threshold: continue
+        
+        # For bipartite: we expect one loop to be much longer than others (≥13 nt)
+        if len(loops) >= 3 and max(loops) >= 13 and loops.count(max(loops)) == 1:
+            candidates.append({
+                "start": start, "end": end, "seq": sub, "subclass": "Bipartite/Split",
+                "g4h": g4h, "runs": runs, "loops": loops
+            })
+    
     # Triplex: three runs (≥3), loops ≤15, higher threshold
     for m in re.finditer(r"(G{3,})(.{1,15})G{3,}(.{1,15})G{3,}", seq):
         start, end = m.start(), m.end()

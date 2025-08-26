@@ -107,7 +107,7 @@ class MotifTestSequences:
                 "description": "Bipartite G-quadruplex with long central loop"
             },
             "multimeric_g4": {
-                "sequence": "GGGTTGGGTTGGGTTGGGAAAAGGGTTGGGTTGGGTTGGG",  # Multiple G4s close together with short linker
+                "sequence": "GGGTTGGGTTGGGTTGGGAAAAAAAAAAAAAAGGGTTGGGTTGGGTTGGG",  # Two separate G4s with 15-nt linker
                 "expected_class": "G-Quadruplex Family",
                 "expected_subtype": "Multimeric G4",
                 "description": "Multimeric G-quadruplex structures"
