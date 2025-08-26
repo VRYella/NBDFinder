@@ -147,13 +147,13 @@ class MotifTestSequences:
             
             # 8. Z-DNA (2 subclasses)
             "z_dna": {
-                "sequence": "CGCGCGCGCGCGCGCGCGCGCGCGCGCG",  # Alternating purines/pyrimidines
+                "sequence": "CGCACGCACGCACGCACGCACGCACGCACGCA",  # Alternating but not CGG repeats
                 "expected_class": "Z-DNA",
                 "expected_subtype": "Z-DNA",
                 "description": "Alternating purine-pyrimidine sequence"
             },
             "egz_dna": {
-                "sequence": "CGGCGGCGGCGGCGGCGGCGGCGGCGGCGGCGGCGGCGG",  # CGG repeats
+                "sequence": "CGGCGGCGGCGGCGGCGGCGGCGGCGGCGGCGGCGGCGG",  # Pure CGG repeats
                 "expected_class": "Z-DNA",
                 "expected_subtype": "eGZ (Extruded-G) DNA",
                 "description": "CGG repeat expansions (eGZ)"

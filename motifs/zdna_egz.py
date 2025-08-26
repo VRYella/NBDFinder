@@ -249,17 +249,32 @@ def find_zdna_and_egz(
 ):
     """
     Run Z-DNA and eGZ and resolve a final, non-overlapping set with priority:
-    Z-DNA (alternating Pu/Py) > eGZ (CGG expansions).
+    eGZ (CGG expansions) > Z-DNA (alternating Pu/Py) for CGG-rich sequences.
+    Z-DNA > eGZ for other alternating sequences.
     """
     zdna_kwargs = zdna_kwargs or {}
     egz_kwargs = egz_kwargs or {}
-    z_calls = find_zdna(seq, **zdna_kwargs)
+    
+    # First, identify CGG-rich regions
+    cgg_density = seq.count('CGG') / max(1, len(seq) // 3)
+    
     e_calls = find_egz_motif(seq, **egz_kwargs)
+    z_calls = find_zdna(seq, **zdna_kwargs)
+    
     if not enforce_nonoverlap: return z_calls + e_calls
-    # Merge and enforce priority
+    
+    # Merge and enforce priority based on sequence characteristics
     allrecs = []
-    for r in z_calls: r["_priority"] = 1; allrecs.append(r)
-    for r in e_calls: r["_priority"] = 2; allrecs.append(r)
+    
+    # For sequences with high CGG density, prioritize eGZ
+    if cgg_density > 0.5:  # More than 50% of possible positions are CGG
+        for r in e_calls: r["_priority"] = 1; allrecs.append(r)
+        for r in z_calls: r["_priority"] = 2; allrecs.append(r)
+    else:
+        # For other sequences, prioritize Z-DNA
+        for r in z_calls: r["_priority"] = 1; allrecs.append(r)
+        for r in e_calls: r["_priority"] = 2; allrecs.append(r)
+    
     allrecs.sort(key=lambda r: (r["_priority"], -float(r["Score"]), -int(r["Length"]), int(r["Start"])))
     chosen, occ = [], []
     for r in allrecs:
