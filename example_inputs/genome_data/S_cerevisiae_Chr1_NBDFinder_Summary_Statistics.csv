@@ -1,2 +1,0 @@
-genome_name,sequence_name,total_motifs_detected,unique_motif_types,motif_type_detection_rate_percent,total_coverage_bp,mean_score,median_score,std_score,min_score,max_score,Curved DNA_count,Slipped DNA_count,Cruciform DNA_count,Triplex_count,G-Quadruplex Family_count,i-motif family_count,Z-DNA_count,Hybrid_count,R-loop_count
-S_cerevisiae_Chr1,NC_001133.9,1584,9,47.368421052631575,59843,51.887048957947165,39.42739820199815,127.2248230016938,6.107313218497099,1968.402158542396,726,73,31,62,528,29,19,100,16
