@@ -25,7 +25,7 @@ class MotifTestSequences:
         self.test_sequences = {
             # 1. Curved DNA (2 subclasses)
             "global_curvature": {
-                "sequence": "AAAAAATTTTTGAAAAAATTTTTCAAAAAATTTTTGAAAAAATTTTTT",
+                "sequence": "AAAAAATTTTTTCGCGCGAAAAAATTTTTTCGCGCGAAAAAATTTTTTCGCGCG",
                 "expected_class": "Curved DNA",
                 "expected_subtype": "Global curvature",
                 "description": "Periodic poly(A)/poly(T) tracts with ~10 bp spacing"
@@ -39,7 +39,7 @@ class MotifTestSequences:
             
             # 2. Slipped DNA (2 subclasses)
             "direct_repeat": {
-                "sequence": "GCTAAGCTAGCTAAGCTAAGCTAAGCTAAGCTA",  # Perfect direct repeats
+                "sequence": "GCTAAGCTAGCTAAGCTACGCTAAGCTAGCTAAGCTACGCTAAGCTAGCTAAGCTA",  # Perfect direct repeats
                 "expected_class": "Slipped DNA",
                 "expected_subtype": "Slipped DNA [Direct Repeat]", 
                 "description": "Perfect direct repeats"
@@ -61,15 +61,15 @@ class MotifTestSequences:
             
             # 4. R-loop (1 subclass)
             "r_loop": {
-                "sequence": "GGGCTGGGGAAGGGCTGGGCTAAGGGCCTGGGCTGGGGTAAGGGCCTGGGCTGGGGTAAGGGCCTGGGCTGGGGTAAGGCCTGGGCTGGGG",
+                "sequence": "GGGCTAGGGAAAGGGCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
                 "expected_class": "R-loop",
                 "expected_subtype": "R-loop",
-                "description": "G-rich sequence matching RLFS patterns"
+                "description": "G-rich RIZ followed by long GC-rich REZ region"
             },
             
             # 5. Triplex (2 subclasses)
             "triplex": {
-                "sequence": "AAAAGAAGAAAAGTAAAAGAAGAAAAGTAAAAACTTCTTTACTTTTCTTCTTTAC",  # Mirror repeat
+                "sequence": "AAAAAGAAGAAAAAGAAAACTTCTTTCTTTC",  # Homopurine/homopyrimidine mirror repeat
                 "expected_class": "Triplex",
                 "expected_subtype": "Triplex",
                 "description": "Homopurine/homopyrimidine mirror repeat"
@@ -89,37 +89,37 @@ class MotifTestSequences:
                 "description": "Canonical G-quadruplex with short loops"
             },
             "relaxed_g4": {
-                "sequence": "GGGTTTTGGGTTTTGGGTTTTGGG",  # Longer loops
+                "sequence": "GGGTTTTTTTTGGGTTTTTTTTGGGTTTTTTTTGGG",  # Loops 8+ bp for relaxed
                 "expected_class": "G-Quadruplex Family", 
                 "expected_subtype": "Relaxed G4",
                 "description": "Relaxed G-quadruplex with longer loops"
             },
             "bulged_g4": {
-                "sequence": "GGGATTGGGTTGGGTTGGG",  # Bulge in G-run
+                "sequence": "GGGATGGGTTGGGTTGGG",  # Bulge in first G-run
                 "expected_class": "G-Quadruplex Family",
                 "expected_subtype": "Bulged G4",
                 "description": "Bulged G-quadruplex with interruption in G-run"
             },
             "bipartite_g4": {
-                "sequence": "GGGTTGGGAAAAAAGGGTTGGG",  # Long central loop
+                "sequence": "GGGTTGGGAAAAAAAAAAAAAAAAAAGGGTTGGG",  # Long central loop 20+ bp
                 "expected_class": "G-Quadruplex Family",
                 "expected_subtype": "Bipartite G4", 
                 "description": "Bipartite G-quadruplex with long central loop"
             },
             "multimeric_g4": {
-                "sequence": "GGGTTGGGTTGGGTTGGGAAGGGTTGGGTTGGGTTGGG",  # Multiple G4s
+                "sequence": "GGGTTGGGTTGGGTTGGGAAGGGTTGGGTTGGGTTGGG",  # Multiple G4s close together
                 "expected_class": "G-Quadruplex Family",
                 "expected_subtype": "Multimeric G4",
                 "description": "Multimeric G-quadruplex structures"
             },
             "imperfect_g4": {
-                "sequence": "GGATTGGGTTGGGTTGGA",  # Imperfect G-runs
+                "sequence": "GGATTGGGTTGGGTTGGA",  # G2 runs instead of G3+
                 "expected_class": "G-Quadruplex Family",
                 "expected_subtype": "Imperfect G4",
                 "description": "Imperfect G-quadruplex with G2 runs"
             },
             "g_triplex": {
-                "sequence": "GGGTTGGGTTGGG",  # 3-tetrad G4
+                "sequence": "GGGTTGGGTTGGG",  # Only 3 G-runs
                 "expected_class": "G-Quadruplex Family",
                 "expected_subtype": "G-Triplex intermediate",
                 "description": "G-triplex intermediate structure"
@@ -133,13 +133,13 @@ class MotifTestSequences:
                 "description": "Canonical i-motif with short loops"
             },
             "relaxed_imotif": {
-                "sequence": "CCCTTTTCCCTTTTCCCTTTTCCC",  # Longer loops
+                "sequence": "CCCTTTTTTTTCCCTTTTTTTTCCCTTTTTTTTCCC",  # Longer loops 8+ bp
                 "expected_class": "i-motif family",
                 "expected_subtype": "Relaxed i-motif",
                 "description": "Relaxed i-motif with longer loops"
             },
             "ac_motif": {
-                "sequence": "ACACACACACACACACACACACACACACAC",  # AC repeats
+                "sequence": "ACACACACACACACACACACACACACACACACACACAC",  # AC repeats
                 "expected_class": "i-motif family",
                 "expected_subtype": "AC-motif",
                 "description": "AC-motif alternating pattern"

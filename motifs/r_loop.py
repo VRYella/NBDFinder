@@ -71,7 +71,7 @@ def advanced_rloop_score(riz_seq, rez_seq, w1=50.0, w2=10.0, alpha=0.25):
     return combined_score
 
 # Advanced REZ detection: find the best GC-rich downstream region with optimized scoring.
-def find_rez_advanced(seq, start_pos, max_search_len=2000, min_window=100, step=50, min_gc=40):
+def find_rez_advanced(seq, start_pos, max_search_len=2000, min_window=50, step=25, min_gc=30):
     """
     Sliding window approach for optimal REZ detection (GC-content and length-based scoring).
     """
@@ -98,7 +98,7 @@ def find_rez_advanced(seq, start_pos, max_search_len=2000, min_window=100, step=
     return best_rez
 
 # Advanced RLFS detection using unified framework with preserved biological accuracy.
-def find_rlfs(seq, models=("m1", "m2"), min_total_length=100):
+def find_rlfs(seq, models=("m1", "m2"), min_total_length=50):
     """
     Maintains RLFS+REZ detection for biological accuracy, integrates unified scoring/reporting.
     """
