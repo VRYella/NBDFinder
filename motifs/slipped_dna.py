@@ -141,9 +141,71 @@ def find_slipped_dna_advanced(seq):
         results = _non_overlap_selection(all_hits)
     return results
 
-# --- Utility requirements (to be provided in same module or imported) ---
-# - wrap(seq): formats sequence for output (e.g. line breaks)
-# - calculate_conservation_score(seq, class_name): returns dict with enrichment_score, p_value, significance
-# - _score_DR(l, copies, total_len, spacer): scoring for DRs per catalog rules
-# - _score_STR(unit, reps, full_len): scoring for STRs per catalog rules
-# - _non_overlap_selection(hits): filters list to globally non-overlapping motif calls
+def _score_DR(l, copies, total_len, spacer):
+    """
+    Scoring for Direct Repeats per catalog rules.
+    Emphasizes unit length, copy number, and total length.
+    """
+    # Unit-length weight: shorter units are more slippage-prone
+    unit_weight = max(1.0, 5.0 / l) if l > 0 else 1.0
+    
+    # Copy-number bonus: monotonic, capped
+    copy_bonus = min(copies * 2.0, 10.0)
+    
+    # Length thresholds: simple, transparent steps
+    length_bonus = 0.0
+    if total_len >= 100:
+        length_bonus = 3.0
+    elif total_len >= 50:
+        length_bonus = 2.0
+    elif total_len >= 30:
+        length_bonus = 1.0
+    
+    # Spacer penalty
+    spacer_penalty = spacer * 0.5
+    
+    return unit_weight + copy_bonus + length_bonus - spacer_penalty
+
+def _score_STR(unit, reps, full_len):
+    """
+    Scoring for Short Tandem Repeats per catalog rules.
+    Emphasizes unit length, repeat count, and total length.
+    """
+    # Unit-length weight: shorter units are more slippage-prone (discretized)
+    unit_weight = {1: 4.0, 2: 3.0, 3: 2.5, 4: 2.0, 5: 1.5, 6: 1.0}.get(unit, 1.0)
+    
+    # Copy-number bonus: monotonic, capped
+    copy_bonus = min(reps * 1.5, 12.0)
+    
+    # Length thresholds: simple, transparent steps
+    length_bonus = 0.0
+    if full_len >= 100:
+        length_bonus = 3.0
+    elif full_len >= 50:
+        length_bonus = 2.0
+    elif full_len >= 30:
+        length_bonus = 1.0
+    
+    return unit_weight + copy_bonus + length_bonus
+
+def _non_overlap_selection(motif_list):
+    """
+    Select non-overlapping intervals from a motif list by descending score.
+    Standard greedy approach for interval selection.
+    """
+    sorted_motifs = sorted(motif_list, key=lambda m: m['Score'], reverse=True)
+    selected = []
+    covered = set()
+    for motif in sorted_motifs:
+        region = set(range(motif['Start'], motif['End']+1))
+        if not region & covered:
+            selected.append(motif)
+            covered |= region
+    return selected
+
+def find_slipped_dna(seq):
+    """
+    Wrapper function for backwards compatibility.
+    Calls find_slipped_dna_advanced with the sequence.
+    """
+    return find_slipped_dna_advanced(seq)

@@ -42,7 +42,7 @@ __all__ = [
     # Shared utilities
     'parse_fasta', 'wrap', 'gc_content', 'reverse_complement', 'is_palindrome',
     'overlapping_finditer', 'calculate_conservation_score', 'validate_motif',
-    'get_basic_stats', 'all_motifs', 'format_motif_rows', 'clean_subtype_name',
+    'all_motifs', 'format_motif_rows',
     
     # Category 1: Curved DNA
     'find_curved_DNA', 'curvature_score', 'find_polyA_polyT_tracts',
