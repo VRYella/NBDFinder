@@ -291,47 +291,8 @@ def all_motifs(seq, nonoverlap=False, report_hotspots=False, sequence_name="Sequ
     # 6. G-Quadruplex Family
     print("6. Processing G-Quadruplex Family...")
     try:
-        from .g4_related import (find_gquadruplex, find_gtriplex, find_relaxed_gquadruplex, 
-                                find_bulged_gquadruplex, find_bipartite_gquadruplex, 
-                                find_multimeric_gquadruplex, find_imperfect_gquadruplex)
-        g4_motifs = []
-        
-        # Try each G4 function individually to handle any issues
-        try:
-            g4_motifs += find_multimeric_gquadruplex(seq)
-        except Exception as e:
-            print(f"     Warning: Multimeric G4 detection failed: {e}")
-            
-        try:
-            g4_motifs += find_gquadruplex(seq)
-        except Exception as e:
-            print(f"     Warning: Canonical G4 detection failed: {e}")
-            
-        try:
-            g4_motifs += find_relaxed_gquadruplex(seq)
-        except Exception as e:
-            print(f"     Warning: Relaxed G4 detection failed: {e}")
-            
-        try:
-            g4_motifs += find_bulged_gquadruplex(seq)
-        except Exception as e:
-            print(f"     Warning: Bulged G4 detection failed: {e}")
-            
-        try:
-            g4_motifs += find_bipartite_gquadruplex(seq)
-        except Exception as e:
-            print(f"     Warning: Bipartite G4 detection failed: {e}")
-            
-        try:
-            g4_motifs += find_imperfect_gquadruplex(seq)
-        except Exception as e:
-            print(f"     Warning: Imperfect G4 detection failed: {e}")
-            
-        try:
-            g4_motifs += find_gtriplex(seq)
-        except Exception as e:
-            print(f"     Warning: G-triplex detection failed: {e}")
-        
+        from .g4_related import find_all_g4_motifs
+        g4_motifs = find_all_g4_motifs(seq, use_non_overlapping=True, sequence_name=sequence_name)
         motif_list += g4_motifs
         processed_classes.append(f"G-Quadruplex Family: {len(g4_motifs)} motifs found")
         print(f"   Found {len(g4_motifs)} G-Quadruplex Family motifs")

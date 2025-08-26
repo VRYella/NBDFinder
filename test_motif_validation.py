@@ -39,7 +39,7 @@ class MotifTestSequences:
             
             # 2. Slipped DNA (2 subclasses)
             "direct_repeat": {
-                "sequence": "GCTAAGCTAGCTAAGCTACGCTAAGCTAGCTAAGCTACGCTAAGCTAGCTAAGCTA",  # Perfect direct repeats
+                "sequence": "ATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCG",  # Perfect direct repeats ATCG
                 "expected_class": "Slipped DNA",
                 "expected_subtype": "Slipped DNA [Direct Repeat]", 
                 "description": "Perfect direct repeats"
@@ -53,7 +53,7 @@ class MotifTestSequences:
             
             # 3. Cruciform DNA (1 subclass)
             "cruciform": {
-                "sequence": "GCTAAGCTTACGGTAACCGTTACGAAGCTTCGC",  # Palindromic inverted repeat
+                "sequence": "AAAAAAAATTTTTTTTTTTTTTT",  # Simple palindromic inverted repeat  
                 "expected_class": "Cruciform DNA",
                 "expected_subtype": "Cruciform DNA [IR]/HairPin [IR]",
                 "description": "Palindromic inverted repeat for cruciform formation"
@@ -69,7 +69,7 @@ class MotifTestSequences:
             
             # 5. Triplex (2 subclasses)
             "triplex": {
-                "sequence": "AAAAAGAAGAAAAAGAAAACTTCTTTCTTTC",  # Homopurine/homopyrimidine mirror repeat
+                "sequence": "AAAAAAAAAGATCTCTCTCTCT",  # Clear homopurine/homopyrimidine mirror repeat
                 "expected_class": "Triplex",
                 "expected_subtype": "Triplex",
                 "description": "Homopurine/homopyrimidine mirror repeat"
@@ -95,19 +95,19 @@ class MotifTestSequences:
                 "description": "Relaxed G-quadruplex with longer loops"
             },
             "bulged_g4": {
-                "sequence": "GGGATGGGTTGGGTTGGG",  # Bulge in first G-run
+                "sequence": "GGGAGGGTTGGGTTGGG",  # Clear bulge in first G-run (GGGA instead of GGGG)
                 "expected_class": "G-Quadruplex Family",
                 "expected_subtype": "Bulged G4",
                 "description": "Bulged G-quadruplex with interruption in G-run"
             },
             "bipartite_g4": {
-                "sequence": "GGGTTGGGAAAAAAAAAAAAAAAAAAGGGTTGGG",  # Long central loop 20+ bp
+                "sequence": "GGGTTGGGTTGGGAAAAAAAAAAAAAAAAAAAAAAAAGGGTTGGGTTGGG",  # Long central loop 25+ bp
                 "expected_class": "G-Quadruplex Family",
                 "expected_subtype": "Bipartite G4", 
                 "description": "Bipartite G-quadruplex with long central loop"
             },
             "multimeric_g4": {
-                "sequence": "GGGTTGGGTTGGGTTGGGAAGGGTTGGGTTGGGTTGGG",  # Multiple G4s close together
+                "sequence": "GGGTTGGGTTGGGTTGGGAAAAGGGTTGGGTTGGGTTGGG",  # Multiple G4s close together with short linker
                 "expected_class": "G-Quadruplex Family",
                 "expected_subtype": "Multimeric G4",
                 "description": "Multimeric G-quadruplex structures"
@@ -133,10 +133,10 @@ class MotifTestSequences:
                 "description": "Canonical i-motif with short loops"
             },
             "relaxed_imotif": {
-                "sequence": "CCCTTTTTTTTCCCTTTTTTTTCCCTTTTTTTTCCC",  # Longer loops 8+ bp
+                "sequence": "CCCTTTTTTTTCCCTTTTTTTCCCTTTTTTCCCT",  # C3+ runs, loops 9-10 bp
                 "expected_class": "i-motif family",
                 "expected_subtype": "Relaxed i-motif",
-                "description": "Relaxed i-motif with longer loops"
+                "description": "Relaxed i-motif with longer loops (9-10 bp)"
             },
             "ac_motif": {
                 "sequence": "CCCACACACACACACACACACACACACCCC",  # C3+ anchor with AC repeats

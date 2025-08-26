@@ -75,12 +75,11 @@ def find_cruciform(seq):
     """
     results = []
     n = len(seq)
-    # Stringent defaults: arms >=10 bp, short spacers prioritized (0–3)
-    # Loop can be extended to 0–10 for permissive scans, but short spacers are generally more relevant.
-    min_arm = 10
+    # More balanced parameters: require meaningful arms but allow some flexibility
+    min_arm = 10  # Back to minimum arm of 10
     max_arm = 100  # computational bound; can be raised as needed
     min_spacer = 0
-    max_spacer = 3  # small spacer emphasis; configurable
+    max_spacer = 5  # Moderate spacer tolerance
 
     # Practical minimum total length is thus >= 2*10 = 20 bp
     for i in range(0, max(0, n - 2*min_arm)):
@@ -112,6 +111,10 @@ def find_cruciform(seq):
                 # Deterministic score (no composition); AT retained as annotation
                 at_frac = (arm.count('A') + arm.count('T')) / max(1, arm_len)
                 score = float(_score_cruciform(arm_len, spacer_len, total_len))
+
+                # Add minimum score threshold to filter weak candidates
+                if score < 2.0:  # Require meaningful score
+                    continue
 
                 # Optional conservation annotation (external to sequence-only call)
                 conservation_result = calculate_conservation_score(full, "Cruciform")
@@ -147,4 +150,15 @@ def find_cruciform(seq):
             if arm_called:
                 break
 
-    return results
+    # Add non-overlapping selection to avoid too many overlapping cruciforms
+    results = sorted(results, key=lambda r: (-float(r["Score"]), -int(r["Length"]), int(r["Start"])))
+    final_results = []
+    occupied = []
+    for r in results:
+        s, e = r["Start"], r["End"]
+        if any(not (e <= cs or s >= ce) for cs, ce in occupied):
+            continue
+        final_results.append(r)
+        occupied.append((s, e))
+    
+    return final_results
