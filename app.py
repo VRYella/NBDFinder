@@ -757,56 +757,6 @@ with tab_dict["Home"]:
     # Summary statistics
     from motifs.classification_config import get_class_counts
     total_classes, total_fixed_subclasses = get_class_counts()
-    
-    st.markdown(f"""
-    <div style='background: #f8fafc; padding: 16px; border-radius: 8px; border-left: 4px solid #0891b2; margin: 20px 0;'>
-        <h4 style='color: #0891b2; margin: 0 0 8px 0;'>📊 Classification Summary</h4>
-        <p style='margin: 4px 0; color: #374151;'><strong>Total Classes:</strong> {total_classes}</p>
-        <p style='margin: 4px 0; color: #374151;'><strong>Fixed Subclasses:</strong> {total_fixed_subclasses}</p>
-        <p style='margin: 4px 0; color: #374151;'><strong>Dynamic Subclasses:</strong> Generated during analysis (Hybrid & Cluster regions)</p>
-        <p style='margin: 4px 0; color: #374151;'><strong>Total Coverage:</strong> 22+ officially recognized subclasses</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Version and citation info
-    st.markdown("---")
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.markdown("""
-        <div class="feature-card">
-            <h4>Version Information</h4>
-            <p><strong>Version:</strong> 2.0</p>
-            <p><strong>Last Updated:</strong> December 2024</p>
-            <p><strong>License:</strong> Academic Use</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown("""
-        <div class="feature-card">
-            <h4>Citation</h4>
-            <p style="font-size: 0.9rem; font-style: italic;">
-            Yella, V.R. (2024). NBDFinder: A Comprehensive Computational Framework 
-            for Genome-Wide Detection and Analysis of Non-B DNA Structural Motifs. 
-            GitHub Repository.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col3:
-        st.markdown("""
-        <div class="feature-card">
-            <h4>Platform Overview</h4>
-            <p>High-performance analysis platform for non-canonical DNA structures with:</p>
-            <ul style="font-size: 0.9rem;">
-                <li>Real-time detection algorithms</li>
-                <li>Professional-quality visualizations</li>
-                <li>Clinical disease annotations</li>
-                <li>Multi-format data export</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
 
 # =====================================================
 # UPLOAD & ANALYZE PAGE
