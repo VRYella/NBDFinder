@@ -14,7 +14,7 @@ Author: Dr. Venkata Rajesh Yella (updates by Copilot, 2024)
 """
 
 import re
-from .shared_utils import wrap, calculate_conservation_score, overlapping_finditer
+from .shared_utils import wrap, calculate_conservation_score, calculate_structural_factor
 
 # ---- iM-Hunter exact: per-base, C-centric, windowed ----
 def _im_base_scores(seq):
@@ -79,8 +79,8 @@ def find_imotif(seq):
     from .shared_utils import calculate_structural_factor
     results, used = [], []
     # Seed: four C-runs, up to 12-nt loops (canonical+relaxed window)
-    seed_pat = r"(?=(C+).{1,12}C+.{1,12}C+.{1,12}C+)"
-    for m in overlapping_finditer(seed_pat, seq):
+    seed_pat = r"C+.{1,12}C+.{1,12}C+.{1,12}C+"
+    for m in re.finditer(seed_pat, seq, re.IGNORECASE):
         start = m.start()
         window_seq = seq[start:start+len(m.group(0))]
         c_spans = _find_c_runs(window_seq)

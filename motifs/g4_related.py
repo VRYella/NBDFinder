@@ -357,7 +357,7 @@ def find_all_g4_motifs(seq, use_non_overlapping=True, sequence_name=""):
     Find all G4 motifs using exact G4Hunter and explicit subclass logic with strict non-overlap.
     Follows: extract → merge (multimer/bipartite) → assign priority/score → non-overlap → output.
     """
-    base = _extract_candidates(seq, window=25, threshold=1.2)
+    base = _extract_candidates(seq, window=25, threshold=0.8)
     merged1 = _attempt_merge_multimer(base, max_linker=20)
     merged2 = _attempt_merge_bipartite(merged1, min_linker=20, max_linker=50)
     with_meta = _assign_priority_and_score(merged2)

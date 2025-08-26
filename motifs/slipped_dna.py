@@ -103,6 +103,11 @@ def find_slipped_dna_advanced(seq):
             if i + unit > n: break
             repeat_unit = seq[i:i+unit]
             if 'n' in repeat_unit.lower(): continue
+            
+            # Exclude GAA/TTC patterns and their variants - these should be handled by sticky DNA detection
+            if (repeat_unit.upper() in ['GAA', 'TTC', 'AAG', 'AGG', 'GGA', 'TCT', 'CTC', 'CTT'] and 
+                any(x in seq[i:i+50].upper() for x in ['GAAGAA', 'TTCTTC'])):
+                continue
             reps, j = 1, i+unit
             while j + unit <= n and seq[j:j+unit] == repeat_unit: reps += 1; j += unit
             remainder, rs, re_idx = 0, i, j
