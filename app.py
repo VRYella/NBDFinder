@@ -1730,36 +1730,335 @@ with tab_dict["Clinical/Disease"]:
         if not st.session_state.results:
             st.info("No analysis results available. Please run an analysis first.")
         else:
-            st.markdown("""
-            <div class="feature-card">
-                <h4>Disease Annotation Status</h4>
-                <p>Clinical disease annotation functionality is being integrated.</p>
-                <p><strong>Planned Features:</strong></p>
-                <ul>
-                    <li>Disease-associated repeat expansions</li>
-                    <li>Pathogenic motif classifications</li>
-                    <li>Clinical significance scoring</li>
-                    <li>Literature references</li>
-                </ul>
-            </div>
-            """, unsafe_allow_html=True)
+            # Extract disease-associated motifs from results
+            disease_motifs = []
+            other_motifs_with_clinical = []
+            
+            for result in st.session_state.results:
+                for motif in result.get('motifs', []):
+                    if motif.get('Class') == 'Disease-Associated Motif':
+                        disease_motifs.append(motif)
+                    elif any(key in motif for key in ['Clinical_Significance', 'Disease_Name', 'Pathogenic']):
+                        other_motifs_with_clinical.append(motif)
+            
+            if disease_motifs or other_motifs_with_clinical:
+                # Clinical significance summary
+                col1, col2, col3 = st.columns(3)
+                
+                with col1:
+                    pathogenic_count = sum(1 for m in disease_motifs if m.get('Clinical_Significance') == 'Pathogenic')
+                    st.metric("Pathogenic Variants", pathogenic_count, delta=None if pathogenic_count == 0 else "⚠️ Attention Required")
+                
+                with col2:
+                    vus_count = sum(1 for m in disease_motifs if 'VUS' in str(m.get('Clinical_Significance', '')))
+                    st.metric("Variants of Uncertain Significance", vus_count)
+                
+                with col3:
+                    total_disease_motifs = len(disease_motifs)
+                    st.metric("Total Disease-Associated Motifs", total_disease_motifs)
+                
+                # Disease motifs table
+                if disease_motifs:
+                    st.markdown("#### 🔬 Disease-Associated Repeat Expansions")
+                    
+                    clinical_data = []
+                    for motif in disease_motifs:
+                        clinical_data.append({
+                            'Disease': motif.get('Disease_Name', 'Unknown'),
+                            'Gene': motif.get('Gene_Symbol', 'Unknown'),
+                            'Repeat Unit': motif.get('Repeat_Unit', 'Unknown'),
+                            'Count': motif.get('Repeat_Count', 0),
+                            'Normal Range': motif.get('Normal_Range', 'Unknown'),
+                            'Pathogenic Threshold': motif.get('Pathogenic_Threshold', 'Unknown'),
+                            'Clinical Significance': motif.get('Clinical_Significance', 'Unknown'),
+                            'Risk Score': f"{motif.get('Risk_Score', 0):.1f}%",
+                            'Population Percentile': f"{motif.get('Population_Percentile', 0):.1f}%",
+                            'Inheritance': motif.get('Inheritance_Pattern', 'Unknown')
+                        })
+                    
+                    clinical_df = pd.DataFrame(clinical_data)
+                    st.dataframe(clinical_df, use_container_width=True)
+                    
+                    # Individual disease motif details
+                    st.markdown("#### 📋 Detailed Clinical Information")
+                    
+                    for i, motif in enumerate(disease_motifs):
+                        with st.expander(f"{motif.get('Disease_Name', 'Unknown Disease')} - {motif.get('Gene_Symbol', 'Unknown Gene')}"):
+                            col1, col2 = st.columns(2)
+                            
+                            with col1:
+                                st.markdown("**Clinical Details:**")
+                                st.write(f"**Disease:** {motif.get('Disease_Name', 'Unknown')}")
+                                st.write(f"**Gene Symbol:** {motif.get('Gene_Symbol', 'Unknown')}")
+                                st.write(f"**Inheritance Pattern:** {motif.get('Inheritance_Pattern', 'Unknown')}")
+                                st.write(f"**Clinical Features:** {motif.get('Clinical_Features', 'Not specified')}")
+                                
+                                # Risk assessment
+                                risk_score = motif.get('Risk_Score', 0)
+                                if risk_score >= 85:
+                                    risk_level = "🔴 Very High"
+                                elif risk_score >= 70:
+                                    risk_level = "🟠 High"
+                                elif risk_score >= 50:
+                                    risk_level = "🟡 Moderate"
+                                else:
+                                    risk_level = "🟢 Low"
+                                
+                                st.write(f"**Risk Level:** {risk_level} ({risk_score:.1f}%)")
+                            
+                            with col2:
+                                st.markdown("**Laboratory Information:**")
+                                st.write(f"**Repeat Unit:** {motif.get('Repeat_Unit', 'Unknown')}")
+                                st.write(f"**Repeat Count:** {motif.get('Repeat_Count', 0)}")
+                                st.write(f"**Normal Range:** {motif.get('Normal_Range', 'Unknown')}")
+                                st.write(f"**Pathogenic Threshold:** {motif.get('Pathogenic_Threshold', 'Unknown')}")
+                                st.write(f"**Population Percentile:** {motif.get('Population_Percentile', 0):.1f}%")
+                                
+                                # Structural impact
+                                structural_impact = motif.get('Structural_Impact', 'Not specified')
+                                st.write(f"**Structural Impact:** {structural_impact}")
+                            
+                            # Therapeutic and counseling information
+                            therapeutic_target = motif.get('Therapeutic_Target', 'No specific targets identified')
+                            genetic_counseling = motif.get('Genetic_Counseling', 'Standard genetic counseling recommended')
+                            
+                            st.markdown("**🎯 Therapeutic Targets:**")
+                            st.info(therapeutic_target)
+                            
+                            st.markdown("**🧬 Genetic Counseling Recommendations:**")
+                            st.info(genetic_counseling)
+                            
+                            # References
+                            pmid_refs = motif.get('PMID_References', '')
+                            if pmid_refs:
+                                st.markdown("**📚 Literature References:**")
+                                refs = pmid_refs.split('; ')
+                                for ref in refs:
+                                    if ref.strip():
+                                        st.markdown(f"- [PMID: {ref.strip()}](https://pubmed.ncbi.nlm.nih.gov/{ref.strip()}/)")
+                
+                # Other motifs with clinical relevance
+                if other_motifs_with_clinical:
+                    st.markdown("#### 🔬 Other Motifs with Clinical Relevance")
+                    
+                    other_clinical_data = []
+                    for motif in other_motifs_with_clinical:
+                        pathogenic_status = "Yes" if motif.get('Pathogenic', False) else "No"
+                        other_clinical_data.append({
+                            'Motif Class': motif.get('Class', 'Unknown'),
+                            'Subtype': motif.get('Subtype', 'Unknown'),
+                            'Length': motif.get('Length', 0),
+                            'Score': f"{motif.get('Score', 0):.1f}",
+                            'Pathogenic': pathogenic_status,
+                            'Position': f"{motif.get('Start', 0)}-{motif.get('End', 0)}"
+                        })
+                    
+                    other_df = pd.DataFrame(other_clinical_data)
+                    st.dataframe(other_df, use_container_width=True)
+            
+            else:
+                st.info("🔍 No disease-associated motifs detected in the current analysis.")
+                st.markdown("""
+                <div class="feature-card">
+                    <h4>🧬 What are disease-associated motifs?</h4>
+                    <p>Disease-associated motifs are specific DNA sequences, often repeat expansions, that are linked to genetic diseases when present beyond normal thresholds. Examples include:</p>
+                    <ul>
+                        <li><strong>GAA repeats</strong> in Friedreich's Ataxia (FXN gene)</li>
+                        <li><strong>CGG repeats</strong> in Fragile X Syndrome (FMR1 gene)</li>
+                        <li><strong>CAG repeats</strong> in Huntington's Disease (HTT gene)</li>
+                        <li><strong>CTG repeats</strong> in Myotonic Dystrophy (DMPK gene)</li>
+                    </ul>
+                    <p>Try analyzing sequences with known repeat expansions to see the clinical analysis in action.</p>
+                </div>
+                """, unsafe_allow_html=True)
     
     # ---- CLINICAL SUMMARY SUBTAB ----
     with clinical_subtabs[1]:
-        st.markdown("### Clinical Interpretation Summary")
+        st.markdown("### 📊 Clinical Interpretation Summary")
         
-        st.markdown("""
-        <div class="feature-card">
-            <h4>Clinical Data Integration</h4>
-            <p>This section will provide:</p>
-            <ul>
-                <li>Risk assessment for detected motifs</li>
-                <li>Links to clinical databases (ClinVar, OMIM)</li>
-                <li>Therapeutic implications</li>
-                <li>Patient counseling information</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
+        if not st.session_state.results:
+            st.info("No analysis results available. Please run an analysis first.")
+        else:
+            # Generate comprehensive clinical summary
+            total_motifs = sum(len(result.get('motifs', [])) for result in st.session_state.results)
+            disease_motifs = []
+            clinical_motifs = []
+            
+            for result in st.session_state.results:
+                for motif in result.get('motifs', []):
+                    if motif.get('Class') == 'Disease-Associated Motif':
+                        disease_motifs.append(motif)
+                    elif any(key in motif for key in ['Clinical_Significance', 'Disease_Name', 'Pathogenic']):
+                        clinical_motifs.append(motif)
+            
+            # Summary metrics
+            col1, col2, col3, col4 = st.columns(4)
+            
+            with col1:
+                st.metric("Total Motifs Detected", total_motifs)
+            
+            with col2:
+                pathogenic_count = sum(1 for m in disease_motifs if m.get('Clinical_Significance') == 'Pathogenic')
+                st.metric("Pathogenic Findings", pathogenic_count, 
+                         delta="⚠️" if pathogenic_count > 0 else "✅")
+            
+            with col3:
+                likely_pathogenic = sum(1 for m in disease_motifs if 'Likely Pathogenic' in str(m.get('Clinical_Significance', '')))
+                st.metric("Likely Pathogenic", likely_pathogenic)
+            
+            with col4:
+                vus_count = sum(1 for m in disease_motifs if 'VUS' in str(m.get('Clinical_Significance', '')))
+                st.metric("VUS Findings", vus_count)
+            
+            if disease_motifs:
+                # Risk stratification
+                st.markdown("#### 🎯 Risk Stratification")
+                
+                risk_categories = {'Very High (≥85%)': 0, 'High (70-84%)': 0, 'Moderate (50-69%)': 0, 'Low (<50%)': 0}
+                
+                for motif in disease_motifs:
+                    risk_score = motif.get('Risk_Score', 0)
+                    if risk_score >= 85:
+                        risk_categories['Very High (≥85%)'] += 1
+                    elif risk_score >= 70:
+                        risk_categories['High (70-84%)'] += 1
+                    elif risk_score >= 50:
+                        risk_categories['Moderate (50-69%)'] += 1
+                    else:
+                        risk_categories['Low (<50%)'] += 1
+                
+                # Display risk distribution
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    st.markdown("**Risk Distribution:**")
+                    for category, count in risk_categories.items():
+                        if count > 0:
+                            if 'Very High' in category:
+                                st.error(f"🔴 {category}: {count} finding(s)")
+                            elif 'High' in category:
+                                st.warning(f"🟠 {category}: {count} finding(s)")
+                            elif 'Moderate' in category:
+                                st.info(f"🟡 {category}: {count} finding(s)")
+                            else:
+                                st.success(f"🟢 {category}: {count} finding(s)")
+                
+                with col2:
+                    # Most significant finding
+                    highest_risk_motif = max(disease_motifs, key=lambda x: x.get('Risk_Score', 0), default=None)
+                    if highest_risk_motif:
+                        st.markdown("**Most Significant Finding:**")
+                        st.info(f"""
+                        **Disease:** {highest_risk_motif.get('Disease_Name', 'Unknown')}  
+                        **Gene:** {highest_risk_motif.get('Gene_Symbol', 'Unknown')}  
+                        **Risk Score:** {highest_risk_motif.get('Risk_Score', 0):.1f}%  
+                        **Clinical Significance:** {highest_risk_motif.get('Clinical_Significance', 'Unknown')}
+                        """)
+                
+                # Therapeutic opportunities
+                st.markdown("#### 🎯 Therapeutic Targeting Opportunities")
+                
+                therapeutic_targets = {}
+                for motif in disease_motifs:
+                    target = motif.get('Therapeutic_Target', 'No specific targets identified')
+                    if target != 'No specific targets identified':
+                        disease = motif.get('Disease_Name', 'Unknown')
+                        if target not in therapeutic_targets:
+                            therapeutic_targets[target] = []
+                        therapeutic_targets[target].append(disease)
+                
+                if therapeutic_targets:
+                    for target, diseases in therapeutic_targets.items():
+                        with st.expander(f"🎯 {target}"):
+                            st.write(f"**Applicable to:** {', '.join(set(diseases))}")
+                            
+                            # Add relevant information based on target type
+                            if 'Antisense oligonucleotides' in target:
+                                st.info("💡 **Mechanism:** ASOs can modulate RNA splicing and reduce toxic RNA accumulation")
+                            elif 'Gene therapy' in target:
+                                st.info("💡 **Mechanism:** Viral vector-mediated gene replacement or correction")
+                            elif 'RNA interference' in target:
+                                st.info("💡 **Mechanism:** siRNA or shRNA to reduce mutant protein expression")
+                else:
+                    st.info("No specific therapeutic targets identified for the detected variants.")
+                
+                # Clinical databases and resources
+                st.markdown("#### 🔗 Clinical Databases & Resources")
+                
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    st.markdown("**Genetic Testing Resources:**")
+                    st.markdown("""
+                    - [ClinVar](https://www.ncbi.nlm.nih.gov/clinvar/) - Clinical variant database
+                    - [OMIM](https://www.omim.org/) - Online Mendelian Inheritance in Man
+                    - [GTR](https://www.ncbi.nlm.nih.gov/gtr/) - Genetic Testing Registry
+                    - [ClinGen](https://clinicalgenome.org/) - Clinical Genome Resource
+                    """)
+                
+                with col2:
+                    st.markdown("**Professional Guidelines:**")
+                    st.markdown("""
+                    - [ACMG Guidelines](https://www.acmg.net/) - Variant interpretation standards
+                    - [AMP Guidelines](https://www.amp.org/) - Molecular pathology guidelines
+                    - [CAP Guidelines](https://www.cap.org/) - Laboratory accreditation standards
+                    - [NSGC](https://www.nsgc.org/) - Genetic counseling resources
+                    """)
+                
+                # Genetic counseling recommendations
+                st.markdown("#### 🧬 Genetic Counseling Recommendations")
+                
+                counseling_summary = []
+                inheritance_patterns = set()
+                
+                for motif in disease_motifs:
+                    counseling = motif.get('Genetic_Counseling', '')
+                    inheritance = motif.get('Inheritance_Pattern', 'Unknown')
+                    
+                    if counseling:
+                        counseling_summary.append(counseling)
+                    if inheritance != 'Unknown':
+                        inheritance_patterns.add(inheritance)
+                
+                if counseling_summary:
+                    for counseling in set(counseling_summary):  # Remove duplicates
+                        st.info(counseling)
+                
+                if inheritance_patterns:
+                    st.markdown("**Inheritance Patterns Detected:**")
+                    inheritance_info = {
+                        'AR': 'Autosomal Recessive - Both parents are carriers',
+                        'AD': 'Autosomal Dominant - One affected parent passes the condition',
+                        'XL': 'X-Linked - Passed through X chromosome',
+                        'MT': 'Mitochondrial - Maternal inheritance'
+                    }
+                    
+                    for pattern in inheritance_patterns:
+                        if pattern in inheritance_info:
+                            st.write(f"- **{pattern}:** {inheritance_info[pattern]}")
+            
+            else:
+                st.markdown("""
+                <div class="feature-card">
+                    <h4>✅ No High-Risk Genetic Variants Detected</h4>
+                    <p>The analysis did not identify any disease-associated repeat expansions or pathogenic variants in the analyzed sequence(s).</p>
+                    
+                    <h5>📋 Clinical Interpretation:</h5>
+                    <ul>
+                        <li>This result suggests the analyzed sequence does not contain known pathogenic repeat expansions</li>
+                        <li>Standard non-B DNA structures detected may still have biological significance</li>
+                        <li>Consider clinical context and additional testing if symptoms suggest genetic disease</li>
+                    </ul>
+                    
+                    <h5>⚠️ Important Notes:</h5>
+                    <ul>
+                        <li>This analysis focuses on repeat expansion disorders and known non-B DNA motifs</li>
+                        <li>Other types of genetic variants (SNPs, CNVs, etc.) are not covered</li>
+                        <li>Clinical correlation and additional testing may be warranted</li>
+                        <li>Consult with a genetic counselor for comprehensive interpretation</li>
+                    </ul>
+                </div>
+                """, unsafe_allow_html=True)
 
 # =====================================================
 # DOWNLOAD & EXPORT PAGE
