@@ -77,7 +77,7 @@ def curvature_score(seq):
     run_bonus = sum(len(r)**0.5 for r in runs)
     return len(seq) * (1.0 + at_frac) + 0.5 * run_bonus
 
-def find_global_curved_polyA_polyT(seq: str, min_tract_len: int = 3, min_repeats: int = 3, min_spacing: int = 8, max_spacing: int = 12, min_score: float = 6.0):
+def find_global_curved_polyA_polyT(seq: str, min_tract_len: int = 4, min_repeats: int = 3, min_spacing: int = 6, max_spacing: int = 15, min_score: float = 4.0):
     """
     Detect globally curved DNA with periodic, phased poly(A)/poly(T) tracts.
     Scientific basis: in-phase arrays of A/T tracts enforce curvature (phasing ~10–11 bp).
@@ -89,26 +89,37 @@ def find_global_curved_polyA_polyT(seq: str, min_tract_len: int = 3, min_repeats
     """
     tracts = find_polyA_polyT_tracts(seq, min_tract_len)
     results = []; apr_regions = []
-    for i in range(len(tracts) - min_repeats + 1):
+    
+    # Process all possible tract groupings to find periodic patterns
+    for i in range(len(tracts)):
         group = [tracts[i]]
-        for j in range(1, min_repeats):
-            prev_center = (tracts[i + j - 1][0] + tracts[i + j - 1][1]) // 2
-            curr_center = (tracts[i + j][0] + tracts[i + j][1]) // 2
+        
+        # Build group by adding consecutive tracts with proper spacing
+        for j in range(i + 1, len(tracts)):
+            if len(group) >= min_repeats and (len(group) >= 4 or j - i >= 4):
+                break  # Found sufficient pattern or checked enough tracts
+                
+            prev_center = (group[-1][0] + group[-1][1]) // 2
+            curr_center = (tracts[j][0] + tracts[j][1]) // 2
             spacing = curr_center - prev_center
+            
             if min_spacing <= spacing <= max_spacing:
-                group.append(tracts[i + j])
-            else:
-                break
+                group.append(tracts[j])
+            elif len(group) >= min_repeats:
+                break  # End of current group pattern
+                
         if len(group) >= min_repeats:
             gstart = group[0][0]; gend = group[-1][1]
             motif_seq = seq[gstart:gend+1]
             centers = [((s+e)//2) for s, e, _ in group]
             tract_len_sum = sum((e - s + 1) for s, e, _ in group)
             tract_count = len(group)
-            phs = _phase_score(centers, target=10.5, tol=2.5)
+            phs = _phase_score(centers, target=10.5, tol=3.0)  # Slightly more tolerance
             length_bonus = _length_step_bonus(gend - gstart + 1)
-            # Deterministic global score (no heavy composition dependency)
-            score = (tract_len_sum / 10.0) + (1.0 * tract_count) + (2.0 * phs) + length_bonus
+            
+            # Enhanced scoring for better detection
+            score = (tract_len_sum / 8.0) + (1.5 * tract_count) + (3.0 * phs) + length_bonus
+            
             if score >= min_score:
                 conservation_result = calculate_conservation_score(motif_seq, "Curved DNA")
                 conservation_score = conservation_result["enrichment_score"]
@@ -167,12 +178,7 @@ def find_curved_DNA(seq: str) -> list:
     """
     Main function to detect curved DNA structures.
     Returns both global (phased arrays) and local (isolated tracts) curvature calls.
-    Enhancements:
-      1. Phasing-aware scoring for global arrays (target ~10.5 bp).
-      2. Deterministic length/tract-count terms for reproducibility.
-      3. Final non-overlap selection across global and local calls for high-confidence intervals.
+    Enhancements: 1) Phasing-aware scoring for global arrays; 2) Deterministic length/tract-count terms; 3) Non-overlap selection
     """
-    global_results, apr_regions = find_global_curved_polyA_polyT(seq)
-    local_results = find_local_curved_polyA_polyT(seq, apr_regions)
-    # Merge and retain only top-scoring, non-overlapping intervals
-    return _non_overlap_selection(global_results + local_results)
+    global_results, apr_regions = find_global_curved_polyA_polyT(seq); local_results = find_local_curved_polyA_polyT(seq, apr_regions)
+    return _non_overlap_selection(global_results + local_results)  # Merge and retain top-scoring, non-overlapping intervals

@@ -39,11 +39,11 @@ def find_slipped_dna_advanced(seq):
     """
     results, preliminary = [], []; n = len(seq)
     # --- DR parameters ---
-    min_len_dr, max_len_dr, max_spacer = 10, 300, 5
+    min_len_dr, max_len_dr, max_spacer = 8, 300, 10  # Relaxed min length and spacer
     # --- STR parameters ---
     min_unit_str, max_unit_str, min_len_str = 1, 6, 15
     min_reps_by_unit = {1:6, 2:5, 3:4, 4:3, 5:3, 6:3}
-    min_score_threshold = 10.0
+    min_score_threshold = 8.0  # Lowered threshold for better sensitivity
 
     # --- Direct Repeats (DR) block: strict catalog-mismatch-free search ---
     for i in range(0, max(0, n - min_len_dr * 2 + 1)):
@@ -151,23 +151,25 @@ def _score_DR(l, copies, total_len, spacer):
     Scoring for Direct Repeats per catalog rules.
     Emphasizes unit length, copy number, and total length.
     """
-    # Unit-length weight: shorter units are more slippage-prone
-    unit_weight = max(1.0, 5.0 / l) if l > 0 else 1.0
+    # Unit-length weight: shorter units are more slippage-prone (enhanced scoring)
+    unit_weight = max(2.0, 8.0 / max(1, l))
     
-    # Copy-number bonus: monotonic, capped
-    copy_bonus = min(copies * 2.0, 10.0)
+    # Copy-number bonus: monotonic, capped (enhanced for low copy detection)
+    copy_bonus = min(copies * 2.5, 12.0)
     
     # Length thresholds: simple, transparent steps
     length_bonus = 0.0
     if total_len >= 100:
-        length_bonus = 3.0
+        length_bonus = 4.0
     elif total_len >= 50:
-        length_bonus = 2.0
+        length_bonus = 3.0
     elif total_len >= 30:
+        length_bonus = 2.0
+    elif total_len >= 20:
         length_bonus = 1.0
     
-    # Spacer penalty
-    spacer_penalty = spacer * 0.5
+    # Spacer penalty (reduced)
+    spacer_penalty = spacer * 0.3
     
     return unit_weight + copy_bonus + length_bonus - spacer_penalty
 

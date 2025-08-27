@@ -95,10 +95,10 @@ def _annotate_z_region(seq, t_start, t_end, raw_score):
 
 def find_zdna(
     seq,
-    threshold=50.0,  # recommended region score threshold
+    threshold=45.0,  # balanced threshold - more selective than 35 but less than original 50
     min_length_nt=13,  # minimum NT span (>=12 transitions)
     min_transitions=12,
-    drop_threshold=50.0,  # early-abandon guard
+    drop_threshold=45.0,  # early-abandon guard (balanced)
     gc_weight=7.0,
     gt_ca_weight=1.25,
     at_weight=0.5,

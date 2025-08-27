@@ -90,10 +90,10 @@ def find_hdna(seq):
     """
     results = []
     n = len(seq)
-    min_arm, max_arm = 10, 100
-    max_spacer = 8
-    min_total = 20
-    min_score_threshold = 25.0
+    min_arm, max_arm = 8, 100  # Lowered minimum arm length
+    max_spacer = 12  # Increased spacer tolerance
+    min_total = 18  # Lowered minimum total length
+    min_score_threshold = 18.0  # Lowered score threshold
 
     for arm_len in range(min_arm, min(max_arm, n//2) + 1):
         for spacer in range(0, max_spacer + 1):

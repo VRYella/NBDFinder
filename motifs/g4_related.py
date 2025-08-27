@@ -131,16 +131,30 @@ def _is_generalized_G2plus_L1_12(runs, loops):
 
 def _is_bulged(seq):
     """
-    Bulged: only one run contains a single non-G base interruption (e.g., GxG in GGG), rest are G3+.
+    Bulged: contains G-runs with single base interruptions, creating bulges in the G4 structure.
+    Enhanced to detect various bulge patterns.
     """
     runs = _find_g_runs(seq)
     loops = _loop_lengths_from_runs(runs)
     if len(runs)<4 or len(loops)<3: return False
+    
+    # Look for single-nucleotide interruptions in what would otherwise be longer G-runs
+    # The key insight: GGGAGGG should be detected as a bulged run, not two separate runs
+    
+    # Check for the characteristic bulge pattern: GGGA, GGGT, GGGC in G-runs
+    has_bulge = False
+    
+    # Simple approach: look for GGG[ACT]GGG pattern (clear bulge signature)
+    if re.search(r'GGG[ACT]GGG', seq):
+        has_bulge = True
+    
+    # Also check for shorter patterns: GG[ACT]GG 
+    elif re.search(r'GG[ACT]GG', seq) and not re.search(r'GGG[ACT]GGG', seq):
+        has_bulge = True
+    
+    # Require at least 2 proper G3+ runs along with the bulge
     long_runs = sum(1 for r in runs[:4] if (r[1]-r[0])>=3)
-    if long_runs<3: return False
-    # Heuristic: exactly one G+[AC T]G+ pattern found
-    bulge_hits = len(list(re.finditer(r"G+[ACT]G+", seq)))
-    return bulge_hits == 1
+    return has_bulge and long_runs >= 2
 
 def _is_triplex(runs, loops):
     # G-triplex: three G-runs ≥3, loops ≤15
@@ -151,7 +165,7 @@ def _is_triplex(runs, loops):
 # ================================================
 # Candidate extraction and classification
 # ================================================
-def _extract_candidates(seq, window=25, threshold=1.2):
+def _extract_candidates(seq, window=25, threshold=0.8):  # Lowered threshold for better G4 detection
     """
     Extract G4-like candidates from seq using strict scientific rules and G4Hunter scoring.
     """
@@ -166,17 +180,35 @@ def _extract_candidates(seq, window=25, threshold=1.2):
         g4h = g4hunter_score(sub, window=window)
         if g4h < threshold: continue
         subtype = None
-        if _is_canonical_G3_L1_7(runs, loops): subtype = "Canonical G3+L1–7"
+        # Prioritize bulge detection since bulged sequences can also meet canonical criteria
+        if _is_bulged(sub): subtype = "Bulged"
+        elif _is_canonical_G3_L1_7(runs, loops): subtype = "Canonical G3+L1–7"
         elif _is_longloop_G3_L8_12(runs, loops): subtype = "Long-Loop G3+L8–12"
         elif _is_extended_G3_L1_12(runs, loops): subtype = "Extended G3+L1–12"
         elif _is_two_tetrad_G2_L1_12(runs, loops): subtype = "Two-Tetrad G2L1–12"
         elif _is_generalized_G2plus_L1_12(runs, loops): subtype = "Generalized G2+L1–12"
-        elif _is_bulged(sub): subtype = "Bulged"
         if subtype:
             candidates.append({
                 "start": start, "end": end, "seq": sub, "subclass": subtype,
                 "g4h": g4h, "runs": runs, "loops": loops
             })
+    
+    # Bipartite G4 detection: look for 4 G-runs with one long central loop
+    for m in re.finditer(r"(G{3,})(.{1,12})(G{3,})(.{13,50})(G{3,})(.{1,12})(G{3,})", seq):
+        start, end = m.start(), m.end()
+        sub = seq[start:end]
+        runs = _find_g_runs(sub)
+        loops = _loop_lengths_from_runs(runs)
+        g4h = g4hunter_score(sub, window=window)
+        if g4h < threshold: continue
+        
+        # For bipartite: we expect one loop to be much longer than others (≥13 nt)
+        if len(loops) >= 3 and max(loops) >= 13 and loops.count(max(loops)) == 1:
+            candidates.append({
+                "start": start, "end": end, "seq": sub, "subclass": "Bipartite/Split",
+                "g4h": g4h, "runs": runs, "loops": loops
+            })
+    
     # Triplex: three runs (≥3), loops ≤15, higher threshold
     for m in re.finditer(r"(G{3,})(.{1,15})G{3,}(.{1,15})G{3,}", seq):
         start, end = m.start(), m.end()
@@ -355,12 +387,23 @@ def convert_to_nbdfinder_format(candidates, sequence_name=""):
 def find_all_g4_motifs(seq, use_non_overlapping=True, sequence_name=""):
     """
     Find all G4 motifs using exact G4Hunter and explicit subclass logic with strict non-overlap.
-    Follows: extract → merge (multimer/bipartite) → assign priority/score → non-overlap → output.
+    Follows: extract → preserve bulged/special types → merge (multimer/bipartite for eligible) → assign priority/score → non-overlap → output.
     """
     base = _extract_candidates(seq, window=25, threshold=0.8)
-    merged1 = _attempt_merge_multimer(base, max_linker=20)
+    
+    # Separate bulged and special types from merger eligibles
+    special_types = ["Bulged", "G-Triplex"]
+    eligible_for_merge = [c for c in base if c["subclass"] not in special_types]
+    special_candidates = [c for c in base if c["subclass"] in special_types]
+    
+    # Only merge eligible candidates
+    merged1 = _attempt_merge_multimer(eligible_for_merge, max_linker=20)
     merged2 = _attempt_merge_bipartite(merged1, min_linker=20, max_linker=50)
-    with_meta = _assign_priority_and_score(merged2)
+    
+    # Combine special types back with merged results
+    all_candidates = special_candidates + merged2
+    
+    with_meta = _assign_priority_and_score(all_candidates)
     selected = _strict_non_overlap(with_meta) if use_non_overlapping else with_meta
     return convert_to_nbdfinder_format(selected, sequence_name)
 
