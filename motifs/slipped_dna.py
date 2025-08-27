@@ -43,7 +43,7 @@ def find_slipped_dna_advanced(seq):
     # --- STR parameters ---
     min_unit_str, max_unit_str, min_len_str = 1, 6, 15
     min_reps_by_unit = {1:6, 2:5, 3:4, 4:3, 5:3, 6:3}
-    min_score_threshold = 8.0  # Lowered threshold for better sensitivity
+    min_score_threshold = 10.0  # Literature-based threshold (Mirkin 2007, PMID: 17110380)
 
     # --- Direct Repeats (DR) block: strict catalog-mismatch-free search ---
     for i in range(0, max(0, n - min_len_dr * 2 + 1)):
