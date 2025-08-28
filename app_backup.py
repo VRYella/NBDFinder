@@ -1077,6 +1077,134 @@ with tab_dict["Results & Visualization"]:
                 total_bp = sum(r['sequence_length'] for r in st.session_state.results)
                 st.metric("Total Length", f"{total_bp:,} bp")
             
+@st.cache_data(max_entries=5)
+def create_comprehensive_motif_dataframe(results_list: list, use_official_classification: bool = True):
+    """Cached comprehensive motif DataFrame creation with memory optimization"""
+    if not results_list:
+        return pd.DataFrame()
+    
+    # Import here to avoid circular imports
+    from motifs.classification_config import get_official_classification
+    
+    # Pre-allocate lists for better memory usage
+    all_motifs_details = []
+    
+    for seq_idx, result in enumerate(results_list):
+        for motif_idx, motif in enumerate(result['motifs']):
+            # Ensure motif has proper subtype
+            motif = ensure_subtype(motif)
+            
+            if use_official_classification:
+                # Get official classification
+                legacy_class = motif.get('Class', motif.get('Motif', 'Unknown'))
+                legacy_subtype = motif.get('Subtype', '')
+                official_class, official_subtype = get_official_classification(legacy_class, legacy_subtype)
+            else:
+                official_class = motif.get('Class', 'Unknown')
+                official_subtype = motif.get('Subtype', 'Unknown')
+            
+            # Create optimized motif record
+            motif_record = {
+                'Motif_ID': f"{seq_idx+1}_{motif_idx+1}",
+                'Sequence': result['sequence_name'],
+                'Class': official_class,
+                'Subclass': official_subtype,
+                'Start': motif.get('Start', 0),
+                'End': motif.get('End', 0),
+                'Length': motif.get('End', 0) - motif.get('Start', 0) + 1,
+                'Score': motif.get('Score', 0),
+                'Conservation_Score': motif.get('Conservation_Score', 'N/A'),
+                'Conservation_P_Value': motif.get('Conservation_P_Value', 'N/A'),
+                'Conservation_Significance': motif.get('Conservation_Significance', 'N/A'),
+                'ScoreMethod': motif.get('ScoreMethod', 'N/A'),
+                'Sequence_Fragment': motif.get('Sequence', 'N/A')[:100]  # Limit to 100 chars
+            }
+            
+            all_motifs_details.append(motif_record)
+    
+    # Create DataFrame with explicit dtypes for memory efficiency
+    if all_motifs_details:
+        df = pd.DataFrame(all_motifs_details)
+        
+        # Optimize dtypes for memory efficiency
+        dtype_map = {
+            'Motif_ID': 'string',
+            'Sequence': 'string', 
+            'Class': 'category',
+            'Subclass': 'category',
+            'Start': 'int32',
+            'End': 'int32', 
+            'Length': 'int32',
+            'Score': 'float32',
+            'ScoreMethod': 'category'
+        }
+        
+        for col, dtype in dtype_map.items():
+            if col in df.columns:
+                try:
+                    df[col] = df[col].astype(dtype)
+                except:
+                    pass  # Skip if conversion fails
+        
+        return df
+    
+    return pd.DataFrame()
+
+# Cached DataFrame processing functions for better performance
+@st.cache_data(max_entries=10)
+def create_motif_distribution_chart(motif_counts_dict: dict):
+    """Cached motif distribution chart creation"""
+    if not motif_counts_dict:
+        return None
+    
+    # Create chart with optimized data processing
+    fig = px.pie(
+        values=list(motif_counts_dict.values()),
+        names=list(motif_counts_dict.keys()),
+        title="Motif Class Distribution",
+        height=400
+    )
+    fig.update_layout(margin=dict(t=40, b=20, l=20, r=20))
+    return fig
+
+@st.cache_data(max_entries=10)
+def create_results_dataframe(results_list: list):
+    """Cached DataFrame creation with vectorized operations"""
+    if not results_list:
+        return pd.DataFrame()
+    
+    # Vectorized DataFrame creation for better performance
+    data = {
+        'Sequence Name': [r['sequence_name'] for r in results_list],
+        'Length (bp)': [r['sequence_length'] for r in results_list],
+        'Total Motifs': [r['total_motifs'] for r in results_list]
+    }
+    
+    df = pd.DataFrame(data)
+    # Vectorized calculation
+    df['Motifs/kb'] = (df['Total Motifs'] / df['Length (bp)'] * 1000).round(2)
+    
+    return df
+
+@st.cache_data(max_entries=10) 
+def process_motif_counts(results_list: list):
+    """Cached motif counting with optimized processing"""
+    motif_counts = {}
+    
+    # Vectorized motif counting using pandas
+    all_motifs = []
+    for result in results_list:
+        for motif in result['motifs']:
+            all_motifs.append(motif.get('Class', 'Unknown'))
+    
+    if all_motifs:
+        # Use pandas for faster counting
+        motif_series = pd.Series(all_motifs)
+        motif_counts = motif_series.value_counts().to_dict()
+    
+    return motif_counts
+
+# ---- MAIN APPLICATION ----
             # Use cached motif distribution chart
             motif_counts = process_motif_counts(st.session_state.results)
             
@@ -1113,18 +1241,9 @@ with tab_dict["Results & Visualization"]:
             
             # Longest Hybrid Motif Analysis - identifies most significant regulatory hotspot
             st.markdown("### 🧬 Longest Hybrid Motif Analysis")
-            from motifs.hybrid import analyze_longest_hybrid
-            hybrid_motifs = [m for result in st.session_state.results for m in result['motifs'] if m.get('Class') == 'Hybrid']
-            all_detected_motifs = [m for result in st.session_state.results for m in result['motifs']]
-            longest_analysis = analyze_longest_hybrid(hybrid_motifs, all_detected_motifs) if hybrid_motifs else None
+            from motifs.hybrid import analyze_longest_hybrid; hybrid_motifs = [m for result in st.session_state.results for m in result['motifs'] if m.get('Class') == 'Hybrid']; all_detected_motifs = [m for result in st.session_state.results for m in result['motifs']]; longest_analysis = analyze_longest_hybrid(hybrid_motifs, all_detected_motifs) if hybrid_motifs else None
             if longest_analysis:
-                col1, col2 = st.columns(2)
-                col1.metric("Sequence", longest_analysis['sequence_name'])
-                col1.metric("Position", f"{longest_analysis['start']}-{longest_analysis['end']}")
-                col1.metric("Length", f"{longest_analysis['length']} bp")
-                col2.metric("Overlap Count", longest_analysis['overlap_count'])
-                col2.metric("Involved Classes", " + ".join(longest_analysis['classes']))
-                col2.info("🔬 Biological significance: Longer hybrid regions with more overlaps indicate complex regulatory hotspots with enhanced potential for genomic instability and functional diversity.")
+                col1, col2 = st.columns(2); col1.metric("Sequence", longest_analysis['sequence_name']); col1.metric("Position", f"{longest_analysis['start']}-{longest_analysis['end']}"); col1.metric("Length", f"{longest_analysis['length']} bp"); col2.metric("Overlap Count", longest_analysis['overlap_count']); col2.metric("Involved Classes", " + ".join(longest_analysis['classes'])); col2.info("🔬 Biological significance: Longer hybrid regions with more overlaps indicate complex regulatory hotspots with enhanced potential for genomic instability and functional diversity.")
             else:
                 st.info("ℹ️ No hybrid motifs detected in the analysis results.")
         
