@@ -20,7 +20,7 @@ from io import BytesIO
 from motifs import (
     all_motifs, 
     find_hotspots,
-    parse_fasta, gc_content, reverse_complement,
+    parse_fasta, parse_fasta_multi, gc_content, reverse_complement,
     select_best_nonoverlapping_motifs, wrap
 )
 
@@ -731,7 +731,7 @@ with tab_dict["Upload & Analyze"]:
             if fasta_file:
                 try:
                     content = fasta_file.read().decode('utf-8')
-                    seqs, names = parse_fasta(content)
+                    seqs, names = parse_fasta_multi(content)
                     if seqs:
                         with col_preview:
                             st.success(f"✓ {len(seqs)} sequence(s) loaded")
@@ -753,7 +753,7 @@ with tab_dict["Upload & Analyze"]:
             
             if sequence_input:
                 if sequence_input.startswith('>'):
-                    seqs, names = parse_fasta(sequence_input)
+                    seqs, names = parse_fasta_multi(sequence_input)
                 else:
                     # Treat as raw sequence
                     cleaned_seq = ''.join(sequence_input.upper().split())

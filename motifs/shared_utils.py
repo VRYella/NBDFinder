@@ -44,6 +44,61 @@ def std(values): return sqrt(sum((x - mean(values)) ** 2 for x in values) / (len
 def parse_fasta(fasta_str: str) -> str:
     return "".join(line.strip() for line in fasta_str.split('\n') if not line.startswith(">")).upper().replace(" ", "").replace("U", "T")
 
+def parse_fasta_multi(fasta_str: str) -> tuple[list[str], list[str]]:
+    """
+    Parse multi-FASTA input and return sequences and names as separate lists.
+    
+    Args:
+        fasta_str: FASTA format string (single or multi-sequence)
+        
+    Returns:
+        tuple: (sequences_list, names_list)
+    """
+    sequences = []
+    names = []
+    
+    if not fasta_str.strip():
+        return sequences, names
+    
+    # Handle case where input doesn't start with '>' (raw sequence)
+    if not fasta_str.strip().startswith('>'):
+        cleaned_seq = "".join(line.strip() for line in fasta_str.split('\n')).upper().replace(" ", "").replace("U", "T")
+        if cleaned_seq:
+            sequences.append(cleaned_seq)
+            names.append("User_Input")
+        return sequences, names
+    
+    # Parse multi-FASTA content
+    current_seq = ""
+    current_name = ""
+    
+    for line in fasta_str.split('\n'):
+        line = line.strip()
+        if line.startswith('>'):
+            # Save previous sequence if exists
+            if current_seq:
+                cleaned_seq = current_seq.upper().replace(" ", "").replace("U", "T")
+                if cleaned_seq:
+                    sequences.append(cleaned_seq)
+                    display_name = current_name[:100] + "..." if len(current_name) > 100 else current_name
+                    names.append(display_name if display_name else f"Sequence_{len(sequences)}")
+            
+            # Start new sequence
+            current_name = line[1:]  # Remove '>'
+            current_seq = ""
+        elif line:
+            current_seq += line
+    
+    # Add the last sequence
+    if current_seq:
+        cleaned_seq = current_seq.upper().replace(" ", "").replace("U", "T")
+        if cleaned_seq:
+            sequences.append(cleaned_seq)
+            display_name = current_name[:100] + "..." if len(current_name) > 100 else current_name
+            names.append(display_name if display_name else f"Sequence_{len(sequences)}")
+    
+    return sequences, names
+
 def wrap(seq: str, width: int = 60) -> str:
     return "\n".join(seq[i:i+width] for i in range(0, len(seq), width))
 
