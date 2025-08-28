@@ -1,22 +1,38 @@
 # NBDFinder - Non-B DNA Analysis Platform 
 # ============================================
 # Compact, information-dense Streamlit interface
-# Optimized for professional dashboard-style usage
+# Optimized for professional dashboard-style usage with performance enhancements
 
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
-import plotly.express as px
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
+import numpy as np
 import io
 import time
 from collections import Counter
-from Bio import Entrez, SeqIO
-import numpy as np
-from io import BytesIO
+import hashlib
 
-# Core motif detection imports with performance optimization
+# Lazy imports for performance optimization
+def lazy_import_visualization():
+    """Lazy import of visualization libraries when needed"""
+    global plt, px, go, make_subplots, BytesIO, seaborn
+    if 'plt' not in globals():
+        import matplotlib.pyplot as plt
+        import plotly.express as px
+        import plotly.graph_objects as go
+        from plotly.subplots import make_subplots
+        from io import BytesIO
+        import seaborn as sns
+        seaborn = sns
+    return plt, px, go, make_subplots, BytesIO, seaborn
+
+def lazy_import_bio():
+    """Lazy import of biopython when needed"""
+    global Entrez, SeqIO
+    if 'Entrez' not in globals():
+        from Bio import Entrez, SeqIO
+    return Entrez, SeqIO
+
+# Core motif detection imports with caching optimization
 from motifs import (
     find_hotspots,
     parse_fasta, parse_fasta_multi, gc_content, reverse_complement,
@@ -47,108 +63,8 @@ def cached_gc_content(sequence: str) -> float:
     """Cached GC content calculation"""
     return gc_content(sequence)
 
-# Performance-optimized DataFrame processing with memory management
-@st.cache_data(max_entries=10)
-def create_motif_distribution_chart(motif_counts_dict: dict):
-    """Cached motif distribution chart creation"""
-    if not motif_counts_dict:
-        return None
-    
-    # Lazy import for visualization
-    plt, px, go, make_subplots, BytesIO, seaborn = lazy_import_visualization()
-    
-    # Create chart with optimized data processing
-    fig = px.pie(
-        values=list(motif_counts_dict.values()),
-        names=list(motif_counts_dict.keys()),
-        title="Motif Class Distribution",
-        height=400
-    )
-    fig.update_layout(margin=dict(t=40, b=20, l=20, r=20))
-    return fig
-
-@st.cache_data(max_entries=10)
-def process_motif_counts_vectorized(results_list: list):
-    """Vectorized motif counting using pandas for better performance"""
-    if not results_list:
-        return {}
-    
-    # Extract all motifs in one pass
-    all_motifs = []
-    for result in results_list:
-        for motif in result['motifs']:
-            all_motifs.append(motif.get('Class', 'Unknown'))
-    
-    if all_motifs:
-        # Use pandas for fast counting with explicit cleanup
-        motif_series = pd.Series(all_motifs, dtype='category')
-        motif_counts = motif_series.value_counts().to_dict()
-        
-        # Explicit cleanup for memory efficiency
-        del motif_series, all_motifs
-        import gc
-        gc.collect()
-        
-        return motif_counts
-    
-    return {}
-
-@st.cache_data(max_entries=10)
-def create_results_summary_df(results_list: list):
-    """Create optimized results summary DataFrame with proper dtypes"""
-    if not results_list:
-        return pd.DataFrame()
-    
-    # Pre-allocate data dictionary for efficiency
-    data = {
-        'Sequence Name': [],
-        'Length (bp)': [],
-        'Total Motifs': [],
-        'Processing Time (s)': []
-    }
-    
-    for result in results_list:
-        data['Sequence Name'].append(result['sequence_name'])
-        data['Length (bp)'].append(result['sequence_length']) 
-        data['Total Motifs'].append(result['total_motifs'])
-        data['Processing Time (s)'].append(result.get('processing_time', 0.0))
-    
-    # Create DataFrame with optimized dtypes
-    df = pd.DataFrame(data)
-    df['Length (bp)'] = df['Length (bp)'].astype('int32')
-    df['Total Motifs'] = df['Total Motifs'].astype('int16')
-    df['Processing Time (s)'] = df['Processing Time (s)'].astype('float32')
-    
-    # Vectorized calculation
-    df['Motifs/kb'] = (df['Total Motifs'] / df['Length (bp)'] * 1000).round(2).astype('float32')
-    
-    return df
-
-# Lazy import functions for performance
-def lazy_import_visualization():
-    """Lazy import of visualization libraries when needed"""
-    try:
-        # Check if matplotlib is already imported in globals
-        import matplotlib.pyplot as plt
-        import plotly.express as px
-        import plotly.graph_objects as go
-        from plotly.subplots import make_subplots
-        from io import BytesIO
-        import seaborn as sns
-        return plt, px, go, make_subplots, BytesIO, sns
-    except ImportError as e:
-        # Fallback for missing packages
-        print(f"Visualization import warning: {e}")
-        return None, None, None, None, None, None
-
-def lazy_import_bio():
-    """Lazy import of biopython when needed"""
-    try:
-        from Bio import Entrez, SeqIO
-        return Entrez, SeqIO
-    except ImportError as e:
-        print(f"Bio import warning: {e}")
-        return None, None
+# Classification utilities for proper motif mapping
+from motifs.classification_config import get_official_classification
 
 # Advanced visualization components (optional dependencies)
 try:
@@ -875,7 +791,7 @@ with tab_dict["Upload & Analyze"]:
                             # Compact sequence summary
                             for i, (name, seq) in enumerate(zip(names[:3], seqs[:3])):  # Show max 3
                                 with st.expander(f"#{i+1}: {name[:30]}...", expanded=False):
-                                    st.text(f"Length: {len(seq):,} bp | GC: {cached_gc_content(seq):.1f}%")
+                                    st.text(f"Length: {len(seq):,} bp | GC: {gc_content(seq):.1f}%")
                     else:
                         st.error("❌ No valid sequences found")
                 except Exception as e:
@@ -941,7 +857,7 @@ with tab_dict["Upload & Analyze"]:
                     if st.button("🚀 Fetch", type="primary"):
                         with st.spinner("Fetching..."):
                             try:
-                                # Use cached NCBI fetch for better performance
+                                # Use cached NCBI fetch
                                 seqs, names = cached_ncbi_fetch(ncbi_query)
                                 if seqs:
                                     st.session_state.seqs = seqs
@@ -957,19 +873,21 @@ with tab_dict["Upload & Analyze"]:
             st.session_state.seqs = seqs
             st.session_state.names = names
         
-        # Compact current sequences display
-        if st.session_state.get('seqs'):
-            with st.expander(f"📊 Current: {len(st.session_state.seqs)} sequence(s)", expanded=False):
-                for i, (seq, name) in enumerate(zip(st.session_state.seqs[:3], st.session_state.names[:3])):
-                    col1, col2, col3 = st.columns(3)
-                    with col1:
-                        st.metric("Seq", f"#{i+1}")
-                    with col2:
-                        st.metric("Length", f"{len(seq):,}")
-                    with col3:
-                        st.metric("GC%", f"{cached_gc_content(seq):.1f}")
-                if len(st.session_state.seqs) > 3:
-                    st.write(f"... and {len(st.session_state.seqs) - 3} more")
+            # Compact current sequences display with cached GC content
+            if st.session_state.get('seqs'):
+                with st.expander(f"📊 Current: {len(st.session_state.seqs)} sequence(s)", expanded=False):
+                    for i, (seq, name) in enumerate(zip(st.session_state.seqs[:3], st.session_state.names[:3])):
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            st.metric("Seq", f"#{i+1}")
+                        with col2:
+                            st.metric("Length", f"{len(seq):,}")
+                        with col3:
+                            # Use cached GC content calculation
+                            gc_pct = cached_gc_content(seq)
+                            st.metric("GC%", f"{gc_pct:.1f}")
+                    if len(st.session_state.seqs) > 3:
+                        st.write(f"... and {len(st.session_state.seqs) - 3} more")
     
     # ---- COMPACT PARAMETER SETTINGS SUBTAB ----
     with upload_subtabs[1]:
@@ -1159,39 +1077,145 @@ with tab_dict["Results & Visualization"]:
                 total_bp = sum(r['sequence_length'] for r in st.session_state.results)
                 st.metric("Total Length", f"{total_bp:,} bp")
             
-            # Compact motif class distribution with performance optimization
-            motif_counts = process_motif_counts_vectorized(st.session_state.results)
+@st.cache_data(max_entries=5)
+def create_comprehensive_motif_dataframe(results_list: list, use_official_classification: bool = True):
+    """Cached comprehensive motif DataFrame creation with memory optimization"""
+    if not results_list:
+        return pd.DataFrame()
+    
+    # Import here to avoid circular imports
+    from motifs.classification_config import get_official_classification
+    
+    # Pre-allocate lists for better memory usage
+    all_motifs_details = []
+    
+    for seq_idx, result in enumerate(results_list):
+        for motif_idx, motif in enumerate(result['motifs']):
+            # Ensure motif has proper subtype
+            motif = ensure_subtype(motif)
+            
+            if use_official_classification:
+                # Get official classification
+                legacy_class = motif.get('Class', motif.get('Motif', 'Unknown'))
+                legacy_subtype = motif.get('Subtype', '')
+                official_class, official_subtype = get_official_classification(legacy_class, legacy_subtype)
+            else:
+                official_class = motif.get('Class', 'Unknown')
+                official_subtype = motif.get('Subtype', 'Unknown')
+            
+            # Create optimized motif record
+            motif_record = {
+                'Motif_ID': f"{seq_idx+1}_{motif_idx+1}",
+                'Sequence': result['sequence_name'],
+                'Class': official_class,
+                'Subclass': official_subtype,
+                'Start': motif.get('Start', 0),
+                'End': motif.get('End', 0),
+                'Length': motif.get('End', 0) - motif.get('Start', 0) + 1,
+                'Score': motif.get('Score', 0),
+                'Conservation_Score': motif.get('Conservation_Score', 'N/A'),
+                'Conservation_P_Value': motif.get('Conservation_P_Value', 'N/A'),
+                'Conservation_Significance': motif.get('Conservation_Significance', 'N/A'),
+                'ScoreMethod': motif.get('ScoreMethod', 'N/A'),
+                'Sequence_Fragment': motif.get('Sequence', 'N/A')[:100]  # Limit to 100 chars
+            }
+            
+            all_motifs_details.append(motif_record)
+    
+    # Create DataFrame with explicit dtypes for memory efficiency
+    if all_motifs_details:
+        df = pd.DataFrame(all_motifs_details)
+        
+        # Optimize dtypes for memory efficiency
+        dtype_map = {
+            'Motif_ID': 'string',
+            'Sequence': 'string', 
+            'Class': 'category',
+            'Subclass': 'category',
+            'Start': 'int32',
+            'End': 'int32', 
+            'Length': 'int32',
+            'Score': 'float32',
+            'ScoreMethod': 'category'
+        }
+        
+        for col, dtype in dtype_map.items():
+            if col in df.columns:
+                try:
+                    df[col] = df[col].astype(dtype)
+                except:
+                    pass  # Skip if conversion fails
+        
+        return df
+    
+    return pd.DataFrame()
+
+# Cached DataFrame processing functions for better performance
+@st.cache_data(max_entries=10)
+def create_motif_distribution_chart(motif_counts_dict: dict):
+    """Cached motif distribution chart creation"""
+    if not motif_counts_dict:
+        return None
+    
+    # Create chart with optimized data processing
+    fig = px.pie(
+        values=list(motif_counts_dict.values()),
+        names=list(motif_counts_dict.keys()),
+        title="Motif Class Distribution",
+        height=400
+    )
+    fig.update_layout(margin=dict(t=40, b=20, l=20, r=20))
+    return fig
+
+@st.cache_data(max_entries=10)
+def create_results_dataframe(results_list: list):
+    """Cached DataFrame creation with vectorized operations"""
+    if not results_list:
+        return pd.DataFrame()
+    
+    # Vectorized DataFrame creation for better performance
+    data = {
+        'Sequence Name': [r['sequence_name'] for r in results_list],
+        'Length (bp)': [r['sequence_length'] for r in results_list],
+        'Total Motifs': [r['total_motifs'] for r in results_list]
+    }
+    
+    df = pd.DataFrame(data)
+    # Vectorized calculation
+    df['Motifs/kb'] = (df['Total Motifs'] / df['Length (bp)'] * 1000).round(2)
+    
+    return df
+
+@st.cache_data(max_entries=10) 
+def process_motif_counts(results_list: list):
+    """Cached motif counting with optimized processing"""
+    motif_counts = {}
+    
+    # Vectorized motif counting using pandas
+    all_motifs = []
+    for result in results_list:
+        for motif in result['motifs']:
+            all_motifs.append(motif.get('Class', 'Unknown'))
+    
+    if all_motifs:
+        # Use pandas for faster counting
+        motif_series = pd.Series(all_motifs)
+        motif_counts = motif_series.value_counts().to_dict()
+    
+    return motif_counts
+
+# ---- MAIN APPLICATION ----
+            # Use cached motif distribution chart
+            motif_counts = process_motif_counts(st.session_state.results)
             
             if motif_counts:
-                # Create compact distribution chart
                 fig = create_motif_distribution_chart(motif_counts)
                 if fig:
                     st.plotly_chart(fig, use_container_width=True)
-                
-                # Show performance metrics if available
-                total_processing_time = sum(r.get('processing_time', 0) for r in st.session_state.results)
-                if total_processing_time > 0:
-                    avg_time_per_motif = total_processing_time / sum(r['total_motifs'] for r in st.session_state.results)
-                    st.info(f"⚡ Analysis completed in {total_processing_time:.2f}s "
-                           f"({avg_time_per_motif*1000:.1f}ms per motif)")
             
-            # Calculate unique motif classes found
-            unique_classes = set()
-            for result in st.session_state.results:
-                for motif in result['motifs']:
-                    # Use proper classification
-                    motif_class = motif.get('Class', motif.get('Motif', 'Unknown'))
-                    unique_classes.add(motif_class)
-            
-            # Add fourth column metric
-            with st.container():
-                col4_metric = st.columns(1)[0]
-                with col4_metric:
-                    st.metric("Classes Detected", len(unique_classes))
-            
-            # Results summary table with optimized DataFrame
-            st.markdown("### 📋 Sequence Analysis Summary") 
-            results_df = create_results_summary_df(st.session_state.results)
+            # Results summary table with cached DataFrame
+            st.markdown("### 📋 Sequence Analysis Summary")
+            results_df = create_results_dataframe(st.session_state.results)
             if not results_df.empty:
                 st.dataframe(results_df, use_container_width=True)
             
@@ -1420,8 +1444,168 @@ with tab_dict["Results & Visualization"]:
         with result_tabs[3]:
             st.markdown("### 📊 Detailed Result Tables")
             
-            # Comprehensive motif details table
-            all_motifs_details = []
+            # Create comprehensive DataFrame using cached function
+            details_df = create_comprehensive_motif_dataframe(st.session_state.results)
+            
+            if not details_df.empty:
+                # Memory-efficient filtering interface
+                st.markdown("#### 🔍 Filter Results")
+                
+                col1, col2, col3 = st.columns(3)
+                
+                with col1:
+                    available_classes = details_df['Class'].cat.categories.tolist() if 'Class' in details_df.columns else details_df['Class'].unique().tolist()
+                    selected_classes = st.multiselect(
+                        "Filter by Class:",
+                        available_classes,
+                        default=available_classes
+                    )
+                
+                with col2:
+                    available_sequences = details_df['Sequence'].unique().tolist()
+                    selected_sequences = st.multiselect(
+                        "Filter by Sequence:",
+                        available_sequences,
+                        default=available_sequences
+                    )
+                
+                with col3:
+                    min_score = st.number_input("Minimum Score:", value=0.0, min_value=0.0)
+                
+                # Apply filters efficiently using vectorized operations
+                mask = (
+                    (details_df['Class'].isin(selected_classes)) &
+                    (details_df['Sequence'].isin(selected_sequences))
+                )
+                
+                # Apply score filter if Score column has numeric values
+                if 'Score' in details_df.columns:
+                    try:
+                        numeric_scores = pd.to_numeric(details_df['Score'], errors='coerce')
+                        score_mask = numeric_scores >= min_score
+                        mask = mask & score_mask
+                    except:
+                        pass  # Skip score filtering if scores are not numeric
+                
+                filtered_df = details_df[mask].copy()
+                
+                st.markdown(f"#### 📋 Filtered Results ({len(filtered_df):,} motifs)")
+                
+                # Display with pagination for large datasets
+                if len(filtered_df) > 1000:
+                    st.warning(f"⚠️ Large dataset ({len(filtered_df):,} rows). Showing first 1000 rows for performance.")
+                    display_df = filtered_df.head(1000)
+                else:
+                    display_df = filtered_df
+                
+                st.dataframe(display_df, use_container_width=True)
+                
+                # Optimized download with chunked processing
+                if st.button("💾 Prepare Download"):
+                    with st.spinner("Preparing download..."):
+                        # Memory-efficient CSV generation
+                        csv_buffer = io.StringIO()
+                        
+                        # Process in chunks for large datasets
+                        chunk_size = 5000
+                        if len(filtered_df) > chunk_size:
+                            # Write header
+                            filtered_df.head(0).to_csv(csv_buffer, index=False)
+                            
+                            # Write data in chunks
+                            for i in range(0, len(filtered_df), chunk_size):
+                                chunk = filtered_df.iloc[i:i+chunk_size]
+                                chunk.to_csv(csv_buffer, index=False, header=False, mode='a')
+                        else:
+                            filtered_df.to_csv(csv_buffer, index=False)
+                        
+                        csv_data = csv_buffer.getvalue()
+                        csv_buffer.close()
+                        
+                        # Clean up memory
+                        del csv_buffer
+                        import gc
+                        gc.collect()
+                        
+                        st.download_button(
+                            label="💾 Download Filtered Results as CSV",
+                            data=csv_data,
+                            file_name=f"nbdfinder_detailed_results_{len(filtered_df)}_motifs.csv",
+                            mime="text/csv"
+                        )
+            else:
+                st.info("No detailed motif data available for display.")
+            
+@st.cache_data(max_entries=5)
+def create_comprehensive_motif_dataframe(results_list: list, use_official_classification: bool = True):
+    """Cached comprehensive motif DataFrame creation with memory optimization"""
+    if not results_list:
+        return pd.DataFrame()
+    
+    # Pre-allocate lists for better memory usage
+    all_motifs_details = []
+    
+    for seq_idx, result in enumerate(results_list):
+        for motif_idx, motif in enumerate(result['motifs']):
+            # Ensure motif has proper subtype
+            motif = ensure_subtype(motif)
+            
+            if use_official_classification:
+                # Get official classification
+                from motifs.classification_config import get_official_classification
+                legacy_class = motif.get('Class', motif.get('Motif', 'Unknown'))
+                legacy_subtype = motif.get('Subtype', '')
+                official_class, official_subtype = get_official_classification(legacy_class, legacy_subtype)
+            else:
+                official_class = motif.get('Class', 'Unknown')
+                official_subtype = motif.get('Subtype', 'Unknown')
+            
+            # Create optimized motif record
+            motif_record = {
+                'Motif_ID': f"{seq_idx+1}_{motif_idx+1}",
+                'Sequence': result['sequence_name'],
+                'Class': official_class,
+                'Subclass': official_subtype,
+                'Start': motif.get('Start', 0),
+                'End': motif.get('End', 0),
+                'Length': motif.get('End', 0) - motif.get('Start', 0) + 1,
+                'Score': motif.get('Score', 0),
+                'Conservation_Score': motif.get('Conservation_Score', 'N/A'),
+                'Conservation_P_Value': motif.get('Conservation_P_Value', 'N/A'),
+                'Conservation_Significance': motif.get('Conservation_Significance', 'N/A'),
+                'ScoreMethod': motif.get('ScoreMethod', 'N/A'),
+                'Sequence_Fragment': motif.get('Sequence', 'N/A')[:100]  # Limit to 100 chars
+            }
+            
+            all_motifs_details.append(motif_record)
+    
+    # Create DataFrame with explicit dtypes for memory efficiency
+    if all_motifs_details:
+        df = pd.DataFrame(all_motifs_details)
+        
+        # Optimize dtypes for memory efficiency
+        dtype_map = {
+            'Motif_ID': 'string',
+            'Sequence': 'string', 
+            'Class': 'category',
+            'Subclass': 'category',
+            'Start': 'int32',
+            'End': 'int32', 
+            'Length': 'int32',
+            'Score': 'float32',
+            'ScoreMethod': 'category'
+        }
+        
+        for col, dtype in dtype_map.items():
+            if col in df.columns:
+                try:
+                    df[col] = df[col].astype(dtype)
+                except:
+                    pass  # Skip if conversion fails
+        
+        return df
+    
+    return pd.DataFrame()
             
             for seq_idx, result in enumerate(st.session_state.results):
                 for motif_idx, motif in enumerate(result['motifs']):
