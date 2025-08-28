@@ -40,7 +40,7 @@ from .shared_utils import all_motifs, format_motif_rows
 __version__ = "2.0.0"
 __all__ = [
     # Shared utilities
-    'parse_fasta', 'wrap', 'gc_content', 'reverse_complement', 'is_palindrome',
+    'parse_fasta', 'parse_fasta_multi', 'wrap', 'gc_content', 'reverse_complement', 'is_palindrome',
     'overlapping_finditer', 'calculate_conservation_score', 'validate_motif',
     'all_motifs', 'format_motif_rows',
     
