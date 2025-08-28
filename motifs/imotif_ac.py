@@ -97,7 +97,7 @@ def find_imotif(seq):
         subtype = None
         if _is_canonical_c3_loops_1_7(c_runs, loops) and im_score >= 0.45:
             subtype = "Canonical i-motif"
-        elif _is_relaxed_c3_loops_1_12(c_runs, loops) and im_score >= 0.25:  # Lowered threshold
+        elif _is_relaxed_c3_loops_1_12(c_runs, loops) and im_score >= 0.30:  # Literature-based relaxed threshold (PMID: 24240478)
             subtype = "Relaxed i-motif"
         if not subtype: continue
         structural_factor = calculate_structural_factor(motif_seq, subtype, loops)

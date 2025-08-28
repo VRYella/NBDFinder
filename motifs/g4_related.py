@@ -165,7 +165,7 @@ def _is_triplex(runs, loops):
 # ================================================
 # Candidate extraction and classification
 # ================================================
-def _extract_candidates(seq, window=25, threshold=0.8):  # Lowered threshold for better G4 detection
+def _extract_candidates(seq, window=25, threshold=1.2):  # Literature standard: Bedrat et al. NAR 2016 (PMID: 26673694)
     """
     Extract G4-like candidates from seq using strict scientific rules and G4Hunter scoring.
     """
@@ -217,7 +217,7 @@ def _extract_candidates(seq, window=25, threshold=0.8):  # Lowered threshold for
         loops = _loop_lengths_from_runs(runs)
         if not _is_triplex(runs, loops): continue
         g4h = g4hunter_score(sub, window=window)
-        if g4h < max(1.4, threshold): continue
+        if g4h < max(1.5, threshold): continue  # Higher threshold for triplex structures (PMID: 28651847)
         candidates.append({
             "start": start, "end": end, "seq": sub, "subclass": "G-Triplex",
             "g4h": g4h, "runs": runs, "loops": loops
@@ -389,7 +389,7 @@ def find_all_g4_motifs(seq, use_non_overlapping=True, sequence_name=""):
     Find all G4 motifs using exact G4Hunter and explicit subclass logic with strict non-overlap.
     Follows: extract → preserve bulged/special types → merge (multimer/bipartite for eligible) → assign priority/score → non-overlap → output.
     """
-    base = _extract_candidates(seq, window=25, threshold=0.8)
+    base = _extract_candidates(seq, window=25, threshold=1.2)  # Literature standard threshold
     
     # Separate bulged and special types from merger eligibles
     special_types = ["Bulged", "G-Triplex"]

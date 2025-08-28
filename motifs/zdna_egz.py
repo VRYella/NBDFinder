@@ -95,7 +95,7 @@ def _annotate_z_region(seq, t_start, t_end, raw_score):
 
 def find_zdna(
     seq,
-    threshold=45.0,  # balanced threshold - more selective than 35 but less than original 50
+    threshold=50.0,  # Literature standard threshold (Rich & Zhang 2003, PMID: 12690205)
     min_length_nt=13,  # minimum NT span (>=12 transitions)
     min_transitions=12,
     drop_threshold=45.0,  # early-abandon guard (balanced)

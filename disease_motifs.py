@@ -313,7 +313,7 @@ class AdvancedDiseaseDetector:
     
     def detect_pathogenic_repeats(self, sequence: str, gene_context: str = None) -> List[Dict]:
         """
-        Detect pathogenic repeat expansions with clinical classification
+        Detect pathogenic repeat expansions with intelligent prioritization
         
         Args:
             sequence: DNA sequence to analyze
@@ -324,61 +324,149 @@ class AdvancedDiseaseDetector:
         """
         results = []
         
+        # Group motifs by repeat unit to enable intelligent selection
+        motifs_by_unit = {}
         for disease_id, motif_info in self.disease_db.items():
-            if gene_context and gene_context.upper() != motif_info.gene_symbol:
-                continue
-                
             repeat_unit = motif_info.repeat_unit
+            if repeat_unit not in motifs_by_unit:
+                motifs_by_unit[repeat_unit] = []
+            motifs_by_unit[repeat_unit].append((disease_id, motif_info))
+        
+        for repeat_unit, disease_motifs in motifs_by_unit.items():
             matches = self._find_repeat_expansions(sequence, repeat_unit)
             
             for match in matches:
                 repeat_count = len(match["sequence"]) // len(repeat_unit)
-                clinical_sig = self._classify_clinical_significance(
-                    repeat_count, motif_info
-                )
                 
-                # Calculate additional risk metrics
-                risk_score = self._calculate_risk_score(repeat_count, motif_info)
-                instability_score = self._calculate_instability_score(match["sequence"])
+                # Find the most appropriate disease match based on repeat count and clinical significance
+                best_match = self._select_best_disease_match(repeat_count, disease_motifs, gene_context)
                 
-                result = {
-                    "Sequence Name": "",
-                    "Class": "Disease-Associated Motif",
-                    "Subtype": f"{motif_info.disease_name.replace(' ', '_')}_repeat",
-                    "Start": match["start"] + 1,
-                    "End": match["end"],
-                    "Sequence": match["sequence"],
-                    "Score": risk_score,
-                    "Length": len(match["sequence"]),
+                if best_match:
+                    disease_id, motif_info = best_match
+                    clinical_sig = self._classify_clinical_significance(repeat_count, motif_info)
                     
-                    # Clinical annotations
-                    "Repeat_Count": repeat_count,
-                    "Repeat_Unit": repeat_unit,
-                    "Clinical_Significance": clinical_sig.value,
-                    "Disease_Name": motif_info.disease_name,
-                    "Gene_Symbol": motif_info.gene_symbol,
-                    "Inheritance_Pattern": motif_info.inheritance_pattern,
-                    "Normal_Range": f"{motif_info.normal_range[0]}-{motif_info.normal_range[1]}",
-                    "Pathogenic_Threshold": motif_info.pathogenic_threshold,
-                    "Risk_Score": risk_score,
-                    "Instability_Score": instability_score,
-                    "Population_Percentile": self._calculate_percentile(repeat_count, motif_info.motif_type),
-                    "Clinical_Features": "; ".join(motif_info.clinical_features),
-                    "PMID_References": "; ".join(motif_info.pmid_references),
-                    
-                    # Therapeutic implications
-                    "Therapeutic_Target": self._assess_therapeutic_potential(motif_info, repeat_count),
-                    "Genetic_Counseling": self._generate_counseling_notes(clinical_sig, motif_info),
-                    
-                    # Advanced scoring
-                    "ScoreMethod": "Disease_Associated_Clinical_Classification",
-                    "Conservation_Score": self._calculate_conservation(match["sequence"]),
-                    "Structural_Impact": self._assess_structural_impact(motif_info.motif_type, repeat_count)
-                }
-                
-                results.append(result)
+                    # Only report if clinically significant (VUS or higher)
+                    if clinical_sig in [ClinicalSignificance.PATHOGENIC, 
+                                      ClinicalSignificance.LIKELY_PATHOGENIC, 
+                                      ClinicalSignificance.VUS]:
+                        
+                        # Calculate additional risk metrics
+                        risk_score = self._calculate_risk_score(repeat_count, motif_info)
+                        instability_score = self._calculate_instability_score(match["sequence"])
+                        
+                        result = {
+                            "Sequence Name": "",
+                            "Class": "Disease-Associated Motif",
+                            "Subtype": f"{motif_info.disease_name.replace(' ', '_')}_repeat",
+                            "Start": match["start"] + 1,
+                            "End": match["end"],
+                            "Sequence": match["sequence"],
+                            "Score": risk_score,
+                            "Length": len(match["sequence"]),
+                            
+                            # Clinical annotations
+                            "Repeat_Count": repeat_count,
+                            "Repeat_Unit": repeat_unit,
+                            "Clinical_Significance": clinical_sig.value,
+                            "Disease_Name": motif_info.disease_name,
+                            "Gene_Symbol": motif_info.gene_symbol,
+                            "Inheritance_Pattern": motif_info.inheritance_pattern,
+                            "Normal_Range": f"{motif_info.normal_range[0]}-{motif_info.normal_range[1]}",
+                            "Pathogenic_Threshold": motif_info.pathogenic_threshold,
+                            "Risk_Score": risk_score,
+                            "Instability_Score": instability_score,
+                            "Population_Percentile": self._calculate_percentile(repeat_count, motif_info.motif_type),
+                            "Clinical_Features": "; ".join(motif_info.clinical_features),
+                            "PMID_References": "; ".join(motif_info.pmid_references),
+                            
+                            # Therapeutic implications
+                            "Therapeutic_Target": self._assess_therapeutic_potential(motif_info, repeat_count),
+                            "Genetic_Counseling": self._generate_counseling_notes(clinical_sig, motif_info),
+                            
+                            # Advanced scoring
+                            "ScoreMethod": "Disease_Associated_Clinical_Classification",
+                            "Conservation_Score": self._calculate_conservation(match["sequence"]),
+                            "Structural_Impact": self._assess_structural_impact(motif_info.motif_type, repeat_count),
+                            "Arms/Repeat Unit/Copies": "",
+                            "Spacer": ""
+                        }
+                        
+                        results.append(result)
         
         return results
+    
+    def _select_best_disease_match(self, repeat_count: int, disease_motifs: List, gene_context: str = None) -> tuple:
+        """Select the most appropriate disease match for a given repeat count"""
+        if gene_context:
+            # If gene context is provided, prioritize exact gene matches
+            for disease_id, motif_info in disease_motifs:
+                if motif_info.gene_symbol.upper() == gene_context.upper():
+                    return (disease_id, motif_info)
+        
+        # Score each potential match based on clinical appropriateness
+        scored_matches = []
+        
+        for disease_id, motif_info in disease_motifs:
+            score = 0
+            
+            # Priority 1: Pathogenic range (highest priority)
+            if repeat_count >= motif_info.pathogenic_threshold:
+                score += 100
+            
+            # Priority 2: Close to pathogenic threshold
+            elif repeat_count >= motif_info.pathogenic_threshold * 0.8:
+                score += 50
+            
+            # Priority 3: Within intermediate range  
+            elif repeat_count > motif_info.normal_range[1]:
+                score += 25
+            
+            # Bonus for well-established diseases (based on low pathogenic threshold = well-studied)
+            if motif_info.pathogenic_threshold <= 50:
+                score += 10
+            
+            # Penalty for very high thresholds (less likely matches)
+            if motif_info.pathogenic_threshold > 200:
+                score -= 20
+            
+            # Special handling for common repeats
+            if motif_info.repeat_unit == "CAG":
+                # For CAG repeats, prioritize based on repeat count ranges
+                if 36 <= repeat_count <= 100:  # Huntington range
+                    if "Huntington" in motif_info.disease_name:
+                        score += 30
+                elif 38 <= repeat_count <= 62:  # SBMA range  
+                    if "Spinal and Bulbar" in motif_info.disease_name:
+                        score += 30
+                elif 39 <= repeat_count <= 82:  # SCA1 range
+                    if "Spinocerebellar Ataxia Type 1" in motif_info.disease_name:
+                        score += 30
+            
+            elif motif_info.repeat_unit == "CGG":
+                # For CGG repeats, prioritize based on repeat count ranges
+                if repeat_count > 200:  # Fragile X full mutation
+                    if "Fragile X" in motif_info.disease_name:
+                        score += 50
+                elif 55 <= repeat_count <= 200:  # Fragile X premutation
+                    if "Fragile X" in motif_info.disease_name:
+                        score += 30
+            
+            elif motif_info.repeat_unit == "GAA":
+                # GAA repeats - Friedreich's Ataxia is the main concern
+                if repeat_count >= 66:
+                    if "Friedreich" in motif_info.disease_name:
+                        score += 50
+            
+            if score > 0:
+                scored_matches.append((score, disease_id, motif_info))
+        
+        if scored_matches:
+            # Return the highest scoring match
+            scored_matches.sort(reverse=True)
+            _, disease_id, motif_info = scored_matches[0]
+            return (disease_id, motif_info)
+        
+        return None
     
     def _find_repeat_expansions(self, sequence: str, repeat_unit: str) -> List[Dict]:
         """Find repeat expansions of specific unit"""
