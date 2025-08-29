@@ -518,7 +518,6 @@ MAIN_PAGES = {
     "Upload & Analyze": "Sequence Upload and Analysis",
     "Results & Visualization": "Analysis Results and Professional Visualizations",
     "Clinical/Disease": "Disease Annotation and Clinical Data",
-    "Download & Export": "Download Results and Export Data",
     "Documentation": "Scientific Documentation & References"
 }
 
@@ -833,304 +832,307 @@ with tab_dict["Home"]:
 # UPLOAD & ANALYZE PAGE - COMPACT VERSION
 # =====================================================
 with tab_dict["Upload & Analyze"]:
-    # Compact subtabs for Upload & Analyze
-    upload_subtabs = st.tabs(["📤 Upload", "⚙️ Settings", "▶️ Run"])
+    # Consolidated single-tab interface for Upload & Analyze
+    st.markdown("### 📤 Sequence Input & Analysis")
     
-    # ---- COMPACT UPLOAD SEQUENCE SUBTAB ----
-    with upload_subtabs[0]:
-        # Main input method selection - horizontal layout
-        col_method, col_action = st.columns([3, 1])
-        with col_method:
-            input_method = st.radio("Input Method:", 
-                                   ["📁 Upload FASTA", "📝 Paste Text", "🔬 Example", "🌐 NCBI"], 
-                                   horizontal=True)
-        
-        # Clear session state when switching methods  
-        if 'last_input_method' not in st.session_state:
-            st.session_state.last_input_method = input_method
-        elif st.session_state.last_input_method != input_method:
-            st.session_state.seqs = []
-            st.session_state.names = []
-            st.session_state.results = []
-            st.session_state.last_input_method = input_method
-        
-        seqs, names = [], []
-        
-        if input_method == "📁 Upload FASTA":
-            col_upload, col_preview = st.columns([1, 1])
-            with col_upload:
-                fasta_file = st.file_uploader(
-                    "Choose file", 
-                    type=['fa', 'fasta', 'txt'],
-                    help="Upload FASTA files (.fa, .fasta, .txt)"
-                )
-            
-            if fasta_file:
-                try:
-                    content = fasta_file.read().decode('utf-8')
-                    seqs, names = parse_fasta_multi(content)
-                    if seqs:
-                        with col_preview:
-                            st.success(f"✓ {len(seqs)} sequence(s) loaded")
-                            # Compact sequence summary
-                            for i, (name, seq) in enumerate(zip(names[:3], seqs[:3])):  # Show max 3
-                                with st.expander(f"#{i+1}: {name[:30]}...", expanded=False):
-                                    st.text(f"Length: {len(seq):,} bp | GC: {cached_gc_content(seq):.1f}%")
-                    else:
-                        st.error("❌ No valid sequences found")
-                except Exception as e:
-                    st.error(f"❌ Error: {str(e)[:50]}...")
-        
-        elif input_method == "📝 Paste Text":
-            sequence_input = st.text_area(
-                "Paste sequence(s):",
-                height=150,  # Reduced from 200
-                placeholder=">Seq1\nATCGATCG...\n>Seq2\nGCGCGCGC..."
+    # ---- SEQUENCE INPUT SECTION ----
+    # Main input method selection - horizontal layout
+    col_method, col_action = st.columns([3, 1])
+    with col_method:
+        input_method = st.radio("Input Method:", 
+                               ["📁 Upload FASTA", "📝 Paste Text", "🔬 Example", "🌐 NCBI"], 
+                               horizontal=True)
+    
+    # Clear session state when switching methods  
+    if 'last_input_method' not in st.session_state:
+        st.session_state.last_input_method = input_method
+    elif st.session_state.last_input_method != input_method:
+        st.session_state.seqs = []
+        st.session_state.names = []
+        st.session_state.results = []
+        st.session_state.last_input_method = input_method
+    
+    seqs, names = [], []
+    
+    if input_method == "📁 Upload FASTA":
+        col_upload, col_preview = st.columns([1, 1])
+        with col_upload:
+            fasta_file = st.file_uploader(
+                "Choose file", 
+                type=['fa', 'fasta', 'txt'],
+                help="Upload FASTA files (.fa, .fasta, .txt)"
             )
-            
-            if sequence_input:
-                if sequence_input.startswith('>'):
-                    seqs, names = parse_fasta_multi(sequence_input)
-                else:
-                    # Treat as raw sequence
-                    cleaned_seq = ''.join(sequence_input.upper().split())
-                    if all(c in 'ATCGRYSWKMBDHVN' for c in cleaned_seq):
-                        seqs = [cleaned_seq]
-                        names = ["User_Input"]
-                    else:
-                        st.error("❌ Invalid sequence characters")
-                
+        
+        if fasta_file:
+            try:
+                content = fasta_file.read().decode('utf-8')
+                seqs, names = parse_fasta_multi(content)
                 if seqs:
-                    st.success(f"✓ {len(seqs)} sequence(s) parsed")
-        
-        elif input_method == "🔬 Example":
-            # Compact example selection
-            example_choice = st.selectbox("Select example:", 
-                                        list(EXAMPLE_SEQUENCES.keys()),
-                                        help="Pre-loaded sequences for testing")
-            
-            if st.button("Load Example", type="secondary"):
-                example_data = EXAMPLE_SEQUENCES[example_choice]
-                seqs = [example_data['sequence']]
-                names = [example_data['name']]
-                st.success(f"✓ Loaded: {names[0]} ({len(seqs[0]):,} bp)")
-        
-        elif input_method == "🌐 NCBI":
-            # Compact NCBI section with simplified examples
-            col_examples, col_input = st.columns([2, 3])
-            
-            with col_examples:
-                st.write("**Quick Examples:**")
-                # Simplified example buttons in grid
-                example_cols = st.columns(2)
-                examples = list(FAMOUS_NCBI_EXAMPLES.items())[:4]  # Show only first 4
-                for i, (gene, accession) in enumerate(examples):
-                    with example_cols[i % 2]:
-                        if st.button(f"{gene}", key=f"ex_{i}", use_container_width=True):
-                            st.session_state.ncbi_query = accession
-                            st.rerun()
-            
-            with col_input:
-                ncbi_query = st.text_input(
-                    "NCBI Query:",
-                    value=st.session_state.get('ncbi_query', ''),
-                    placeholder="NG_007161.1 or gene name"
-                )
-                
-                if ncbi_query:
-                    if st.button("🚀 Fetch", type="primary"):
-                        with st.spinner("Fetching..."):
-                            try:
-                                # Use cached NCBI fetch for better performance
-                                seqs, names = cached_ncbi_fetch(ncbi_query)
-                                if seqs:
-                                    st.session_state.seqs = seqs
-                                    st.session_state.names = names
-                                    st.success(f"✓ Fetched {len(seqs)} sequence(s)")
-                                else:
-                                    st.error("❌ No sequences found")
-                            except Exception as e:
-                                st.error(f"❌ Error: {str(e)[:100]}...")
-        
-        # Store sequences in session state
-        if seqs:
-            st.session_state.seqs = seqs
-            st.session_state.names = names
-        
-        # Compact current sequences display
-        if st.session_state.get('seqs'):
-            with st.expander(f"📊 Current: {len(st.session_state.seqs)} sequence(s)", expanded=False):
-                for i, (seq, name) in enumerate(zip(st.session_state.seqs[:3], st.session_state.names[:3])):
-                    col1, col2, col3 = st.columns(3)
-                    with col1:
-                        st.metric("Seq", f"#{i+1}")
-                    with col2:
-                        st.metric("Length", f"{len(seq):,}")
-                    with col3:
-                        st.metric("GC%", f"{cached_gc_content(seq):.1f}")
-                if len(st.session_state.seqs) > 3:
-                    st.write(f"... and {len(st.session_state.seqs) - 3} more")
+                    with col_preview:
+                        st.success(f"✓ {len(seqs)} sequence(s) loaded")
+                        # Compact sequence summary
+                        for i, (name, seq) in enumerate(zip(names[:3], seqs[:3])):  # Show max 3
+                            with st.expander(f"#{i+1}: {name[:30]}...", expanded=False):
+                                st.text(f"Length: {len(seq):,} bp | GC: {cached_gc_content(seq):.1f}%")
+                else:
+                    st.error("❌ No valid sequences found")
+            except Exception as e:
+                st.error(f"❌ Error: {str(e)[:50]}...")
     
-    # ---- COMPACT PARAMETER SETTINGS SUBTAB ----
-    with upload_subtabs[1]:
-        # Compact parameter layout using multiple columns
-        col1, col2, col3 = st.columns(3)
+    elif input_method == "📝 Paste Text":
+        sequence_input = st.text_area(
+            "Paste sequence(s):",
+            height=150,  # Reduced from 200
+            placeholder=">Seq1\nATCGATCG...\n>Seq2\nGCGCGCGC..."
+        )
         
-        with col1:
-            st.write("**Motif Classes**")
-            motif_classes = st.multiselect(
-                "Select classes:",
-                list(MOTIF_COLORS.keys()),
-                default=list(MOTIF_COLORS.keys()),
-                help="Choose motif types to detect"
-            )
+        if sequence_input:
+            if sequence_input.startswith('>'):
+                seqs, names = parse_fasta_multi(sequence_input)
+            else:
+                # Treat as raw sequence
+                cleaned_seq = ''.join(sequence_input.upper().split())
+                if all(c in 'ATCGRYSWKMBDHVN' for c in cleaned_seq):
+                    seqs = [cleaned_seq]
+                    names = ["User_Input"]
+                else:
+                    st.error("❌ Invalid sequence characters")
             
-            sensitivity = st.select_slider(
-                "Sensitivity:",
-                options=["Low", "Medium", "High", "Max"],
-                value="High",
-                help="Detection sensitivity level"
-            )
-        
-        with col2:
-            st.write("**Size Limits**")
-            min_motif_length = st.number_input("Min length (bp):", 
-                                             min_value=3, max_value=100, value=10)
-            max_motif_length = st.number_input("Max length (bp):", 
-                                             min_value=10, max_value=1000, value=200)
-            overlap_threshold = st.slider("Overlap %:", 
-                                         min_value=0, max_value=100, value=50)
-        
-        with col3:
-            st.write("**Options**")
-            quality_filter = st.checkbox("Quality filter", value=True)
-            parallel_processing = st.checkbox("Parallel processing", value=True)
-            memory_optimization = st.checkbox("Memory optimization", value=True)
-        
-        # Store settings in session state
-        st.session_state.analysis_settings = {
-            'motif_classes': motif_classes,
-            'sensitivity': sensitivity,
-            'min_motif_length': min_motif_length,
-            'max_motif_length': max_motif_length,
-            'overlap_threshold': overlap_threshold,
-            'quality_filter': quality_filter,
-            'parallel_processing': parallel_processing,
-            'memory_optimization': memory_optimization
-        }
+            if seqs:
+                st.success(f"✓ {len(seqs)} sequence(s) parsed")
     
-    # ---- COMPACT RUN ANALYSIS SUBTAB ----
-    with upload_subtabs[2]:
-        # Analysis summary in compact layout
-        col1, col2, col3 = st.columns(3)
+    elif input_method == "🔬 Example":
+        # Compact example selection
+        example_choice = st.selectbox("Select example:", 
+                                    list(EXAMPLE_SEQUENCES.keys()),
+                                    help="Pre-loaded sequences for testing")
         
-        with col1:
-            if st.session_state.seqs:
-                st.metric("Sequences", len(st.session_state.seqs))
-                st.metric("Total Length", f"{sum(len(s) for s in st.session_state.seqs):,} bp")
-            else:
-                st.warning("⚠️ No sequences loaded")
+        if st.button("Load Example", type="secondary"):
+            example_data = EXAMPLE_SEQUENCES[example_choice]
+            seqs = [example_data['sequence']]
+            names = [example_data['name']]
+            st.success(f"✓ Loaded: {names[0]} ({len(seqs[0]):,} bp)")
+    
+    elif input_method == "🌐 NCBI":
+        # Compact NCBI section with simplified examples
+        col_examples, col_input = st.columns([2, 3])
         
-        with col2:
-            if hasattr(st.session_state, 'analysis_settings'):
-                settings = st.session_state.analysis_settings
-                st.metric("Motif Classes", len(settings.get('motif_classes', [])))
-                st.metric("Sensitivity", settings.get('sensitivity', 'High'))
-            else:
-                st.info("ℹ️ Configure settings first")
-        
-        with col3:
-            if st.session_state.seqs and hasattr(st.session_state, 'analysis_settings'):
-                if st.button("▶️ Start Analysis", type="primary", use_container_width=True):
-                    # Define run_analysis function inline
-                    def run_analysis():
-                        st.session_state.analysis_running = True
+        with col_examples:
+            st.write("**Quick Examples:**")
+            # Simplified example buttons in grid
+            example_cols = st.columns(2)
+            examples = list(FAMOUS_NCBI_EXAMPLES.items())[:4]  # Show only first 4
+            for i, (gene, accession) in enumerate(examples):
+                with example_cols[i % 2]:
+                    if st.button(f"{gene}", key=f"ex_{i}", use_container_width=True):
+                        st.session_state.ncbi_query = accession
                         st.rerun()
-                    
-                    run_analysis()
-            else:
-                st.button("▶️ Start Analysis", disabled=True, use_container_width=True)
-                st.caption("Need sequences and settings")
         
-                # Analysis progress - optimized version with parallel processing
-        if st.session_state.get('analysis_running', False):
-            with st.spinner("Analyzing sequences..."):
-                progress_bar = st.progress(0)
-                status_text = st.empty()
+        with col_input:
+            ncbi_query = st.text_input(
+                "NCBI Query:",
+                value=st.session_state.get('ncbi_query', ''),
+                placeholder="NG_007161.1 or gene name"
+            )
+            
+            if ncbi_query:
+                if st.button("🚀 Fetch", type="primary"):
+                    with st.spinner("Fetching..."):
+                        try:
+                            # Use cached NCBI fetch for better performance
+                            seqs, names = cached_ncbi_fetch(ncbi_query)
+                            if seqs:
+                                st.session_state.seqs = seqs
+                                st.session_state.names = names
+                                st.success(f"✓ Fetched {len(seqs)} sequence(s)")
+                            else:
+                                st.error("❌ No sequences found")
+                        except Exception as e:
+                            st.error(f"❌ Error: {str(e)[:100]}...")
+    
+    # Store sequences in session state
+    if seqs:
+        st.session_state.seqs = seqs
+        st.session_state.names = names
+    
+    # Compact current sequences display
+    if st.session_state.get('seqs'):
+        with st.expander(f"📊 Current: {len(st.session_state.seqs)} sequence(s)", expanded=False):
+            for i, (seq, name) in enumerate(zip(st.session_state.seqs[:3], st.session_state.names[:3])):
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("Seq", f"#{i+1}")
+                with col2:
+                    st.metric("Length", f"{len(seq):,}")
+                with col3:
+                    st.metric("GC%", f"{cached_gc_content(seq):.1f}")
+            if len(st.session_state.seqs) > 3:
+                st.write(f"... and {len(st.session_state.seqs) - 3} more")
+    
+    st.markdown("---")
+    
+    # ---- ANALYSIS PARAMETERS SECTION ----
+    st.markdown("### ⚙️ Analysis Parameters")
+    # Compact parameter layout using multiple columns
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.write("**Motif Classes**")
+        motif_classes = st.multiselect(
+            "Select classes:",
+            list(MOTIF_COLORS.keys()),
+            default=list(MOTIF_COLORS.keys()),
+            help="Choose motif types to detect"
+        )
+        
+        sensitivity = st.select_slider(
+            "Sensitivity:",
+            options=["Low", "Medium", "High", "Max"],
+            value="High",
+            help="Detection sensitivity level"
+        )
+    
+    with col2:
+        st.write("**Size Limits**")
+        min_motif_length = st.number_input("Min length (bp):", 
+                                         min_value=3, max_value=100, value=10)
+        max_motif_length = st.number_input("Max length (bp):", 
+                                         min_value=10, max_value=1000, value=200)
+        overlap_threshold = st.slider("Overlap %:", 
+                                     min_value=0, max_value=100, value=50)
+    
+    with col3:
+        st.write("**Options**")
+        quality_filter = st.checkbox("Quality filter", value=True)
+        parallel_processing = st.checkbox("Parallel processing", value=True)
+        memory_optimization = st.checkbox("Memory optimization", value=True)
+    
+    # Store settings in session state
+    st.session_state.analysis_settings = {
+        'motif_classes': motif_classes,
+        'sensitivity': sensitivity,
+        'min_motif_length': min_motif_length,
+        'max_motif_length': max_motif_length,
+        'overlap_threshold': overlap_threshold,
+        'quality_filter': quality_filter,
+        'parallel_processing': parallel_processing,
+        'memory_optimization': memory_optimization
+    }
+    
+    st.markdown("---")
+    
+    # ---- ANALYSIS EXECUTION SECTION ----
+    st.markdown("### ▶️ Run Analysis")
+    # Analysis summary in compact layout
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        if st.session_state.seqs:
+            st.metric("Sequences", len(st.session_state.seqs))
+            st.metric("Total Length", f"{sum(len(s) for s in st.session_state.seqs):,} bp")
+        else:
+            st.warning("⚠️ No sequences loaded")
+    
+    with col2:
+        if hasattr(st.session_state, 'analysis_settings'):
+            settings = st.session_state.analysis_settings
+            st.metric("Motif Classes", len(settings.get('motif_classes', [])))
+            st.metric("Sensitivity", settings.get('sensitivity', 'High'))
+        else:
+            st.info("ℹ️ Configure settings first")
+    
+    with col3:
+        if st.session_state.seqs and hasattr(st.session_state, 'analysis_settings'):
+            if st.button("▶️ Start Analysis", type="primary", use_container_width=True):
+                # Define run_analysis function inline
+                def run_analysis():
+                    st.session_state.analysis_running = True
+                    st.rerun()
                 
-                # Run optimized analysis with caching and parallel processing
-                try:
-                    results = []
-                    settings = st.session_state.get('analysis_settings', {})
-                    use_parallel = settings.get('parallel_processing', True)
+                run_analysis()
+        else:
+            st.button("▶️ Start Analysis", disabled=True, use_container_width=True)
+            st.caption("Need sequences and settings")
+    
+            # Analysis progress - optimized version with parallel processing
+    if st.session_state.get('analysis_running', False):
+        with st.spinner("Analyzing sequences..."):
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+            
+            # Run optimized analysis with caching and parallel processing
+            try:
+                results = []
+                settings = st.session_state.get('analysis_settings', {})
+                use_parallel = settings.get('parallel_processing', True)
+                
+                if use_parallel and len(st.session_state.seqs) > 1:
+                    # Parallel processing for multiple sequences
+                    from concurrent.futures import ThreadPoolExecutor, as_completed
+                    import hashlib
                     
-                    if use_parallel and len(st.session_state.seqs) > 1:
-                        # Parallel processing for multiple sequences
-                        from concurrent.futures import ThreadPoolExecutor, as_completed
-                        import hashlib
+                    with ThreadPoolExecutor(max_workers=min(4, len(st.session_state.seqs))) as executor:
+                        futures = {}
                         
-                        with ThreadPoolExecutor(max_workers=min(4, len(st.session_state.seqs))) as executor:
-                            futures = {}
-                            
-                            for i, (seq, name) in enumerate(zip(st.session_state.seqs, st.session_state.names)):
-                                # Create hash for caching
-                                seq_hash = hashlib.md5(seq.encode()).hexdigest()
-                                future = executor.submit(cached_all_motifs, seq_hash, seq, settings)
-                                futures[future] = (i, name, seq)
-                            
-                            for future in as_completed(futures):
-                                i, name, seq = futures[future]
-                                progress_bar.progress((i + 1) / len(st.session_state.seqs))
-                                status_text.text(f"Processing sequence {i+1}/{len(st.session_state.seqs)}: {name[:30]}...")
-                                
-                                try:
-                                    cached_result = future.result(timeout=60)  # 60 second timeout
-                                    results.append({
-                                        'sequence_name': name,
-                                        'sequence': seq,
-                                        'motifs': cached_result['motifs'],
-                                        'total_motifs': len(cached_result['motifs']),
-                                        'sequence_length': len(seq),
-                                        'processing_time': cached_result['processing_time']
-                                    })
-                                except Exception as e:
-                                    st.error(f"Error processing {name}: {str(e)[:100]}...")
-                                    # Continue with other sequences
-                    else:
-                        # Sequential processing with caching for single sequence or when parallel disabled
-                        import hashlib
                         for i, (seq, name) in enumerate(zip(st.session_state.seqs, st.session_state.names)):
+                            # Create hash for caching
+                            seq_hash = hashlib.md5(seq.encode()).hexdigest()
+                            future = executor.submit(cached_all_motifs, seq_hash, seq, settings)
+                            futures[future] = (i, name, seq)
+                        
+                        for future in as_completed(futures):
+                            i, name, seq = futures[future]
                             progress_bar.progress((i + 1) / len(st.session_state.seqs))
                             status_text.text(f"Processing sequence {i+1}/{len(st.session_state.seqs)}: {name[:30]}...")
                             
-                            # Create hash for caching
-                            seq_hash = hashlib.md5(seq.encode()).hexdigest()
-                            cached_result = cached_all_motifs(seq_hash, seq, settings)
-                            
-                            results.append({
-                                'sequence_name': name,
-                                'sequence': seq,
-                                'motifs': cached_result['motifs'],
-                                'total_motifs': len(cached_result['motifs']),
-                                'sequence_length': len(seq),
-                                'processing_time': cached_result['processing_time']
-                            })
-                    
-                    st.session_state.results = results
-                    st.session_state.analysis_running = False
-                    
-                    # Performance summary
-                    total_time = sum(r.get('processing_time', 0) for r in results)
-                    total_motifs = sum(r['total_motifs'] for r in results)
-                    status_text.empty()
-                    st.success(f"✓ Analysis completed! Found {total_motifs} motifs in {total_time:.2f}s")
-                    
-                except Exception as e:
-                    st.session_state.analysis_running = False
-                    st.error(f"❌ Analysis failed: {e}")
-                    import traceback
-                    with st.expander("Error details"):
-                        st.code(traceback.format_exc())
+                            try:
+                                cached_result = future.result(timeout=60)  # 60 second timeout
+                                results.append({
+                                    'sequence_name': name,
+                                    'sequence': seq,
+                                    'motifs': cached_result['motifs'],
+                                    'total_motifs': len(cached_result['motifs']),
+                                    'sequence_length': len(seq),
+                                    'processing_time': cached_result['processing_time']
+                                })
+                            except Exception as e:
+                                st.error(f"Error processing {name}: {str(e)[:100]}...")
+                                # Continue with other sequences
+                else:
+                    # Sequential processing with caching for single sequence or when parallel disabled
+                    import hashlib
+                    for i, (seq, name) in enumerate(zip(st.session_state.seqs, st.session_state.names)):
+                        progress_bar.progress((i + 1) / len(st.session_state.seqs))
+                        status_text.text(f"Processing sequence {i+1}/{len(st.session_state.seqs)}: {name[:30]}...")
+                        
+                        # Create hash for caching
+                        seq_hash = hashlib.md5(seq.encode()).hexdigest()
+                        cached_result = cached_all_motifs(seq_hash, seq, settings)
+                        
+                        results.append({
+                            'sequence_name': name,
+                            'sequence': seq,
+                            'motifs': cached_result['motifs'],
+                            'total_motifs': len(cached_result['motifs']),
+                            'sequence_length': len(seq),
+                            'processing_time': cached_result['processing_time']
+                        })
+                
+                st.session_state.results = results
+                st.session_state.analysis_running = False
+                
+                # Performance summary
+                total_time = sum(r.get('processing_time', 0) for r in results)
+                total_motifs = sum(r['total_motifs'] for r in results)
+                status_text.empty()
+                st.success(f"✓ Analysis completed! Found {total_motifs} motifs in {total_time:.2f}s")
+                
+            except Exception as e:
+                st.session_state.analysis_running = False
+                st.error(f"❌ Analysis failed: {e}")
+                import traceback
+                with st.expander("Error details"):
+                    st.code(traceback.format_exc())
 
 # RESULTS & VISUALIZATION PAGE - COMPACT VERSION
 # =====================================================
@@ -1138,8 +1140,8 @@ with tab_dict["Results & Visualization"]:
     if not st.session_state.results:
         st.info("ℹ️ No results available. Run analysis first.")
     else:
-        # Compact combined results subtabs
-        result_tabs = st.tabs(["📊 Overview", "📈 Distribution", "🗺️ Genomic", "📋 Tables", "🖼️ Figures"])
+        # Compact combined results subtabs including Download & Export
+        result_tabs = st.tabs(["📊 Overview", "📈 Distribution", "🗺️ Genomic", "📋 Tables", "🖼️ Figures", "📥 Download & Export"])
         
         # ---- COMPACT OVERVIEW SUBTAB ----
         with result_tabs[0]:
@@ -1901,6 +1903,335 @@ with tab_dict["Results & Visualization"]:
                 
                 if st.session_state.results:
                     st.info("💡 Analysis results detected! 3D visualizations are available in the comprehensive visualization suite above.")
+        
+        # ---- DOWNLOAD & EXPORT SUBTAB ----
+        with result_tabs[5]:
+            st.markdown("### 📥 Download & Export")
+            
+            if not st.session_state.results:
+                st.info("No analysis results available for download. Please run an analysis first.")
+            else:
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    st.markdown("**Data Export Options**")
+                    
+                    # Results table download
+                    if st.button("Download Results Table (CSV)"):
+                        results_data = []
+                        for result in st.session_state.results:
+                            for motif in result['motifs']:
+                                # Ensure motif has proper subtype
+                                motif = ensure_subtype(motif)
+                                
+                                # Get official classification
+                                legacy_class = motif.get('Class', motif.get('Motif', 'Unknown'))
+                                legacy_subtype = motif.get('Subtype', '')
+                                official_class, official_subtype = get_official_classification(legacy_class, legacy_subtype)
+                                
+                                results_data.append({
+                                    'Sequence': result['sequence_name'],
+                                    'Class': official_class,
+                                    'Subclass': official_subtype,
+                                    'Start': motif.get('Start', 0),
+                                    'End': motif.get('End', 0),
+                                    'Length': motif.get('End', 0) - motif.get('Start', 0) + 1,
+                                    'Score': motif.get('Score', 0),
+                                    'Conservation_Score': motif.get('Conservation_Score', 'N/A'),
+                                    'Conservation_P_Value': motif.get('Conservation_P_Value', 'N/A'),
+                                    'Conservation_Significance': motif.get('Conservation_Significance', 'N/A'),
+                                    'ScoreMethod': motif.get('ScoreMethod', 'N/A'),
+                                    'Sequence_Fragment': motif.get('Sequence', 'N/A')
+                                })
+                        
+                        df = pd.DataFrame(results_data)
+                        csv = df.to_csv(index=False)
+                        st.download_button(
+                            label="Download CSV",
+                            data=csv,
+                            file_name="nbdfinder_results.csv",
+                            mime="text/csv"
+                        )
+                    
+                    # Excel export
+                    if st.button("Download Results (Excel)"):
+                        try:
+                            # Create Excel file with multiple sheets
+                            from io import BytesIO
+                            import openpyxl
+                            from openpyxl.styles import Font, PatternFill, Alignment
+                            
+                            output = BytesIO()
+                            workbook = openpyxl.Workbook()
+                            
+                            # Remove default sheet
+                            workbook.remove(workbook.active)
+                            
+                            # Summary sheet
+                            summary_sheet = workbook.create_sheet("Summary")
+                            summary_sheet['A1'] = "NBDFinder Analysis Summary"
+                            summary_sheet['A1'].font = Font(bold=True, size=16)
+                            summary_sheet['A3'] = f"Total Sequences: {len(st.session_state.results)}"
+                            summary_sheet['A4'] = f"Total Motifs: {sum(r['total_motifs'] for r in st.session_state.results)}"
+                            summary_sheet['A5'] = f"Analysis Date: {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}"
+                            
+                            # Detailed results sheet with conservation analysis
+                            results_sheet = workbook.create_sheet("Detailed_Results")
+                            headers = ['Sequence', 'Class', 'Subclass', 'Start', 'End', 'Length', 'Score', 
+                                      'Conservation_Score', 'Conservation_P_Value', 'Conservation_Significance',
+                                      'ScoreMethod', 'Sequence_Fragment']
+                            
+                            for col, header in enumerate(headers, 1):
+                                cell = results_sheet.cell(row=1, column=col, value=header)
+                                cell.font = Font(bold=True)
+                                cell.fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+                                cell.alignment = Alignment(horizontal="center")
+                            
+                            row = 2
+                            for result in st.session_state.results:
+                                for motif in result['motifs']:
+                                    motif = ensure_subtype(motif)
+                                    legacy_class = motif.get('Class', motif.get('Motif', 'Unknown'))
+                                    legacy_subtype = motif.get('Subtype', '')
+                                    official_class, official_subtype = get_official_classification(legacy_class, legacy_subtype)
+                                    
+                                    data = [
+                                        result['sequence_name'],
+                                        official_class,
+                                        official_subtype,
+                                        motif.get('Start', 0),
+                                        motif.get('End', 0),
+                                        motif.get('End', 0) - motif.get('Start', 0) + 1,
+                                        motif.get('Score', 0),
+                                        motif.get('Conservation_Score', 'N/A'),
+                                        motif.get('Conservation_P_Value', 'N/A'),
+                                        motif.get('Conservation_Significance', 'N/A'),
+                                        motif.get('ScoreMethod', 'N/A'),
+                                        motif.get('Sequence', 'N/A')
+                                    ]
+                                    
+                                    for col, value in enumerate(data, 1):
+                                        results_sheet.cell(row=row, column=col, value=value)
+                                    row += 1
+                            
+                            # Auto-fit columns
+                            for sheet in workbook.worksheets:
+                                for column in sheet.columns:
+                                    max_length = 0
+                                    column_letter = column[0].column_letter
+                                    for cell in column:
+                                        try:
+                                            if len(str(cell.value)) > max_length:
+                                                max_length = len(str(cell.value))
+                                        except:
+                                            pass
+                                    adjusted_width = min(max_length + 2, 50)
+                                    sheet.column_dimensions[column_letter].width = adjusted_width
+                            
+                            workbook.save(output)
+                            excel_data = output.getvalue()
+                            
+                            st.download_button(
+                                label="📥 Download Excel File",
+                                data=excel_data,
+                                file_name=f"nbdfinder_results_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                            )
+                            
+                        except Exception as e:
+                            st.error(f"Excel export failed: {str(e)}")
+                            st.info("Fallback: Using CSV export instead")
+                            # Fallback to CSV
+                            csv = df.to_csv(index=False)
+                            st.download_button(
+                                label="📥 Download CSV (Fallback)",
+                                data=csv,
+                                file_name="nbdfinder_results.csv",
+                                mime="text/csv"
+                            )
+                
+                with col2:
+                    st.markdown("**Visualization Export**")
+                    
+                    if st.button("Download Plots (PNG)"):
+                        try:
+                            import zipfile
+                            from io import BytesIO
+                            import matplotlib.pyplot as plt
+                            
+                            # Create ZIP file for multiple plots
+                            zip_buffer = BytesIO()
+                            
+                            with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+                                # Generate motif distribution plot
+                                if st.session_state.results:
+                                    all_motifs = []
+                                    for result in st.session_state.results:
+                                        all_motifs.extend(result['motifs'])
+                                    
+                                    if all_motifs:
+                                        # Class distribution plot
+                                        classes = [ensure_subtype(motif).get('Class', 'Unknown') for motif in all_motifs]
+                                        class_counts = pd.Series(classes).value_counts()
+                                        
+                                        fig, ax = plt.subplots(figsize=(12, 8))
+                                        bars = ax.bar(range(len(class_counts)), class_counts.values, 
+                                                    color=['#1e3a8a', '#0891b2', '#059669', '#dc2626', '#7c3aed', 
+                                                          '#ea580c', '#0d9488', '#be185d', '#4338ca', '#7c2d12'][:len(class_counts)])
+                                        
+                                        ax.set_xlabel('Non-B DNA Classes', fontsize=12, fontweight='bold')
+                                        ax.set_ylabel('Count', fontsize=12, fontweight='bold')
+                                        ax.set_title('Distribution of Non-B DNA Motifs by Class', fontsize=14, fontweight='bold')
+                                        ax.set_xticks(range(len(class_counts)))
+                                        ax.set_xticklabels(class_counts.index, rotation=45, ha='right')
+                                        
+                                        # Add value labels on bars
+                                        for i, bar in enumerate(bars):
+                                            height = bar.get_height()
+                                            ax.text(bar.get_x() + bar.get_width()/2., height + 0.5,
+                                                   f'{int(height)}', ha='center', va='bottom', fontweight='bold')
+                                        
+                                        plt.tight_layout()
+                                        
+                                        # Save to ZIP
+                                        img_buffer = BytesIO()
+                                        plt.savefig(img_buffer, format='png', dpi=300, bbox_inches='tight')
+                                        zip_file.writestr('motif_class_distribution.png', img_buffer.getvalue())
+                                        plt.close()
+                                        
+                                        # Score distribution plot
+                                        scores = [motif.get('Score', 0) for motif in all_motifs if motif.get('Score', 0) > 0]
+                                        if scores:
+                                            fig, ax = plt.subplots(figsize=(10, 6))
+                                            ax.hist(scores, bins=20, color='#0891b2', alpha=0.7, edgecolor='black')
+                                            ax.set_xlabel('Motif Score', fontsize=12, fontweight='bold')
+                                            ax.set_ylabel('Frequency', fontsize=12, fontweight='bold')
+                                            ax.set_title('Distribution of Motif Scores', fontsize=14, fontweight='bold')
+                                            ax.grid(True, alpha=0.3)
+                                            plt.tight_layout()
+                                            
+                                            img_buffer = BytesIO()
+                                            plt.savefig(img_buffer, format='png', dpi=300, bbox_inches='tight')
+                                            zip_file.writestr('motif_score_distribution.png', img_buffer.getvalue())
+                                            plt.close()
+                                        
+                                        # Position plot for first sequence
+                                        if len(st.session_state.results) > 0:
+                                            result = st.session_state.results[0]
+                                            if result['motifs']:
+                                                positions = [motif.get('Start', 0) for motif in result['motifs']]
+                                                types = [ensure_subtype(motif).get('Class', 'Unknown') for motif in result['motifs']]
+                                                
+                                                fig, ax = plt.subplots(figsize=(14, 6))
+                                                unique_types = list(set(types))
+                                                colors = plt.cm.tab10(np.linspace(0, 1, len(unique_types)))
+                                                
+                                                for i, motif_type in enumerate(unique_types):
+                                                    type_positions = [pos for pos, t in zip(positions, types) if t == motif_type]
+                                                    ax.scatter(type_positions, [i] * len(type_positions), 
+                                                             c=[colors[i]], label=motif_type, s=60, alpha=0.7)
+                                                
+                                                ax.set_xlabel('Genomic Position (bp)', fontsize=12, fontweight='bold')
+                                                ax.set_ylabel('Motif Type', fontsize=12, fontweight='bold')
+                                                ax.set_title(f'Motif Positions in {result["sequence_name"]}', fontsize=14, fontweight='bold')
+                                                ax.set_yticks(range(len(unique_types)))
+                                                ax.set_yticklabels(unique_types)
+                                                ax.grid(True, alpha=0.3)
+                                                ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+                                                plt.tight_layout()
+                                                
+                                                img_buffer = BytesIO()
+                                                plt.savefig(img_buffer, format='png', dpi=300, bbox_inches='tight')
+                                                zip_file.writestr('motif_positions.png', img_buffer.getvalue())
+                                                plt.close()
+                            
+                            zip_data = zip_buffer.getvalue()
+                            
+                            st.download_button(
+                                label="📥 Download Plot Package (ZIP)",
+                                data=zip_data,
+                                file_name=f"nbdfinder_plots_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.zip",
+                                mime="application/zip"
+                            )
+                            
+                        except Exception as e:
+                            st.error(f"Plot export failed: {str(e)}")
+                            st.info("Please ensure you have analysis results to export plots.")
+                    
+                    if st.button("📄 Generate Analysis Report"):
+                        if not st.session_state.results:
+                            st.warning("No analysis results available for report generation.")
+                        else:
+                            try:
+                                # Create a comprehensive text report
+                                report_content = []
+                                report_content.append("=" * 60)
+                                report_content.append("NBDFinder Analysis Report")
+                                report_content.append("=" * 60)
+                                report_content.append(f"Generated: {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}")
+                                report_content.append("")
+                                
+                                # Summary section
+                                total_motifs = sum(r['total_motifs'] for r in st.session_state.results)
+                                report_content.append("ANALYSIS SUMMARY")
+                                report_content.append("-" * 20)
+                                report_content.append(f"Total Sequences Analyzed: {len(st.session_state.results)}")
+                                report_content.append(f"Total Motifs Detected: {total_motifs}")
+                                report_content.append("")
+                                
+                                # Sequence details
+                                report_content.append("SEQUENCE DETAILS")
+                                report_content.append("-" * 20)
+                                for i, result in enumerate(st.session_state.results, 1):
+                                    report_content.append(f"Sequence {i}: {result['sequence_name']}")
+                                    report_content.append(f"  Length: {result['sequence_length']} bp")
+                                    report_content.append(f"  Motifs: {result['total_motifs']}")
+                                    report_content.append("")
+                                
+                                # Motif details
+                                report_content.append("DETAILED MOTIF RESULTS")
+                                report_content.append("-" * 30)
+                                report_content.append(f"{'Sequence':<20} {'Class':<25} {'Subclass':<20} {'Start':<8} {'End':<8} {'Score':<8}")
+                                report_content.append("-" * 90)
+                                
+                                for result in st.session_state.results:
+                                    for motif in result['motifs']:
+                                        motif = ensure_subtype(motif)
+                                        legacy_class = motif.get('Class', motif.get('Motif', 'Unknown'))
+                                        legacy_subtype = motif.get('Subtype', '')
+                                        official_class, official_subtype = get_official_classification(legacy_class, legacy_subtype)
+                                        
+                                        seq_name = result['sequence_name'][:19]
+                                        class_name = official_class[:24]
+                                        subclass_name = official_subtype[:19]
+                                        start = str(motif.get('Start', 0))
+                                        end = str(motif.get('End', 0))
+                                        score = f"{motif.get('Score', 0):.1f}"
+                                        
+                                        report_content.append(f"{seq_name:<20} {class_name:<25} {subclass_name:<20} {start:<8} {end:<8} {score:<8}")
+                                
+                                report_content.append("")
+                                report_content.append("=" * 60)
+                                report_content.append("End of Report")
+                                report_content.append("Generated by NBDFinder v2.0 - Dr. Venkata Rajesh Yella")
+                                
+                                # Create downloadable text report
+                                report_text = "\n".join(report_content)
+                                
+                                st.download_button(
+                                    label="📥 Download Analysis Report (TXT)",
+                                    data=report_text,
+                                    file_name=f"nbdfinder_report_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.txt",
+                                    mime="text/plain"
+                                )
+                                
+                                # Also show a preview
+                                with st.expander("📋 Report Preview", expanded=False):
+                                    st.text(report_text[:2000] + "\n\n... (truncated in preview)")
+                                
+                            except Exception as e:
+                                st.error(f"Report generation failed: {str(e)}")
+                                st.info("Please ensure you have analysis results to generate a report.")
 
 # =====================================================
 # CLINICAL/DISEASE ANNOTATION PAGE
@@ -2249,348 +2580,6 @@ with tab_dict["Clinical/Disease"]:
 # =====================================================
 # DOWNLOAD & EXPORT PAGE
 # =====================================================
-with tab_dict["Download & Export"]:
-    st.markdown("### Download Analysis Results")
-    
-    if not st.session_state.results:
-        st.info("No analysis results available for download. Please run an analysis first.")
-    else:
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.markdown("**Data Export Options**")
-            
-            # Results table download
-            if st.button("Download Results Table (CSV)"):
-                results_data = []
-                for result in st.session_state.results:
-                    for motif in result['motifs']:
-                        # Ensure motif has proper subtype
-                        motif = ensure_subtype(motif)
-                        
-                        # Get official classification
-                        legacy_class = motif.get('Class', motif.get('Motif', 'Unknown'))
-                        legacy_subtype = motif.get('Subtype', '')
-                        official_class, official_subtype = get_official_classification(legacy_class, legacy_subtype)
-                        
-                        results_data.append({
-                            'Sequence': result['sequence_name'],
-                            'Class': official_class,
-                            'Subclass': official_subtype,
-                            'Start': motif.get('Start', 0),
-                            'End': motif.get('End', 0),
-                            'Length': motif.get('End', 0) - motif.get('Start', 0) + 1,
-                            'Score': motif.get('Score', 0),
-                            'Conservation_Score': motif.get('Conservation_Score', 'N/A'),
-                            'Conservation_P_Value': motif.get('Conservation_P_Value', 'N/A'),
-                            'Conservation_Significance': motif.get('Conservation_Significance', 'N/A'),
-                            'ScoreMethod': motif.get('ScoreMethod', 'N/A'),
-                            'Sequence_Fragment': motif.get('Sequence', 'N/A')
-                        })
-                
-                df = pd.DataFrame(results_data)
-                csv = df.to_csv(index=False)
-                st.download_button(
-                    label="Download CSV",
-                    data=csv,
-                    file_name="nbdfinder_results.csv",
-                    mime="text/csv"
-                )
-            
-            # Excel export
-            if st.button("Download Results (Excel)"):
-                try:
-                    # Create Excel file with multiple sheets
-                    from io import BytesIO
-                    import openpyxl
-                    from openpyxl.styles import Font, PatternFill, Alignment
-                    
-                    output = BytesIO()
-                    workbook = openpyxl.Workbook()
-                    
-                    # Remove default sheet
-                    workbook.remove(workbook.active)
-                    
-                    # Summary sheet
-                    summary_sheet = workbook.create_sheet("Summary")
-                    summary_sheet['A1'] = "NBDFinder Analysis Summary"
-                    summary_sheet['A1'].font = Font(bold=True, size=16)
-                    summary_sheet['A3'] = f"Total Sequences: {len(st.session_state.results)}"
-                    summary_sheet['A4'] = f"Total Motifs: {sum(r['total_motifs'] for r in st.session_state.results)}"
-                    summary_sheet['A5'] = f"Analysis Date: {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}"
-                    
-                    # Detailed results sheet with conservation analysis
-                    results_sheet = workbook.create_sheet("Detailed_Results")
-                    headers = ['Sequence', 'Class', 'Subclass', 'Start', 'End', 'Length', 'Score', 
-                              'Conservation_Score', 'Conservation_P_Value', 'Conservation_Significance',
-                              'ScoreMethod', 'Sequence_Fragment']
-                    
-                    for col, header in enumerate(headers, 1):
-                        cell = results_sheet.cell(row=1, column=col, value=header)
-                        cell.font = Font(bold=True)
-                        cell.fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
-                        cell.alignment = Alignment(horizontal="center")
-                    
-                    row = 2
-                    for result in st.session_state.results:
-                        for motif in result['motifs']:
-                            motif = ensure_subtype(motif)
-                            legacy_class = motif.get('Class', motif.get('Motif', 'Unknown'))
-                            legacy_subtype = motif.get('Subtype', '')
-                            official_class, official_subtype = get_official_classification(legacy_class, legacy_subtype)
-                            
-                            data = [
-                                result['sequence_name'],
-                                official_class,
-                                official_subtype,
-                                motif.get('Start', 0),
-                                motif.get('End', 0),
-                                motif.get('End', 0) - motif.get('Start', 0) + 1,
-                                motif.get('Score', 0),
-                                motif.get('Conservation_Score', 'N/A'),
-                                motif.get('Conservation_P_Value', 'N/A'),
-                                motif.get('Conservation_Significance', 'N/A'),
-                                motif.get('ScoreMethod', 'N/A'),
-                                motif.get('Sequence', 'N/A')
-                            ]
-                            
-                            for col, value in enumerate(data, 1):
-                                results_sheet.cell(row=row, column=col, value=value)
-                            row += 1
-                    
-                    # Auto-fit columns
-                    for sheet in workbook.worksheets:
-                        for column in sheet.columns:
-                            max_length = 0
-                            column_letter = column[0].column_letter
-                            for cell in column:
-                                try:
-                                    if len(str(cell.value)) > max_length:
-                                        max_length = len(str(cell.value))
-                                except:
-                                    pass
-                            adjusted_width = min(max_length + 2, 50)
-                            sheet.column_dimensions[column_letter].width = adjusted_width
-                    
-                    workbook.save(output)
-                    excel_data = output.getvalue()
-                    
-                    st.download_button(
-                        label="📥 Download Excel File",
-                        data=excel_data,
-                        file_name=f"nbdfinder_results_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                    )
-                    
-                except Exception as e:
-                    st.error(f"Excel export failed: {str(e)}")
-                    st.info("Fallback: Using CSV export instead")
-                    # Fallback to CSV
-                    csv = df.to_csv(index=False)
-                    st.download_button(
-                        label="📥 Download CSV (Fallback)",
-                        data=csv,
-                        file_name="nbdfinder_results.csv",
-                        mime="text/csv"
-                    )
-        
-        with col2:
-            st.markdown("**Visualization Export**")
-            
-            if st.button("Download Plots (PNG)"):
-                try:
-                    import zipfile
-                    from io import BytesIO
-                    import matplotlib.pyplot as plt
-                    
-                    # Create ZIP file for multiple plots
-                    zip_buffer = BytesIO()
-                    
-                    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-                        # Generate motif distribution plot
-                        if st.session_state.results:
-                            all_motifs = []
-                            for result in st.session_state.results:
-                                all_motifs.extend(result['motifs'])
-                            
-                            if all_motifs:
-                                # Class distribution plot
-                                classes = [ensure_subtype(motif).get('Class', 'Unknown') for motif in all_motifs]
-                                class_counts = pd.Series(classes).value_counts()
-                                
-                                fig, ax = plt.subplots(figsize=(12, 8))
-                                bars = ax.bar(range(len(class_counts)), class_counts.values, 
-                                            color=['#1e3a8a', '#0891b2', '#059669', '#dc2626', '#7c3aed', 
-                                                  '#ea580c', '#0d9488', '#be185d', '#4338ca', '#7c2d12'][:len(class_counts)])
-                                
-                                ax.set_xlabel('Non-B DNA Classes', fontsize=12, fontweight='bold')
-                                ax.set_ylabel('Count', fontsize=12, fontweight='bold')
-                                ax.set_title('Distribution of Non-B DNA Motifs by Class', fontsize=14, fontweight='bold')
-                                ax.set_xticks(range(len(class_counts)))
-                                ax.set_xticklabels(class_counts.index, rotation=45, ha='right')
-                                
-                                # Add value labels on bars
-                                for i, bar in enumerate(bars):
-                                    height = bar.get_height()
-                                    ax.text(bar.get_x() + bar.get_width()/2., height + 0.5,
-                                           f'{int(height)}', ha='center', va='bottom', fontweight='bold')
-                                
-                                plt.tight_layout()
-                                
-                                # Save to ZIP
-                                img_buffer = BytesIO()
-                                plt.savefig(img_buffer, format='png', dpi=300, bbox_inches='tight')
-                                zip_file.writestr('motif_class_distribution.png', img_buffer.getvalue())
-                                plt.close()
-                                
-                                # Score distribution plot
-                                scores = [motif.get('Score', 0) for motif in all_motifs if motif.get('Score', 0) > 0]
-                                if scores:
-                                    fig, ax = plt.subplots(figsize=(10, 6))
-                                    ax.hist(scores, bins=20, color='#0891b2', alpha=0.7, edgecolor='black')
-                                    ax.set_xlabel('Motif Score', fontsize=12, fontweight='bold')
-                                    ax.set_ylabel('Frequency', fontsize=12, fontweight='bold')
-                                    ax.set_title('Distribution of Motif Scores', fontsize=14, fontweight='bold')
-                                    ax.grid(True, alpha=0.3)
-                                    plt.tight_layout()
-                                    
-                                    img_buffer = BytesIO()
-                                    plt.savefig(img_buffer, format='png', dpi=300, bbox_inches='tight')
-                                    zip_file.writestr('motif_score_distribution.png', img_buffer.getvalue())
-                                    plt.close()
-                                
-                                # Position plot for first sequence
-                                if len(st.session_state.results) > 0:
-                                    result = st.session_state.results[0]
-                                    if result['motifs']:
-                                        positions = [motif.get('Start', 0) for motif in result['motifs']]
-                                        types = [ensure_subtype(motif).get('Class', 'Unknown') for motif in result['motifs']]
-                                        
-                                        fig, ax = plt.subplots(figsize=(14, 6))
-                                        unique_types = list(set(types))
-                                        colors = plt.cm.tab10(np.linspace(0, 1, len(unique_types)))
-                                        
-                                        for i, motif_type in enumerate(unique_types):
-                                            type_positions = [pos for pos, t in zip(positions, types) if t == motif_type]
-                                            ax.scatter(type_positions, [i] * len(type_positions), 
-                                                     c=[colors[i]], label=motif_type, s=60, alpha=0.7)
-                                        
-                                        ax.set_xlabel('Genomic Position (bp)', fontsize=12, fontweight='bold')
-                                        ax.set_ylabel('Motif Type', fontsize=12, fontweight='bold')
-                                        ax.set_title(f'Motif Positions in {result["sequence_name"]}', fontsize=14, fontweight='bold')
-                                        ax.set_yticks(range(len(unique_types)))
-                                        ax.set_yticklabels(unique_types)
-                                        ax.grid(True, alpha=0.3)
-                                        ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-                                        plt.tight_layout()
-                                        
-                                        img_buffer = BytesIO()
-                                        plt.savefig(img_buffer, format='png', dpi=300, bbox_inches='tight')
-                                        zip_file.writestr('motif_positions.png', img_buffer.getvalue())
-                                        plt.close()
-                    
-                    zip_data = zip_buffer.getvalue()
-                    
-                    st.download_button(
-                        label="📥 Download Plot Package (ZIP)",
-                        data=zip_data,
-                        file_name=f"nbdfinder_plots_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.zip",
-                        mime="application/zip"
-                    )
-                    
-                except Exception as e:
-                    st.error(f"Plot export failed: {str(e)}")
-                    st.info("Please ensure you have analysis results to export plots.")
-            
-            if st.button("📄 Generate Analysis Report"):
-                if not st.session_state.results:
-                    st.warning("No analysis results available for report generation.")
-                else:
-                    try:
-                        # Create a comprehensive text report
-                        report_content = []
-                        report_content.append("=" * 60)
-                        report_content.append("NBDFinder Analysis Report")
-                        report_content.append("=" * 60)
-                        report_content.append(f"Generated: {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}")
-                        report_content.append("")
-                        
-                        # Summary section
-                        total_motifs = sum(r['total_motifs'] for r in st.session_state.results)
-                        report_content.append("ANALYSIS SUMMARY")
-                        report_content.append("-" * 20)
-                        report_content.append(f"Total Sequences Analyzed: {len(st.session_state.results)}")
-                        report_content.append(f"Total Motifs Detected: {total_motifs}")
-                        report_content.append("")
-                        
-                        # Sequence details
-                        report_content.append("SEQUENCE DETAILS")
-                        report_content.append("-" * 20)
-                        for i, result in enumerate(st.session_state.results, 1):
-                            report_content.append(f"Sequence {i}: {result['sequence_name']}")
-                            report_content.append(f"  Length: {result['sequence_length']} bp")
-                            report_content.append(f"  Motifs: {result['total_motifs']}")
-                            report_content.append("")
-                        
-                        # Motif details
-                        report_content.append("DETAILED MOTIF RESULTS")
-                        report_content.append("-" * 30)
-                        report_content.append(f"{'Sequence':<20} {'Class':<25} {'Subclass':<20} {'Start':<8} {'End':<8} {'Score':<8}")
-                        report_content.append("-" * 90)
-                        
-                        for result in st.session_state.results:
-                            for motif in result['motifs']:
-                                motif = ensure_subtype(motif)
-                                legacy_class = motif.get('Class', motif.get('Motif', 'Unknown'))
-                                legacy_subtype = motif.get('Subtype', '')
-                                official_class, official_subtype = get_official_classification(legacy_class, legacy_subtype)
-                                
-                                seq_name = result['sequence_name'][:19]
-                                class_name = official_class[:24]
-                                subclass_name = official_subtype[:19]
-                                start = str(motif.get('Start', 0))
-                                end = str(motif.get('End', 0))
-                                score = f"{motif.get('Score', 0):.1f}"
-                                
-                                report_content.append(f"{seq_name:<20} {class_name:<25} {subclass_name:<20} {start:<8} {end:<8} {score:<8}")
-                        
-                        report_content.append("")
-                        report_content.append("=" * 60)
-                        report_content.append("End of Report")
-                        report_content.append("Generated by NBDFinder v2.0 - Dr. Venkata Rajesh Yella")
-                        
-                        # Create downloadable text report
-                        report_text = "\n".join(report_content)
-                        
-                        st.download_button(
-                            label="📥 Download Analysis Report (TXT)",
-                            data=report_text,
-                            file_name=f"nbdfinder_report_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.txt",
-                            mime="text/plain"
-                        )
-                        
-                        # Also show a preview
-                        with st.expander("📋 Report Preview", expanded=False):
-                            st.text(report_text[:2000] + "\n\n... (truncated in preview)")
-                        
-                    except Exception as e:
-                        st.error(f"Report generation failed: {str(e)}")
-                        st.info("Please ensure you have analysis results to generate a report.")
-
-        
-        st.markdown("---")
-        st.markdown("**Session Data**")
-        
-        # Session summary
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric("Sequences Analyzed", len(st.session_state.results))
-        with col2:
-            st.metric("Total Motifs", sum(r['total_motifs'] for r in st.session_state.results))
-        with col3:
-            analysis_time = "< 1 min"  # Placeholder
-            st.metric("Analysis Time", analysis_time)
-
 # =====================================================
 # DOCUMENTATION PAGE
 # =====================================================
