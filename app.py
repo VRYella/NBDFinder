@@ -276,30 +276,83 @@ st.markdown("""
     }
     .stMarkdown p { margin-bottom: 0.5rem; font-size: 1rem; }  /* Reduced from 1.375rem */
     
-    /* COMPACT TABS */
+    /* ENHANCED TABS - Improved readability and unique colors */
     .stTabs [data-baseweb="tab-list"] {
         background: linear-gradient(135deg, var(--surface) 0%, rgba(248,250,252,0.95) 100%);
-        border: 1px solid var(--border); border-radius: 8px; padding: 6px; margin-bottom: 1rem;  /* Reduced padding and margin */
-        box-shadow: var(--shadow); display: flex; gap: 1px; width: 100%;
+        border: 1px solid var(--border); border-radius: 8px; padding: 8px; margin-bottom: 1rem;
+        box-shadow: var(--shadow); display: flex; gap: 2px; width: 100%;
         backdrop-filter: blur(10px);
     }
     .stTabs [data-baseweb="tab"] {
-        background: transparent; border: none; border-radius: 6px;
-        font-family: Inter, sans-serif; font-weight: 500; font-size: 0.9rem;  /* Reduced from 1.25rem */
-        color: var(--text-muted); padding: 8px 16px; transition: var(--transition);  /* Reduced from 18px 32px */
+        background: transparent; border: none; border-radius: 8px;
+        font-family: Inter, sans-serif; font-weight: 700; font-size: 1.2rem;  /* Increased size and weight */
+        color: var(--text-muted); padding: 12px 20px; transition: var(--transition);
         cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
-        white-space: nowrap; flex: 1; letter-spacing: -0.01em; margin: 0;
+        white-space: nowrap; flex: 1; letter-spacing: -0.02em; margin: 0;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
-    .stTabs [data-baseweb="tab"]:hover {
-        background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(248,250,252,0.95) 100%); 
-        color: var(--primary); font-weight: 600;
-        transform: translateY(-1px); box-shadow: var(--shadow);  /* Reduced transform */
-        border: 1px solid rgba(30,58,138,0.1);
+    
+    /* Individual tab colors for better distinction */
+    .stTabs [data-baseweb="tab"]:nth-child(1):hover {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        color: white; font-weight: 700; transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        border: 1px solid rgba(59, 130, 246, 0.3);
     }
-    .stTabs [aria-selected="true"] {
-        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-        color: white; font-weight: 600; font-size: 0.9rem;
-        box-shadow: var(--shadow-colored); transform: translateY(-1px);  /* Reduced transform */
+    .stTabs [data-baseweb="tab"]:nth-child(2):hover {
+        background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+        color: white; font-weight: 700; transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .stTabs [data-baseweb="tab"]:nth-child(3):hover {
+        background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+        color: white; font-weight: 700; transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+        border: 1px solid rgba(139, 92, 246, 0.3);
+    }
+    .stTabs [data-baseweb="tab"]:nth-child(4):hover {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white; font-weight: 700; transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    .stTabs [data-baseweb="tab"]:nth-child(5):hover {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white; font-weight: 700; transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    
+    /* Active tab styles with unique colors */
+    .stTabs [aria-selected="true"]:nth-child(1) {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        color: white; font-weight: 700; font-size: 1.2rem;
+        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5); transform: translateY(-2px);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    .stTabs [aria-selected="true"]:nth-child(2) {
+        background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+        color: white; font-weight: 700; font-size: 1.2rem;
+        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5); transform: translateY(-2px);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    .stTabs [aria-selected="true"]:nth-child(3) {
+        background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+        color: white; font-weight: 700; font-size: 1.2rem;
+        box-shadow: 0 8px 25px rgba(139, 92, 246, 0.5); transform: translateY(-2px);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    .stTabs [aria-selected="true"]:nth-child(4) {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white; font-weight: 700; font-size: 1.2rem;
+        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.5); transform: translateY(-2px);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    .stTabs [aria-selected="true"]:nth-child(5) {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white; font-weight: 700; font-size: 1.2rem;
+        box-shadow: 0 8px 25px rgba(239, 68, 68, 0.5); transform: translateY(-2px);
         border: 1px solid rgba(255,255,255,0.2);
     }
     
