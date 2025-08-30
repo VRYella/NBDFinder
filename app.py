@@ -1765,6 +1765,9 @@ with tab_dict["Documentation"]:
 # FOOTER - PROFESSIONAL BRANDING
 # =========================================================================
     
+    # Create columns for the footer display
+    col1, col2 = st.columns(2)
+    
     with col1:
         # Display main image
         try:
