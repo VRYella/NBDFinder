@@ -1,0 +1,23 @@
+{
+  "sequence_index": 7,
+  "sequence_name": "NM_001098512|PRKG1|Aortic aneurysm, familial thoracic 8, 615436 (3)|PRKG1, PRKG1B, PRKGR1B, AAT8",
+  "gene_symbol": "PRKG1",
+  "disease_info": "Aortic aneurysm, familial thoracic 8, 615436 (3)",
+  "sequence_length": 6957,
+  "gc_content": 38.364237458674715,
+  "total_motifs": 22,
+  "total_disease_motifs": 2,
+  "motif_classes": {
+    "Curved DNA": 14,
+    "Slipped DNA": 1,
+    "R-loop": 2,
+    "Z-DNA": 1,
+    "Disease-Associated Motif": 2,
+    "Hybrid": 1,
+    "G-Quadruplex Family": 1
+  },
+  "analysis_time": 15.58610987663269,
+  "timestamp": "2025-08-30T06:04:31.075051",
+  "motif_count": 22,
+  "disease_motif_count": 2
+}

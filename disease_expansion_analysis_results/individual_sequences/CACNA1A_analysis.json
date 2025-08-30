@@ -1,0 +1,22 @@
+{
+  "sequence_index": 1,
+  "sequence_name": "NM_000068|CACNA1A|Spinocerebellar ataxia 6, 183086 (3)|CACNA1A, CACNL1A4, SCA6, EIEE42",
+  "gene_symbol": "CACNA1A",
+  "disease_info": "Spinocerebellar ataxia 6, 183086 (3)",
+  "sequence_length": 8660,
+  "gc_content": 58.96073903002309,
+  "total_motifs": 33,
+  "total_disease_motifs": 1,
+  "motif_classes": {
+    "Curved DNA": 7,
+    "Slipped DNA": 4,
+    "R-loop": 11,
+    "Z-DNA": 4,
+    "Disease-Associated Motif": 1,
+    "Hybrid": 6
+  },
+  "analysis_time": 20.77850842475891,
+  "timestamp": "2025-08-30T06:03:10.818607",
+  "motif_count": 33,
+  "disease_motif_count": 1
+}

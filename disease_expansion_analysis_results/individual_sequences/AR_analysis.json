@@ -1,0 +1,24 @@
+{
+  "sequence_index": 6,
+  "sequence_name": "NM_001011645|AR|{Prostate cancer, susceptibility to}, 176807 (3)|AR, DHTR, TFM, SBMA, KD, SMAX1, HYS...",
+  "gene_symbol": "AR",
+  "disease_info": "{Prostate cancer, susceptibility to}, 176807 (3)",
+  "sequence_length": 10257,
+  "gc_content": 47.02154626108999,
+  "total_motifs": 42,
+  "total_disease_motifs": 2,
+  "motif_classes": {
+    "Curved DNA": 14,
+    "Slipped DNA": 5,
+    "Cruciform DNA": 1,
+    "R-loop": 9,
+    "Z-DNA": 2,
+    "Disease-Associated Motif": 3,
+    "Hybrid": 6,
+    "G-Quadruplex Family": 2
+  },
+  "analysis_time": 25.76111149787903,
+  "timestamp": "2025-08-30T06:04:15.483956",
+  "motif_count": 42,
+  "disease_motif_count": 2
+}

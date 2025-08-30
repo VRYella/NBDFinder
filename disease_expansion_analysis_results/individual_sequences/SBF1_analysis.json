@@ -1,0 +1,21 @@
+{
+  "sequence_index": 10,
+  "sequence_name": "NM_002972|SBF1|Charcot-Marie-Tooth disease, type 4B3, 615284 (3)|SBF1, MTMR5, CMT4B3",
+  "gene_symbol": "SBF1",
+  "disease_info": "Charcot-Marie-Tooth disease, type 4B3, 615284 (3)",
+  "sequence_length": 8019,
+  "gc_content": 64.4718792866941,
+  "total_motifs": 34,
+  "total_disease_motifs": 0,
+  "motif_classes": {
+    "Slipped DNA": 2,
+    "R-loop": 21,
+    "Z-DNA": 4,
+    "Hybrid": 3,
+    "G-Quadruplex Family": 4
+  },
+  "analysis_time": 19.501871347427368,
+  "timestamp": "2025-08-30T06:05:12.429621",
+  "motif_count": 34,
+  "disease_motif_count": 0
+}

@@ -1,0 +1,23 @@
+{
+  "sequence_index": 2,
+  "sequence_name": "NM_003924|PHOX2B|{Neuroblastoma, susceptibility to, 2}, 613013 (3)|PHOX2B, NBPHOX, PMX2B, NBLST2, CC...",
+  "gene_symbol": "PHOX2B",
+  "disease_info": "{Neuroblastoma, susceptibility to, 2}, 613013 (3)",
+  "sequence_length": 2785,
+  "gc_content": 54.1113105924596,
+  "total_motifs": 27,
+  "total_disease_motifs": 4,
+  "motif_classes": {
+    "Curved DNA": 4,
+    "Slipped DNA": 1,
+    "R-loop": 8,
+    "i-motif family": 1,
+    "Z-DNA": 6,
+    "Disease-Associated Motif": 4,
+    "Hybrid": 3
+  },
+  "analysis_time": 5.80435037612915,
+  "timestamp": "2025-08-30T06:03:16.630415",
+  "motif_count": 27,
+  "disease_motif_count": 4
+}

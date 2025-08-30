@@ -1,0 +1,21 @@
+{
+  "sequence_index": 8,
+  "sequence_name": "NM_001127217|SMAD9|Pulmonary hypertension, primary, 2, 615342 (3)|MADH9, SMAD9, MADH6, PPH2",
+  "gene_symbol": "SMAD9",
+  "disease_info": "Pulmonary hypertension, primary, 2, 615342 (3)",
+  "sequence_length": 5558,
+  "gc_content": 43.216984526808204,
+  "total_motifs": 20,
+  "total_disease_motifs": 0,
+  "motif_classes": {
+    "Curved DNA": 9,
+    "Slipped DNA": 4,
+    "Cruciform DNA": 1,
+    "Z-DNA": 2,
+    "Hybrid": 4
+  },
+  "analysis_time": 11.9852135181427,
+  "timestamp": "2025-08-30T06:04:43.064037",
+  "motif_count": 20,
+  "disease_motif_count": 0
+}
