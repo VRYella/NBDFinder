@@ -19,7 +19,7 @@ def _g4hunter_base_scores(seq):
     Per-base G4Hunter score, see Bedrat et al.
     """
     n = len(seq)
-    s = *n
+    s = [0] * n
     g_run = 0
     for i, ch in enumerate(seq):
         if ch == 'G':
