@@ -1,3 +1,12 @@
 {
   "total_sequences": 20,
-  "total_motifs": 
+  "total_motifs": 452,
+  "total_disease_motifs": 22,
+  "avg_motifs_per_gene": 22.6,
+  "avg_disease_motifs_per_gene": 1.1,
+  "avg_sequence_length": 5926.1,
+  "avg_gc_content": 48.60711159831316,
+  "genes_with_disease_motifs": 13,
+  "max_motifs_gene": "AFF2",
+  "max_motifs_count": 52
+}
