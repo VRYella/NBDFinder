@@ -1,0 +1,22 @@
+{
+  "sequence_index": 19,
+  "sequence_name": "NM_001142315|LMO2|Leukemia, acute T-cell (2)|LMO2, RBTNL1, RHOM2, TTG2",
+  "gene_symbol": "LMO2",
+  "disease_info": "Leukemia, acute T-cell (2)",
+  "sequence_length": 1511,
+  "gc_content": 53.60688285903375,
+  "total_motifs": 9,
+  "total_disease_motifs": 1,
+  "motif_classes": {
+    "Curved DNA": 2,
+    "Slipped DNA": 1,
+    "R-loop": 2,
+    "Z-DNA": 2,
+    "Disease-Associated Motif": 1,
+    "Hybrid": 1
+  },
+  "analysis_time": 2.660240650177002,
+  "timestamp": "2025-08-30T06:07:11.379504",
+  "motif_count": 9,
+  "disease_motif_count": 1
+}

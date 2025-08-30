@@ -1,0 +1,24 @@
+{
+  "sequence_index": 12,
+  "sequence_name": "NM_001301228|HMGB3|?Microphthalmia, syndromic 13, 300915 (3)|HMGB3, HMG4, HMG2A, MCOPS13",
+  "gene_symbol": "HMGB3",
+  "disease_info": "?Microphthalmia, syndromic 13, 300915 (3)",
+  "sequence_length": 3722,
+  "gc_content": 45.67436861902203,
+  "total_motifs": 17,
+  "total_disease_motifs": 1,
+  "motif_classes": {
+    "Curved DNA": 4,
+    "Slipped DNA": 3,
+    "R-loop": 3,
+    "i-motif family": 1,
+    "Z-DNA": 1,
+    "Disease-Associated Motif": 1,
+    "Hybrid": 3,
+    "G-Quadruplex Family": 1
+  },
+  "analysis_time": 7.482229709625244,
+  "timestamp": "2025-08-30T06:05:56.071726",
+  "motif_count": 17,
+  "disease_motif_count": 1
+}

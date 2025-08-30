@@ -1,0 +1,22 @@
+{
+  "sequence_index": 16,
+  "sequence_name": "NM_001136001|ABL2|Leukemia, acute myeloid, with eosinophilia (1)|ABL2, ABLL, ARG",
+  "gene_symbol": "ABL2",
+  "disease_info": "Leukemia, acute myeloid, with eosinophilia (1)",
+  "sequence_length": 2133,
+  "gc_content": 52.46132208157525,
+  "total_motifs": 16,
+  "total_disease_motifs": 2,
+  "motif_classes": {
+    "Slipped DNA": 1,
+    "R-loop": 7,
+    "Z-DNA": 3,
+    "Disease-Associated Motif": 2,
+    "Hybrid": 2,
+    "G-Quadruplex Family": 1
+  },
+  "analysis_time": 4.261356353759766,
+  "timestamp": "2025-08-30T06:06:32.278099",
+  "motif_count": 16,
+  "disease_motif_count": 2
+}

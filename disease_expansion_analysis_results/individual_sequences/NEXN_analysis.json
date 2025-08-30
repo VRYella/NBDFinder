@@ -1,0 +1,17 @@
+{
+  "sequence_index": 17,
+  "sequence_name": "NM_001172309|NEXN|Cardiomyopathy, hypertrophic, 20, 613876 (3)|NEXN, NELIN, CMD1CC, CMH20",
+  "gene_symbol": "NEXN",
+  "disease_info": "Cardiomyopathy, hypertrophic, 20, 613876 (3)",
+  "sequence_length": 3090,
+  "gc_content": 36.99029126213592,
+  "total_motifs": 8,
+  "total_disease_motifs": 0,
+  "motif_classes": {
+    "Curved DNA": 8
+  },
+  "analysis_time": 5.952399253845215,
+  "timestamp": "2025-08-30T06:06:38.234433",
+  "motif_count": 8,
+  "disease_motif_count": 0
+}
