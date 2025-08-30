@@ -403,8 +403,29 @@ st.markdown("""
         margin-bottom: 0.25rem !important;
     }
     
+    /* Enhanced selectbox styling for better text visibility - Scientific UI standards */
     .stSelectbox div[data-baseweb="select"] > div, .stTextInput input, .stTextArea textarea {
-        font-size: 0.9rem !important; padding: 6px 8px !important;  /* Reduced from 1.25rem */
+        font-size: 0.95rem !important; /* Slightly larger for readability */
+        padding: 10px 12px !important; /* Increased padding for better text display */
+        line-height: 1.5 !important; /* Improved line spacing per scientific standards */
+        min-width: 300px !important; /* Ensure adequate width for full text display */
+        white-space: normal !important; /* Allow text wrapping for long options */
+    }
+    
+    /* Dropdown option list styling for full text visibility */
+    .stSelectbox div[data-baseweb="select"] div[role="listbox"] {
+        min-width: 300px !important; /* Match selectbox width */
+        max-width: none !important; /* Remove restrictive width constraints */
+    }
+    
+    /* Individual dropdown option styling */
+    .stSelectbox div[data-baseweb="select"] div[role="option"] {
+        padding: 10px 12px !important; /* Adequate padding for text */
+        line-height: 1.5 !important; /* Proper line spacing */
+        white-space: normal !important; /* Allow text wrapping */
+        overflow: visible !important; /* Remove text clipping */
+        text-overflow: initial !important; /* Remove ellipsis truncation */
+        min-height: auto !important; /* Allow height to accommodate wrapped text */
     }
     
     .stCheckbox > label { font-size: 0.9rem; font-weight: 500; color: var(--text); }
@@ -1412,9 +1433,10 @@ with tab_dict["Results & Visualization"]:
                 for result in st.session_state.results:
                     all_motifs_for_viz.extend(result['motifs'])
                 
-                # Call the integrated visualization function
+                # Call the integrated visualization function with main context
                 create_nbdfinder_visualization_interface(all_motifs_for_viz, 
-                                                       sum(r['sequence_length'] for r in st.session_state.results))
+                                                       sum(r['sequence_length'] for r in st.session_state.results),
+                                                       context="main")
         
         # ---- GENOMIC POSITION PLOTS SUBTAB ----
         with result_tabs[2]:
@@ -1606,10 +1628,11 @@ with tab_dict["Results & Visualization"]:
                                     st.markdown("---")
                                     st.markdown("### 📊 Professional Publication Figures")
                                     
-                                    # Call the comprehensive visualization interface
+                                    # Call the comprehensive visualization interface with figures context
                                     create_nbdfinder_visualization_interface(
                                         all_motifs_for_viz, 
-                                        sum(r['sequence_length'] for r in st.session_state.results)
+                                        sum(r['sequence_length'] for r in st.session_state.results),
+                                        context="figures"
                                     )
                                     
                                     st.success("✅ Professional figures generated successfully!")

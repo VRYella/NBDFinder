@@ -47,17 +47,23 @@ class NBDFinderVisualizationHub:
     Central hub for all NBDFinder visualizations, combining legacy and new systems.
     """
     
-    def __init__(self):
-        """Initialize the visualization hub."""
+    def __init__(self, context: str = "default"):
+        """
+        Initialize the visualization hub.
+        
+        Args:
+            context: Context identifier for unique component keys
+        """
+        self.context = context
         self.pub_viz = PublicationVisualizer()
         if LEGACY_VIZ_AVAILABLE:
             self.legacy_viz = AdvancedVisualizer()
         
-        # Streamlit session state keys for caching
+        # Streamlit session state keys for caching (with context to avoid conflicts)
         self.cache_keys = {
-            'last_data_hash': 'nbdf_viz_data_hash',
-            'cached_suite': 'nbdf_viz_suite',
-            'export_cache': 'nbdf_viz_exports'
+            'last_data_hash': f'nbdf_viz_data_hash_{context}',
+            'cached_suite': f'nbdf_viz_suite_{context}',
+            'export_cache': f'nbdf_viz_exports_{context}'
         }
     
     def process_motif_data(self, motifs: List[Dict], sequence_length: int = None) -> pd.DataFrame:
@@ -326,6 +332,16 @@ class NBDFinderVisualizationHub:
         """
         Render content for a specific visualization tab.
         
+        IMPORTANT: Each interactive element (selectbox, etc.) MUST have a unique key
+        to prevent Streamlit duplicate key errors. This is critical for dynamic UI
+        generation and follows React/Streamlit best practices for component keys.
+        
+        Key naming convention: f"{self.context}_{tab_key}_{element_type}_selector"
+        - context: Unique context identifier (main, figures, etc.) to prevent cross-instance conflicts
+        - tab_key: Unique identifier for the visualization tab
+        - element_type: Specific type of selector (plot, heatmap, chart, etc.)
+        - selector: Suffix to indicate this is a UI selector element
+        
         Args:
             tab_key: Key identifying the tab type
             tab_data: Data for this tab
@@ -339,7 +355,8 @@ class NBDFinderVisualizationHub:
             col1, col2 = st.columns([3, 1])
             
             with col2:
-                plot_type = st.selectbox("Plot Type", ["simple", "stacked"], key=f"{tab_key}_type")
+                # Unique key for bar plot type selector to prevent duplicate key errors
+                plot_type = st.selectbox("Plot Type", ["simple", "stacked"], key=f"{self.context}_{tab_key}_plot_selector")
             
             with col1:
                 if plot_type in tab_data:
@@ -350,9 +367,10 @@ class NBDFinderVisualizationHub:
             col1, col2 = st.columns([3, 1])
             
             with col2:
+                # Unique key for heatmap type selector to prevent duplicate key errors
                 heatmap_type = st.selectbox("Heatmap Type", 
                                           ["density", "scores", "cooccurrence"], 
-                                          key=f"{tab_key}_type")
+                                          key=f"{self.context}_{tab_key}_heatmap_selector")
             
             with col1:
                 if heatmap_type in tab_data:
@@ -363,9 +381,10 @@ class NBDFinderVisualizationHub:
             col1, col2 = st.columns([3, 1])
             
             with col2:
+                # Unique key for pie chart type selector to prevent duplicate key errors
                 chart_type = st.selectbox("Chart Type",
                                         ["class_pie", "class_donut", "subtype_donut"],
-                                        key=f"{tab_key}_type",
+                                        key=f"{self.context}_{tab_key}_chart_selector",
                                         format_func=lambda x: x.replace('_', ' ').title())
             
             with col1:
@@ -379,8 +398,9 @@ class NBDFinderVisualizationHub:
                 
                 with col2:
                     available_plots = list(tab_data.keys())
+                    # Unique key for distribution plot selector to prevent duplicate key errors
                     plot_choice = st.selectbox("Distribution Type", available_plots,
-                                             key=f"{tab_key}_type",
+                                             key=f"{self.context}_{tab_key}_distribution_selector",
                                              format_func=lambda x: x.replace('_', ' ').title())
                 
                 with col1:
@@ -394,8 +414,9 @@ class NBDFinderVisualizationHub:
                 
                 with col2:
                     available_plots = list(tab_data.keys())
+                    # Unique key for bubble plot selector to prevent duplicate key errors
                     plot_choice = st.selectbox("Relationship", available_plots,
-                                             key=f"{tab_key}_type",
+                                             key=f"{self.context}_{tab_key}_bubble_selector",
                                              format_func=lambda x: x.replace('_', ' vs ').title())
                 
                 with col1:
@@ -409,8 +430,9 @@ class NBDFinderVisualizationHub:
                 
                 with col2:
                     available_plots = list(tab_data.keys())
+                    # Unique key for sankey plot selector to prevent duplicate key errors
                     plot_choice = st.selectbox("Flow Type", available_plots,
-                                             key=f"{tab_key}_type",
+                                             key=f"{self.context}_{tab_key}_sankey_selector",
                                              format_func=lambda x: x.replace('_', ' → ').title())
                 
                 with col1:
@@ -648,20 +670,21 @@ class NBDFinderVisualizationHub:
 
 
 # Convenience functions for integration with existing NBDFinder app
-def create_nbdfinder_visualization_interface(motifs: List[Dict], sequence_length: int = None) -> None:
+def create_nbdfinder_visualization_interface(motifs: List[Dict], sequence_length: int = None, context: str = "default") -> None:
     """
     Main interface function for NBDFinder Streamlit app integration.
     
     Args:
         motifs: List of motif dictionaries from NBDFinder analysis
         sequence_length: Length of analyzed sequence
+        context: Context identifier to ensure unique component keys (default, figures, etc.)
     """
     if not motifs:
         st.warning("No motifs detected. Please run analysis first.")
         return
     
-    # Initialize visualization hub
-    viz_hub = NBDFinderVisualizationHub()
+    # Initialize visualization hub with context for unique keys
+    viz_hub = NBDFinderVisualizationHub(context=context)
     
     # Process motif data
     motifs_df = viz_hub.process_motif_data(motifs, sequence_length)
