@@ -211,487 +211,392 @@ def add_floating_back_to_top():
 
 
 
-# =========================================================================
-# CONSOLIDATED CSS DESIGN SYSTEM - SCIENTIFIC DASHBOARD STANDARDS
-# =========================================================================
-# Based on:
-# - WCAG 2.1 AA accessibility guidelines for color contrast and navigation
-# - Material Design Component spacing (8px grid system) for consistency
-# - Nature Publishing typography standards for scientific readability
-# - Inter Design System font specifications for modern web interfaces
-
+# ---------- CONSOLIDATED COMPACT DESIGN SYSTEM ----------
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     
     :root {
-        /* Scientific Color Palette - Nature/Science Journal Standards */
-        --primary: #1e3a8a;         /* Deep blue - trust, reliability */
-        --accent: #0891b2;          /* Cyan - data visualization */
-        --secondary: #6366f1;       /* Indigo - interactive elements */
-        --success: #10b981;         /* Emerald - positive feedback */
-        --warning: #f59e0b;         /* Amber - attention */
-        --error: #ef4444;           /* Red - alerts */
-        --info: #3b82f6;           /* Blue - information */
-        
-        /* Neutral palette for scientific interfaces */
-        --text: #1f2937;           /* Primary text - high contrast (WCAG AA) */
-        --text-muted: #6b7280;     /* Secondary text - accessible gray */
-        --text-light: #9ca3af;     /* Tertiary text - subtle information */
-        --bg: #ffffff;             /* Clean white background */
-        --surface: #f8fafc;        /* Elevated surface color */
-        --border: #e5e7eb;         /* Subtle borders */
-        --border-focus: #3b82f6;   /* Focus indication */
-        
-        /* Typography System - Scientific Standards */
-        /* Base font size: 16px = 1rem (following Material Design) */
-        --font-base: 1rem;         /* 16px - primary text */
-        --font-sm: 0.95rem;        /* 15.2px - table/label text */
-        --font-xs: 0.92rem;        /* 14.7px - caption text */
-        --font-button: 0.97rem;    /* 15.5px - button text */
-        
-        /* Header hierarchy - Nature/Science journal standards */
-        --h1-size: 2.2rem;         /* 35.2px - main titles */
-        --h2-size: 1.6rem;         /* 25.6px - section headers */
-        --h3-size: 1.3rem;         /* 20.8px - subsection headers */
-        --h4-size: 1.1rem;         /* 17.6px - component headers */
-        
-        /* Line height specifications - optimal readability */
-        --line-height-body: 1.5;   /* Body text - readability standard */
-        --line-height-heading: 1.2; /* Headings - compact hierarchy */
-        
-        /* Spacing System - Material Design 8px grid */
-        --space-1: 0.5rem;         /* 8px */
-        --space-2: 1rem;           /* 16px */
-        --space-3: 1.5rem;         /* 24px */
-        --space-4: 2rem;           /* 32px */
-        --space-5: 2.5rem;         /* 40px */
-        --space-6: 3rem;           /* 48px */
-        
-        /* Visual effects - subtle and professional */
-        --radius: 0.5rem;          /* 8px - consistent with grid */
-        --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        /* Professional color scheme optimized for compact interface */
+        --primary: #1e3a8a;
+        --accent: #0891b2;
+        --secondary: #6366f1;
+        --tertiary: #7c3aed;
+        --quaternary: #059669;
+        --text: #1f2937;
+        --text-muted: #6b7280;
+        --bg: linear-gradient(135deg, #f8fafc 0%, #ffffff 50%, #fef3c7 100%);
+        --surface: #ffffff;
+        --border: #e5e7eb;
+        --border-accent: #d1d5db;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --error: #ef4444;
+        --info: #3b82f6;
+        --purple: #8b5cf6;
+        --pink: #ec4899;
+        --orange: #f97316;
+        --radius: 6px;  /* Reduced from 12px for compactness */
+        --shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.06); 
+        --shadow-lg: 0 4px 8px -2px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.05);
+        --shadow-colored: 0 4px 12px -2px rgba(30, 58, 138, 0.25);
+        --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);  /* Faster transitions */
     }
     
-    /* GLOBAL LAYOUT - SCIENTIFIC INTERFACE STANDARDS */
+    /* GLOBAL LAYOUT - COMPACT SPACING */
     body, [data-testid="stAppViewContainer"], .main {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        font-size: var(--font-base);
-        line-height: var(--line-height-body);
-        color: var(--text);
-        background-color: var(--bg);
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
+        background: var(--bg); font-family: Inter, sans-serif; color: var(--text); 
+        line-height: 1.4; min-height: 100vh;  /* Reduced line-height from 1.6 */
     }
     
-    .main .block-container {
-        padding: var(--space-3) var(--space-4);
-        max-width: none;
-        width: 100%;
+    .main .block-container { 
+        padding: 1rem 1.5rem; max-width: none; width: 100%;  /* Reduced from 2rem 3rem */
     }
     .stApp > .main { width: 100%; max-width: none; }
     [data-testid="stAppViewContainer"] { width: 100%; max-width: none; }
 
-    /* TYPOGRAPHY SYSTEM - SCIENTIFIC HIERARCHY */
+    /* COMPACT TYPOGRAPHY */
     h1, h2, h3, h4, h5, h6 {
-        font-family: 'Inter', sans-serif;
-        font-weight: 600;
-        line-height: var(--line-height-heading);
-        color: var(--primary);
-        margin: var(--space-2) 0 var(--space-1) 0;
-        letter-spacing: -0.025em;
-    }
-    
-    h1 { 
-        font-size: var(--h1-size); 
-        font-weight: 700; 
+        font-family: Inter, sans-serif; font-weight: 600; letter-spacing: -0.015em;
+        line-height: 1.2; margin: 0.5rem 0 0.3rem; color: var(--primary);  /* Dramatically reduced margins */
         background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         background-clip: text;
     }
-    h2 { font-size: var(--h2-size); font-weight: 650; }
-    h3 { font-size: var(--h3-size); font-weight: 600; }
-    h4 { font-size: var(--h4-size); font-weight: 600; }
+    h1 { font-size: 2.5rem; font-weight: 700; }  /* Reduced from 4.5rem */
+    h2 { font-size: 1.8rem; font-weight: 650; }  /* Reduced from 3.25rem */
+    h3 { font-size: 1.4rem; font-weight: 600; }  /* Reduced from 2.75rem */
+    h4 { font-size: 1.2rem; font-weight: 600; }  /* Reduced from 2.25rem */
+    h5 { font-size: 1.1rem; font-weight: 550; }  /* Reduced from 1.875rem */
+    h6 { font-size: 1rem; font-weight: 500; }    /* Reduced from 1.625rem */
     
-    /* Body text and components */
-    .stMarkdown, .markdown-text-container, p, span, label {
-        font-family: 'Inter', sans-serif;
-        font-size: var(--font-base);
-        line-height: var(--line-height-body);
-        color: var(--text);
-        margin-bottom: var(--space-1);
+    .stMarkdown, .markdown-text-container, .stText, p, span, label, input {
+        font-family: Inter, sans-serif; font-size: 1rem; line-height: 1.4;  /* Reduced from 1.375rem */
+        color: var(--text); font-weight: 400; margin-bottom: 0.5rem;  /* Reduced from 1.5rem */
     }
+    .stMarkdown p { margin-bottom: 0.5rem; font-size: 1rem; }  /* Reduced from 1.375rem */
     
-    /* ENHANCED NAVIGATION TABS - SCIENTIFIC INTERFACE */
+    /* ENHANCED TABS - Improved readability and unique colors */
     .stTabs [data-baseweb="tab-list"] {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        padding: var(--space-1);
-        margin-bottom: var(--space-3);
-        box-shadow: var(--shadow);
-        display: flex;
-        gap: 4px;
+        background: linear-gradient(135deg, var(--surface) 0%, rgba(248,250,252,0.95) 100%);
+        border: 1px solid var(--border); border-radius: 12px; padding: 8px; margin-bottom: 1.5rem;
+        box-shadow: var(--shadow); display: flex; gap: 4px; width: 100%;
         backdrop-filter: blur(10px);
     }
-    
     .stTabs [data-baseweb="tab"] {
-        background: transparent;
-        border: none;
-        border-radius: calc(var(--radius) - 2px);
-        font-family: 'Inter', sans-serif;
-        font-weight: 500;
-        font-size: var(--font-base);
-        color: var(--text-muted);
-        padding: var(--space-2) var(--space-3);
-        transition: var(--transition);
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        white-space: nowrap;
-        flex: 1;
-        min-height: 48px; /* WCAG 2.1 touch target minimum */
-        text-align: center;
+        background: transparent; border: none; border-radius: 10px;
+        font-family: Inter, sans-serif; font-weight: 600; font-size: 1.1rem;  /* Enhanced font styling */
+        color: var(--text-muted); padding: 14px 24px; transition: var(--transition);
+        cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+        white-space: nowrap; flex: 1; letter-spacing: -0.01em; margin: 0;
+        min-height: 48px; text-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
     
+    /* Enhanced hover effects */
     .stTabs [data-baseweb="tab"]:hover {
-        background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, var(--surface) 100%);
-        color: var(--primary);
-        font-weight: 600;
-        transform: translateY(-1px);
-        box-shadow: var(--shadow);
-        border: 1px solid var(--border-focus);
+        background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.98) 100%); 
+        color: var(--primary); font-weight: 700;
+        transform: translateY(-2px); box-shadow: var(--shadow);
+        border: 1px solid rgba(30,58,138,0.1);
     }
     
-    .stTabs [aria-selected="true"] {
-        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-        color: white;
-        font-weight: 600;
-        box-shadow: var(--shadow-md);
-        transform: translateY(-1px);
+    /* Individual tab colors for better distinction */
+    .stTabs [data-baseweb="tab"]:nth-child(1):hover {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        color: white; font-weight: 700; transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    .stTabs [data-baseweb="tab"]:nth-child(2):hover {
+        background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+        color: white; font-weight: 700; transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .stTabs [data-baseweb="tab"]:nth-child(3):hover {
+        background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+        color: white; font-weight: 700; transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+        border: 1px solid rgba(139, 92, 246, 0.3);
+    }
+    .stTabs [data-baseweb="tab"]:nth-child(4):hover {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white; font-weight: 700; transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    .stTabs [data-baseweb="tab"]:nth-child(5):hover {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white; font-weight: 700; transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    
+    /* Enhanced active tab styles with unique colors */
+    .stTabs [aria-selected="true"]:nth-child(1) {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        color: white; font-weight: 700; font-size: 1.15rem;
+        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5); transform: translateY(-2px);
         border: 1px solid rgba(255,255,255,0.2);
     }
-    /* FORM CONTROLS - ACCESSIBLE AND SCIENTIFIC */
-    .stSelectbox > div, .stMultiSelect > div, .stTextInput > div, .stTextArea > div {
-        background: var(--bg);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        transition: var(--transition);
-        margin-bottom: var(--space-1);
+    .stTabs [aria-selected="true"]:nth-child(2) {
+        background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+        color: white; font-weight: 700; font-size: 1.15rem;
+        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5); transform: translateY(-2px);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    .stTabs [aria-selected="true"]:nth-child(3) {
+        background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+        color: white; font-weight: 700; font-size: 1.15rem;
+        box-shadow: 0 8px 25px rgba(139, 92, 246, 0.5); transform: translateY(-2px);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    .stTabs [aria-selected="true"]:nth-child(4) {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white; font-weight: 700; font-size: 1.15rem;
+        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.5); transform: translateY(-2px);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    .stTabs [aria-selected="true"]:nth-child(5) {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white; font-weight: 700; font-size: 1.15rem;
+        box-shadow: 0 8px 25px rgba(239, 68, 68, 0.5); transform: translateY(-2px);
+        border: 1px solid rgba(255,255,255,0.2);
     }
     
+    /* ENHANCED SUBTAB STYLING */
+    .stTabs .stTabs [data-baseweb="tab-list"] {
+        background: linear-gradient(135deg, rgba(248,250,252,0.8) 0%, rgba(241,245,249,0.9) 100%);
+        border: 1px solid rgba(203,213,225,0.8); border-radius: 10px; padding: 6px;
+        margin: 10px 0 20px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .stTabs .stTabs [data-baseweb="tab"] {
+        font-size: 1.0rem; font-weight: 600; padding: 10px 18px;
+        color: #475569; border-radius: 8px; min-height: 40px;
+    }
+    .stTabs .stTabs [data-baseweb="tab"]:hover {
+        background: linear-gradient(135deg, rgba(248,250,252,0.95) 0%, rgba(255,255,255,0.98) 100%);
+        color: var(--primary); font-weight: 700;
+        transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .stTabs .stTabs [aria-selected="true"] {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        color: white; font-weight: 700; font-size: 1.05rem;
+        box-shadow: 0 4px 15px rgba(30,58,138,0.3); transform: translateY(-1px);
+    }
+    
+    /* COMPACT FORM CONTROLS */
+    .stSelectbox > div, .stMultiSelect > div, .stTextInput > div, .stTextArea > div {
+        background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); 
+        transition: var(--transition); margin-bottom: 0.5rem;  /* Added margin control */
+    }
     .stSelectbox > div:hover, .stMultiSelect > div:hover, .stTextInput > div:hover, .stTextArea > div:hover {
         border-color: var(--accent);
     }
-    
     .stSelectbox > div:focus-within, .stMultiSelect > div:focus-within, .stTextInput > div:focus-within, .stTextArea > div:focus-within {
-        border-color: var(--border-focus);
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        outline: none;
+        border-color: var(--primary); box-shadow: 0 0 0 2px rgba(30,64,175,0.1);
     }
     
-    /* Label styling for accessibility */
     .stSelectbox label, .stMultiSelect label, .stTextInput label, .stTextArea label,
     .stSlider label, .stRadio label, .stCheckbox label {
-        font-size: var(--font-sm) !important;
-        font-weight: 500;
-        color: var(--text);
-        margin-bottom: var(--space-1) !important;
+        font-size: 0.9rem !important; font-weight: 500;  /* Reduced from 1.25rem */
+        margin-bottom: 0.25rem !important;
     }
     
-    /* Enhanced selectbox for scientific data display */
+    /* Enhanced selectbox styling for better text visibility - Scientific UI standards */
     .stSelectbox div[data-baseweb="select"] > div, .stTextInput input, .stTextArea textarea {
-        font-size: var(--font-sm) !important;
-        padding: var(--space-2) !important;
-        line-height: var(--line-height-body) !important;
-        min-width: 300px !important;
-        white-space: normal !important;
+        font-size: 0.95rem !important; /* Slightly larger for readability */
+        padding: 10px 12px !important; /* Increased padding for better text display */
+        line-height: 1.5 !important; /* Improved line spacing per scientific standards */
+        min-width: 300px !important; /* Ensure adequate width for full text display */
+        white-space: normal !important; /* Allow text wrapping for long options */
     }
     
     /* Dropdown option list styling for full text visibility */
     .stSelectbox div[data-baseweb="select"] div[role="listbox"] {
-        min-width: 300px !important;
-        max-width: none !important;
+        min-width: 300px !important; /* Match selectbox width */
+        max-width: none !important; /* Remove restrictive width constraints */
     }
     
     /* Individual dropdown option styling */
     .stSelectbox div[data-baseweb="select"] div[role="option"] {
-        padding: var(--space-2) !important;
-        line-height: var(--line-height-body) !important;
-        white-space: normal !important;
-        overflow: visible !important;
-        text-overflow: initial !important;
-        min-height: auto !important;
-    }
-    /* BUTTON SYSTEM - SCIENTIFIC INTERFACE */
-    .stButton > button {
-        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-        color: white;
-        border: none;
-        border-radius: var(--radius);
-        font-family: 'Inter', sans-serif;
-        font-weight: 700;
-        font-size: var(--font-button);
-        padding: var(--space-2) var(--space-3);
-        transition: var(--transition);
-        box-shadow: var(--shadow);
-        cursor: pointer;
-        margin: var(--space-1) 0;
-        min-height: 44px; /* WCAG 2.1 touch target minimum */
+        padding: 10px 12px !important; /* Adequate padding for text */
+        line-height: 1.5 !important; /* Proper line spacing */
+        white-space: normal !important; /* Allow text wrapping */
+        overflow: visible !important; /* Remove text clipping */
+        text-overflow: initial !important; /* Remove ellipsis truncation */
+        min-height: auto !important; /* Allow height to accommodate wrapped text */
     }
     
+    .stCheckbox > label { font-size: 0.9rem; font-weight: 500; color: var(--text); }
+    
+    .stRadio > div { display: flex; gap: 8px; flex-wrap: wrap; }  /* Reduced from 16px */
+    .stRadio > div > label {
+        background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+        padding: 6px 12px; margin: 2px; font-size: 0.9rem; font-weight: 500;  /* Reduced padding and margin */
+        transition: var(--transition); cursor: pointer; min-width: 80px; text-align: center;  /* Reduced min-width */
+    }
+    .stRadio > div > label:hover {
+        border-color: var(--accent); background: rgba(8,145,178,0.05);
+    }
+    .stRadio > div > label[data-checked="true"] {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+        color: white; border-color: var(--primary); font-weight: 600;
+    }
+    
+    /* COMPACT BUTTONS */
+    .stButton > button {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+        color: white; border: none; border-radius: var(--radius); font-family: Inter, sans-serif;
+        font-weight: 500; font-size: 0.9rem; padding: 8px 16px; transition: var(--transition);  /* Reduced from 16px 32px */
+        box-shadow: var(--shadow); cursor: pointer; margin: 0.25rem 0;
+    }
     .stButton > button:hover {
-        transform: translateY(-1px);
-        box-shadow: var(--shadow-md);
+        transform: translateY(-1px); box-shadow: var(--shadow-colored);  /* Reduced transform */
         background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);
     }
     
-    .stButton > button:disabled {
-        background: var(--text-light);
-        color: var(--text-muted);
-        cursor: not-allowed;
-        transform: none;
-        box-shadow: none;
-    }
-    
     .stDownloadButton > button {
-        background: linear-gradient(135deg, var(--success) 0%, #047857 100%);
-        color: white;
-        border: none;
-        border-radius: var(--radius);
-        font-family: 'Inter', sans-serif;
-        font-weight: 600;
-        font-size: var(--font-sm);
-        padding: var(--space-2);
-        transition: var(--transition);
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white; border: none; border-radius: var(--radius); font-family: Inter, sans-serif;
+        font-weight: 500; font-size: 0.85rem; padding: 6px 12px; transition: var(--transition);  /* Reduced sizes */
         box-shadow: var(--shadow);
-        min-height: 44px;
     }
-    
     .stDownloadButton > button:hover {
-        transform: translateY(-1px);
-        box-shadow: var(--shadow-md);
+        transform: translateY(-1px); box-shadow: 0 2px 8px rgba(16,185,129,0.3);
     }
     
-    /* DATA TABLES - SCIENTIFIC PRESENTATION */
+    /* COMPACT DATA TABLES WITH SCROLLING */
     .stDataFrame {
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        overflow: hidden;
-        box-shadow: var(--shadow);
-        margin: var(--space-2) 0;
-        max-height: 400px;
-        overflow-y: auto;
+        border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
+        box-shadow: var(--shadow); margin: 0.5rem 0; max-height: 400px; overflow-y: auto;  /* Added max-height and scrolling */
     }
     
-    .stDataFrame table {
-        font-family: 'Inter', sans-serif;
-        font-size: var(--font-sm);
-    }
+    .stDataFrame table { font-family: Inter, sans-serif; font-size: 0.85rem; }  /* Reduced from 1.05rem */
     
     .stDataFrame thead tr th {
         background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-        color: white;
-        font-weight: 600;
-        font-size: var(--font-sm);
-        padding: var(--space-2);
-        text-align: left;
-        border: none;
-        position: sticky;
-        top: 0;
-        z-index: 10;
+        color: white; font-weight: 600; font-size: 0.9rem; padding: 8px 12px;  /* Reduced from 18px 16px */
+        text-align: left; border: none; position: sticky; top: 0; z-index: 10;  /* Sticky headers */
     }
     
-    .stDataFrame tbody tr:nth-child(even) {
-        background: var(--surface);
-    }
-    
-    .stDataFrame tbody tr:hover {
-        background: rgba(59, 130, 246, 0.05);
-        transition: background 0.2s ease;
-    }
+    .stDataFrame tbody tr:nth-child(even) { background: rgba(248,250,252,0.8); }
+    .stDataFrame tbody tr:hover { background: rgba(8,145,178,0.08); transition: background 0.2s ease; }
     
     .stDataFrame tbody tr td {
-        padding: var(--space-2);
-        border-bottom: 1px solid var(--border);
-        font-weight: 400;
-        color: var(--text);
-        font-size: var(--font-sm);
+        padding: 6px 12px; border-bottom: 1px solid var(--border);  /* Reduced from 16px 14px */
+        font-weight: 400; color: var(--text); font-size: 0.85rem;
     }
     
-    /* METRICS AND CARDS - SCIENTIFIC DASHBOARD */
+    /* COMPACT METRICS */
     .metric-card {
-        background: var(--bg);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        padding: var(--space-3);
-        margin: var(--space-2) 0;
-        box-shadow: var(--shadow);
-        transition: var(--transition);
+        background: linear-gradient(135deg, var(--surface) 0%, rgba(248,250,252,0.9) 100%); 
+        border: 1px solid var(--border); border-radius: var(--radius);
+        padding: 12px; margin: 6px 0; box-shadow: var(--shadow); transition: var(--transition);  /* Reduced padding and margin */
     }
-    
     .metric-card:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-lg);
+        transform: translateY(-2px); box-shadow: var(--shadow-colored);
         border-color: var(--accent);
     }
     
     .metric-card h3 {
         background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        font-size: var(--h2-size);
-        font-weight: 700;
-        margin: 0;
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        background-clip: text; font-size: 1.8rem; font-weight: 700; margin: 0;  /* Reduced from 3rem */
         text-align: center;
     }
-    
     .metric-card p {
-        color: var(--text-muted);
-        font-size: var(--font-sm);
-        font-weight: 500;
-        margin: var(--space-1) 0 0 0;
+        color: var(--text-muted); font-size: 0.9rem; font-weight: 500; margin: 6px 0 0 0;  /* Reduced from 1.25rem */
         text-align: center;
     }
     
-    /* MESSAGES AND ALERTS - ACCESSIBLE FEEDBACK */
+    /* COMPACT MESSAGES */
     .stSuccess, .stError, .stWarning, .stInfo {
-        border-radius: var(--radius);
-        padding: var(--space-2);
-        font-family: 'Inter', sans-serif;
-        font-weight: 500;
-        font-size: var(--font-base);
-        box-shadow: var(--shadow);
-        margin: var(--space-2) 0;
-        border-left-width: 4px;
-        border-left-style: solid;
+        border-radius: var(--radius); padding: 8px 12px; font-family: Inter, sans-serif; 
+        font-weight: 500; font-size: 0.9rem; box-shadow: var(--shadow); margin: 0.5rem 0;  /* Reduced padding */
     }
     
     .stSuccess {
-        background: #d1fae5;
-        border-left-color: var(--success);
-        color: #065f46;
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        border: 1px solid #10b981; border-left: 4px solid #10b981;  /* Reduced border width */
     }
     
     .stError {
-        background: #fee2e2;
-        border-left-color: var(--error);
-        color: #991b1b;
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        border: 1px solid #ef4444; border-left: 4px solid #ef4444;
     }
     
     .stWarning {
-        background: #fef3c7;
-        border-left-color: var(--warning);
-        color: #92400e;
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        border: 1px solid #f59e0b; border-left: 4px solid #f59e0b;
     }
     
     .stInfo {
-        background: #dbeafe;
-        border-left-color: var(--info);
-        color: #1e40af;
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        border: 1px solid #3b82f6; border-left: 4px solid #3b82f6;
     }
     
-    /* RESPONSIVE DESIGN - MOBILE/TABLET SUPPORT */
-    @media (max-width: 768px) {
-        :root {
-            --font-base: 0.9rem;      /* Slightly smaller on mobile */
-            --font-sm: 0.85rem;
-            --h1-size: 1.8rem;
-            --h2-size: 1.4rem;
-            --h3-size: 1.2rem;
-            --h4-size: 1.0rem;
-            --space-2: 0.75rem;       /* Tighter spacing on mobile */
-            --space-3: 1rem;
-            --space-4: 1.5rem;
-        }
-        
-        .main .block-container {
-            padding: var(--space-2) var(--space-2);
-        }
-        
-        .stTabs [data-baseweb="tab"] {
-            padding: var(--space-1) var(--space-2);
-            font-size: var(--font-sm);
-        }
-    }
-    
-    /* ACCESSIBILITY ENHANCEMENTS - WCAG 2.1 AA COMPLIANCE */
-    /* Focus indicators for keyboard navigation */
-    .stButton > button:focus-visible,
-    .stSelectbox > div:focus-within,
-    .stTextInput > div:focus-within {
-        outline: 2px solid var(--border-focus);
-        outline-offset: 2px;
-    }
-    
-    /* High contrast mode support */
-    @media (prefers-contrast: high) {
-        :root {
-            --text: #000000;
-            --bg: #ffffff;
-            --border: #333333;
-            --primary: #0000ff;
-        }
-    }
-    
-    /* Reduced motion for accessibility */
-    @media (prefers-reduced-motion: reduce) {
-        * {
-            animation-duration: 0.01ms !important;
-            animation-iteration-count: 1 !important;
-            transition-duration: 0.01ms !important;
-        }
-    }
-    
-    /* FLOATING ELEMENTS - PROFESSIONAL TOUCH */
-    #back-to-top {
-        position: fixed;
-        bottom: var(--space-3);
-        right: var(--space-3);
-        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-        color: white;
-        padding: var(--space-2);
-        border-radius: 50%;
-        cursor: pointer;
-        box-shadow: var(--shadow-lg);
-        z-index: 1000;
-        font-weight: 600;
-        font-size: var(--font-sm);
+    /* COMPACT EXPANDERS */
+    .streamlit-expanderHeader {
+        background: linear-gradient(135deg, var(--surface) 0%, rgba(248,250,252,0.9) 100%);
+        border: 1px solid var(--border); border-radius: var(--radius);
+        font-weight: 500; font-size: 0.95rem; padding: 8px 12px; margin: 6px 0;  /* Reduced sizes */
         transition: var(--transition);
-        border: none;
-        width: 48px;
-        height: 48px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
     }
     
-    #back-to-top:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-lg);
+    .streamlit-expanderHeader:hover {
+        border-color: var(--accent); box-shadow: var(--shadow); transform: translateY(-1px);
     }
     
-    /* CUSTOM COMPONENTS - SCIENTIFIC CARDS */
-    .feature-card {
-        background: var(--bg);
-        border: 1px solid var(--border);
+    .streamlit-expanderContent {
+        background: var(--surface); border: 1px solid var(--border); border-top: none;
+        border-radius: 0 0 var(--radius) var(--radius); padding: 8px 12px;  /* Added padding control */
+    }
+    
+    /* COMPACT PLOTS */
+    .js-plotly-plot {
+        border-radius: var(--radius); box-shadow: var(--shadow);
+        border: 1px solid var(--border); overflow: hidden; margin: 0.5rem 0;  /* Reduced margin */
+    }
+    
+    /* COMPACT SIDEBAR */
+    .css-1d391kg {
+        background: linear-gradient(180deg, var(--surface) 0%, rgba(248,250,252,0.95) 100%);
+        border-right: 1px solid var(--border);
+    }
+    
+    /* COMPACT PROGRESS AND SPINNERS */
+    .stProgress .st-bo {
+        background: linear-gradient(90deg, var(--accent) 0%, var(--primary) 100%);
         border-radius: var(--radius);
-        padding: var(--space-3);
-        margin: var(--space-2) 0;
-        box-shadow: var(--shadow);
-        transition: var(--transition);
     }
     
+    .stSpinner {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+        border-radius: 50%; animation: pulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    
+    /* COMPACT FLOATING BACK TO TOP BUTTON */
+    #back-to-top {
+        position: fixed; bottom: 15px; right: 15px;  /* Reduced from 20px */
+        background: linear-gradient(135deg, #1e3a8a 0%, #0891b2 100%);
+        color: white; padding: 8px 12px; border-radius: 25px; cursor: pointer;  /* Reduced padding */
+        box-shadow: var(--shadow); z-index: 1000; font-weight: 600; font-size: 0.8rem;  /* Reduced font size */
+        transition: var(--transition); border: none; backdrop-filter: blur(10px);
+    }
+    #back-to-top:hover {
+        transform: translateY(-1px); box-shadow: var(--shadow-colored);  /* Reduced transform */
+    }
+    
+    /* CUSTOM CARDS - COMPACT */
+    .feature-card {
+        background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+        padding: 12px; margin: 8px 0; box-shadow: var(--shadow); transition: var(--transition);  /* Reduced padding and margin */
+    }
     .feature-card:hover {
-        transform: translateY(-1px);
-        box-shadow: var(--shadow-md);
-        border-color: var(--accent);
+        transform: translateY(-2px); box-shadow: var(--shadow-lg);
     }
     </style>
     """, unsafe_allow_html=True)
@@ -719,65 +624,19 @@ MAIN_PAGES = {
     "Documentation": "Scientific Documentation & References"
 }
 
-# =========================================================================
-# ENHANCED SESSION STATE MANAGEMENT - COMPREHENSIVE PERSISTENCE
-# =========================================================================
-# Following React/Streamlit best practices for state management
-
-def initialize_session_state():
-    """
-    Initialize comprehensive session state for scientific dashboard application.
-    
-    Ensures all interactive elements maintain state across user interactions,
-    following WCAG 2.1 guidelines for consistent user experience.
-    """
-    # Core application state
-    if 'current_page' not in st.session_state:
-        st.session_state.current_page = "Home"
-    
-    # Data management state
-    if 'seqs' not in st.session_state:
-        st.session_state.seqs = []
-    if 'names' not in st.session_state:
-        st.session_state.names = []
-    if 'results' not in st.session_state:
-        st.session_state.results = []
-    
-    # Analysis configuration state
-    if 'analysis_settings' not in st.session_state:
-        st.session_state.analysis_settings = {
-            'motif_classes': list(MOTIF_COLORS.keys()),
-            'sensitivity': 'High',
-            'min_motif_length': 10,
-            'max_motif_length': 200,
-            'overlap_threshold': 50,
-            'quality_filter': True,
-            'parallel_processing': True,
-            'memory_optimization': True
-        }
-    
-    # UI state management
-    if 'input_method' not in st.session_state:
-        st.session_state.input_method = "📁 Upload FASTA"
-    if 'ncbi_query' not in st.session_state:
-        st.session_state.ncbi_query = ""
-    if 'last_input_method' not in st.session_state:
-        st.session_state.last_input_method = ""
-    
-    # Analysis execution state
-    if 'analysis_running' not in st.session_state:
-        st.session_state.analysis_running = False
-    if 'analysis_complete' not in st.session_state:
-        st.session_state.analysis_complete = False
-    
-    # User preferences and accessibility
-    if 'theme_preference' not in st.session_state:
-        st.session_state.theme_preference = "light"
-    if 'font_size_preference' not in st.session_state:
-        st.session_state.font_size_preference = "normal"
-
 # Initialize session state
-initialize_session_state()
+if 'current_page' not in st.session_state:
+    st.session_state.current_page = "Home"
+if 'seqs' not in st.session_state:
+    st.session_state.seqs = []
+if 'names' not in st.session_state:
+    st.session_state.names = []
+if 'results' not in st.session_state:
+    st.session_state.results = []
+if 'analysis_settings' not in st.session_state:
+    st.session_state.analysis_settings = {}
+if 'ncbi_query' not in st.session_state:
+    st.session_state.ncbi_query = ""
 
 # Set up Entrez for NCBI access with lazy initialization
 @st.cache_data(ttl=3600)
@@ -969,801 +828,15 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# =========================================================================
-# MODULAR TAB FUNCTIONS - SCIENTIFIC DASHBOARD ARCHITECTURE
-# =========================================================================
-# Each tab implemented as a standalone function following scientific software
-# development best practices and clear separation of concerns
-
-def render_home_tab():
-    """
-    Render the Home/Welcome tab with comprehensive platform overview.
-    
-    Features:
-    - Visual introduction to Non-B DNA structures
-    - Complete classification system display
-    - Interactive feature highlights
-    - Scientific methodology overview
-    
-    Design: Follows Nature/Science journal layout standards
-    """
-    col1, col2 = st.columns([1.2, 1])
-    
-    with col1:
-        # Display main image with scientific caption
-        try:
-            st.image("nbdcircle.JPG", use_container_width=True, 
-                    caption="Non-B DNA structural diversity: From canonical B-form to complex alternative conformations")
-        except:
-            st.info("💡 Main image not found. Please ensure nbdcircle.JPG is in the working directory.")
-    
-    with col2:
-        st.markdown("""
-        <div class="feature-card">
-            <h3 style='color: #1e3a8a; margin-top: 0; margin-bottom: 20px; font-size: 1.25rem; font-weight: 600;'>
-                🧬 10 Non-B DNA Classes & 22+ Subclasses
-            </h3>
-            <div style='font-size: 0.9rem; line-height: 1.4;'>
-                <strong style='color: #1e3a8a;'>Complete Classification System:</strong>
-                <ul style='margin: 8px 0; padding-left: 16px;'>
-                    <li>10 Primary structural classes</li>
-                    <li>22+ Official subclasses</li>
-                    <li>Dynamic hybrid detection</li>
-                    <li>Cluster region analysis</li>
-                </ul>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    # Scientific classification system display
-    st.markdown("---")
-    st.markdown("""
-    <div style='margin: 20px 0;'>
-        <h3 style='color: #1e3a8a; font-weight: 600; margin-bottom: 20px; text-align: center;'>
-            📚 Complete Non-B DNA Classification System
-        </h3>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Import classification system
-    from motifs.classification_config import OFFICIAL_CLASSIFICATION
-    
-    # Organize classes in two columns for optimal display
-    col1, col2 = st.columns(2)
-    
-    classes_list = list(OFFICIAL_CLASSIFICATION.items())
-    col1_classes = classes_list[:5]  # Classes 1-5
-    col2_classes = classes_list[5:]  # Classes 6-10
-    
-    with col1:
-        for class_id, class_info in col1_classes:
-            class_name = class_info['class_name']
-            subclasses = class_info['subclasses']
-            
-            with st.expander(f"**{class_id}. {class_name}**", expanded=False):
-                if subclasses:
-                    st.markdown("**Subclasses:**")
-                    for subclass in subclasses:
-                        st.markdown(f"• {subclass}")
-                    st.markdown(f"*Total subclasses: {len(subclasses)}*")
-                else:
-                    if class_name == "Hybrid":
-                        st.markdown("*Dynamic combinations of multiple motif classes*")
-                    elif class_name == "Non-B DNA Clusters":
-                        st.markdown("*Regions with multiple overlapping non-B DNA structures*")
-                    else:
-                        st.markdown("*Primary class with canonical structure*")
-    
-    with col2:
-        for class_id, class_info in col2_classes:
-            class_name = class_info['class_name']
-            subclasses = class_info['subclasses']
-            
-            with st.expander(f"**{class_id}. {class_name}**", expanded=False):
-                if subclasses:
-                    st.markdown("**Subclasses:**")
-                    for subclass in subclasses:
-                        st.markdown(f"• {subclass}")
-                    st.markdown(f"*Total subclasses: {len(subclasses)}*")
-                else:
-                    st.markdown("*Primary class with canonical structure*")
-
-def render_upload_analyze_tab():
-    """
-    Render the Upload & Analyze tab with comprehensive sequence input and analysis controls.
-    
-    Features:
-    - Multiple input methods (Upload, Paste, Examples, NCBI)
-    - Scientific parameter configuration
-    - Real-time analysis execution with progress tracking
-    - Performance optimization controls
-    
-    Design: Form-based interface following Material Design principles
-    Accessibility: WCAG 2.1 AA compliant with keyboard navigation
-    """
-    st.markdown("### 📊 Sequence Input")
-    
-    # Enhanced input method selection with help tooltips
-    input_method = st.selectbox(
-        "Choose input method:",
-        ["📁 Upload FASTA", "✏️ Paste Sequence", "🔬 Example", "🌐 NCBI"],
-        index=["📁 Upload FASTA", "✏️ Paste Sequence", "🔬 Example", "🌐 NCBI"].index(
-            st.session_state.get('input_method', "📁 Upload FASTA")
-        ),
-        help="Select your preferred method for sequence input. Each method supports different use cases."
-    )
-    
-    # Update session state
-    st.session_state.input_method = input_method
-    
-    # Clear session state when switching methods for clean UX
-    if 'last_input_method' not in st.session_state:
-        st.session_state.last_input_method = input_method
-    elif st.session_state.last_input_method != input_method:
-        st.session_state.seqs = []
-        st.session_state.names = []
-        st.session_state.results = []
-        st.session_state.last_input_method = input_method
-    
-    seqs, names = [], []
-    
-    # Handle different input methods
-    if input_method == "📁 Upload FASTA":
-        col_upload, col_preview = st.columns([1, 1])
-        with col_upload:
-            fasta_file = st.file_uploader(
-                "Choose FASTA file", 
-                type=['fa', 'fasta', 'txt'],
-                help="Upload FASTA files (.fa, .fasta, .txt). Supports multi-sequence files."
-            )
-        
-        if fasta_file:
-            try:
-                content = fasta_file.read().decode('utf-8')
-                seqs, names = parse_fasta_multi(content)
-                if seqs:
-                    with col_preview:
-                        st.success(f"✓ {len(seqs)} sequence(s) loaded successfully")
-                        # Display sequence summary
-                        for i, (seq, name) in enumerate(zip(seqs[:3], names[:3])):
-                            st.metric(f"Seq {i+1}", f"{len(seq):,} bp", f"GC: {cached_gc_content(seq):.1f}%")
-                        if len(seqs) > 3:
-                            st.info(f"... and {len(seqs) - 3} more sequences")
-                else:
-                    st.error("❌ No valid sequences found in file")
-            except Exception as e:
-                st.error(f"❌ File parsing error: {str(e)[:100]}...")
-
-    elif input_method == "✏️ Paste Sequence":
-        sequence_input = st.text_area(
-            "Paste DNA sequence:",
-            height=150,
-            placeholder="Paste your DNA sequence here (ATCG only)...",
-            help="Enter raw DNA sequence or FASTA format. Only ATCG nucleotides are allowed."
-        )
-        
-        if sequence_input:
-            if sequence_input.startswith('>'):
-                # FASTA format
-                seqs, names = parse_fasta_multi(sequence_input)
-                if seqs:
-                    st.success(f"✓ {len(seqs)} sequence(s) parsed from FASTA")
-            else:
-                # Raw sequence
-                cleaned_seq = parse_fasta(sequence_input)
-                if cleaned_seq and len(cleaned_seq) > 10:
-                    seqs = [cleaned_seq]
-                    names = ["User_Input"]
-                    st.success(f"✓ Sequence parsed: {len(cleaned_seq):,} bp")
-                else:
-                    st.error("❌ Invalid sequence. Please use only ATCG nucleotides, minimum 10 bp.")
-
-    elif input_method == "🔬 Example":
-        example_choice = st.selectbox(
-            "Select example sequence:", 
-            list(EXAMPLE_SEQUENCES.keys()),
-            help="Pre-loaded scientifically relevant sequences for testing the platform"
-        )
-        
-        if st.button("🚀 Load Example", type="primary", use_container_width=True):
-            example_data = EXAMPLE_SEQUENCES[example_choice]
-            seqs = [example_data['sequence']]
-            names = [example_data['name']]
-            st.success(f"✓ Loaded: {names[0]} ({len(seqs[0]):,} bp)")
-            st.info(f"📋 Description: {example_data['description']}")
-
-    elif input_method == "🌐 NCBI":
-        # Enhanced NCBI interface with examples and validation
-        col_examples, col_input = st.columns([2, 3])
-        
-        with col_examples:
-            st.markdown("**Quick Examples:**")
-            example_cols = st.columns(2)
-            examples = list(FAMOUS_NCBI_EXAMPLES.items())[:4]
-            for i, (gene, accession) in enumerate(examples):
-                with example_cols[i % 2]:
-                    if st.button(f"🧬 {gene}", key=f"ex_{i}", use_container_width=True):
-                        st.session_state.ncbi_query = accession
-                        st.rerun()
-        
-        with col_input:
-            ncbi_query = st.text_input(
-                "NCBI Accession or Gene:",
-                value=st.session_state.get('ncbi_query', ''),
-                placeholder="e.g., NG_007161.1 or NC_000005.10:1253147-1295047",
-                help="Enter NCBI accession number, gene name, or genomic coordinates"
-            )
-            
-            if ncbi_query:
-                if st.button("🔍 Fetch from NCBI", type="primary", use_container_width=True):
-                    with st.spinner("Fetching from NCBI database..."):
-                        try:
-                            seqs, names = cached_ncbi_fetch(ncbi_query)
-                            if seqs:
-                                st.session_state.seqs = seqs
-                                st.session_state.names = names
-                                st.success(f"✓ Successfully fetched {len(seqs)} sequence(s)")
-                                for i, (seq, name) in enumerate(zip(seqs[:3], names[:3])):
-                                    st.metric(f"Seq {i+1}", f"{len(seq):,} bp", name[:50] + "..." if len(name) > 50 else name)
-                            else:
-                                st.error("❌ No sequences found. Please verify the accession number.")
-                        except Exception as e:
-                            st.error(f"❌ NCBI fetch failed: {str(e)[:100]}...")
-
-    # Store sequences in session state
-    if seqs:
-        st.session_state.seqs = seqs
-        st.session_state.names = names
-
-    # Current sequences display
-    if st.session_state.get('seqs'):
-        with st.expander(f"📊 Loaded Sequences: {len(st.session_state.seqs)}", expanded=False):
-            for i, (seq, name) in enumerate(zip(st.session_state.seqs[:5], st.session_state.names[:5])):
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    st.metric("Sequence", f"#{i+1}")
-                with col2:
-                    st.metric("Length", f"{len(seq):,} bp")
-                with col3:
-                    st.metric("GC Content", f"{cached_gc_content(seq):.1f}%")
-                st.caption(f"**Name:** {name[:100]}{'...' if len(name) > 100 else ''}")
-            if len(st.session_state.seqs) > 5:
-                st.info(f"... and {len(st.session_state.seqs) - 5} more sequences")
-
-    st.markdown("---")
-    
-    # Enhanced analysis parameters section
-    st.markdown("### ⚙️ Analysis Configuration")
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.markdown("**Motif Detection Settings**")
-        motif_classes = st.multiselect(
-            "Motif classes to detect:",
-            list(MOTIF_COLORS.keys()),
-            default=st.session_state.analysis_settings.get('motif_classes', list(MOTIF_COLORS.keys())),
-            help="Select which types of non-B DNA structures to detect"
-        )
-        
-        sensitivity = st.select_slider(
-            "Detection sensitivity:",
-            options=["Low", "Medium", "High", "Maximum"],
-            value=st.session_state.analysis_settings.get('sensitivity', 'High'),
-            help="Higher sensitivity detects more motifs but may include false positives"
-        )
-    
-    with col2:
-        st.markdown("**Size Constraints**")
-        min_motif_length = st.number_input(
-            "Minimum motif length (bp):", 
-            min_value=3, max_value=100, 
-            value=st.session_state.analysis_settings.get('min_motif_length', 10),
-            help="Smallest motif size to detect"
-        )
-        max_motif_length = st.number_input(
-            "Maximum motif length (bp):", 
-            min_value=10, max_value=1000, 
-            value=st.session_state.analysis_settings.get('max_motif_length', 200),
-            help="Largest motif size to detect"
-        )
-        overlap_threshold = st.slider(
-            "Overlap threshold (%):", 
-            min_value=0, max_value=100, 
-            value=st.session_state.analysis_settings.get('overlap_threshold', 50),
-            help="Maximum allowed overlap between detected motifs"
-        )
-    
-    with col3:
-        st.markdown("**Performance Options**")
-        quality_filter = st.checkbox(
-            "Enable quality filtering", 
-            value=st.session_state.analysis_settings.get('quality_filter', True),
-            help="Filter low-quality motif predictions"
-        )
-        parallel_processing = st.checkbox(
-            "Parallel processing", 
-            value=st.session_state.analysis_settings.get('parallel_processing', True),
-            help="Use multiple CPU cores for faster analysis"
-        )
-        memory_optimization = st.checkbox(
-            "Memory optimization", 
-            value=st.session_state.analysis_settings.get('memory_optimization', True),
-            help="Optimize memory usage for large sequences"
-        )
-    
-    # Update session state with current settings
-    st.session_state.analysis_settings.update({
-        'motif_classes': motif_classes,
-        'sensitivity': sensitivity,
-        'min_motif_length': min_motif_length,
-        'max_motif_length': max_motif_length,
-        'overlap_threshold': overlap_threshold,
-        'quality_filter': quality_filter,
-        'parallel_processing': parallel_processing,
-        'memory_optimization': memory_optimization
-    })
-
-    st.markdown("---")
-    
-    # Analysis execution section
-    st.markdown("### ▶️ Start Analysis")
-    
-    # Analysis summary and controls
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        if st.session_state.seqs:
-            st.metric("📊 Sequences Ready", len(st.session_state.seqs))
-            total_length = sum(len(s) for s in st.session_state.seqs)
-            st.metric("📏 Total Length", f"{total_length:,} bp")
-        else:
-            st.warning("⚠️ No sequences loaded")
-    
-    with col2:
-        if st.session_state.analysis_settings:
-            settings = st.session_state.analysis_settings
-            st.metric("🎯 Motif Classes", len(settings.get('motif_classes', [])))
-            st.metric("⚡ Sensitivity", settings.get('sensitivity', 'High'))
-        else:
-            st.info("ℹ️ Configure analysis parameters")
-    
-    with col3:
-        # Analysis execution button with validation
-        can_analyze = bool(st.session_state.seqs and st.session_state.analysis_settings.get('motif_classes'))
-        
-        if can_analyze:
-            if st.button("🚀 Start Analysis", type="primary", use_container_width=True):
-                st.session_state.analysis_running = True
-                st.rerun()
-        else:
-            st.button("🚀 Start Analysis", disabled=True, use_container_width=True)
-            if not st.session_state.seqs:
-                st.caption("⚠️ Load sequences first")
-            elif not st.session_state.analysis_settings.get('motif_classes'):
-                st.caption("⚠️ Select motif classes")
-
-    # Analysis execution with enhanced progress tracking
-    if st.session_state.get('analysis_running', False):
-        st.markdown("### 🔄 Analysis in Progress")
-        
-        with st.spinner("Analyzing sequences for non-B DNA structures..."):
-            progress_bar = st.progress(0)
-            status_text = st.empty()
-            
-            try:
-                results = []
-                settings = st.session_state.analysis_settings
-                use_parallel = settings.get('parallel_processing', True)
-                
-                if use_parallel and len(st.session_state.seqs) > 1:
-                    # Parallel processing implementation
-                    from concurrent.futures import ThreadPoolExecutor, as_completed
-                    import hashlib
-                    
-                    with ThreadPoolExecutor(max_workers=min(4, len(st.session_state.seqs))) as executor:
-                        futures = {}
-                        
-                        for i, (seq, name) in enumerate(zip(st.session_state.seqs, st.session_state.names)):
-                            seq_hash = hashlib.md5(seq.encode()).hexdigest()
-                            future = executor.submit(cached_all_motifs, seq_hash, seq, settings)
-                            futures[future] = (i, name, seq)
-                        
-                        for future in as_completed(futures):
-                            i, name, seq = futures[future]
-                            progress_bar.progress((i + 1) / len(st.session_state.seqs))
-                            status_text.text(f"Processing sequence {i+1}/{len(st.session_state.seqs)}: {name[:30]}...")
-                            
-                            try:
-                                cached_result = future.result(timeout=60)
-                                results.append({
-                                    'sequence_name': name,
-                                    'sequence': seq,
-                                    'motifs': cached_result['motifs'],
-                                    'total_motifs': len(cached_result['motifs']),
-                                    'sequence_length': len(seq),
-                                    'processing_time': cached_result['processing_time']
-                                })
-                            except Exception as e:
-                                st.error(f"❌ Error processing {name}: {str(e)[:100]}...")
-                else:
-                    # Sequential processing
-                    import hashlib
-                    for i, (seq, name) in enumerate(zip(st.session_state.seqs, st.session_state.names)):
-                        progress_bar.progress((i + 1) / len(st.session_state.seqs))
-                        status_text.text(f"Processing sequence {i+1}/{len(st.session_state.seqs)}: {name[:30]}...")
-                        
-                        seq_hash = hashlib.md5(seq.encode()).hexdigest()
-                        cached_result = cached_all_motifs(seq_hash, seq, settings)
-                        
-                        results.append({
-                            'sequence_name': name,
-                            'sequence': seq,
-                            'motifs': cached_result['motifs'],
-                            'total_motifs': len(cached_result['motifs']),
-                            'sequence_length': len(seq),
-                            'processing_time': cached_result['processing_time']
-                        })
-                
-                # Update session state with results
-                st.session_state.results = results
-                st.session_state.analysis_running = False
-                st.session_state.analysis_complete = True
-                
-                # Display completion summary
-                total_time = sum(r.get('processing_time', 0) for r in results)
-                total_motifs = sum(r['total_motifs'] for r in results)
-                avg_time_per_motif = total_time / total_motifs if total_motifs > 0 else 0
-                
-                status_text.empty()
-                progress_bar.progress(1.0)
-                
-                st.success(f"✅ **Analysis Complete!**")
-                col1, col2, col3, col4 = st.columns(4)
-                with col1:
-                    st.metric("🧬 Total Motifs", total_motifs)
-                with col2:
-                    st.metric("⏱️ Total Time", f"{total_time:.2f}s")
-                with col3:
-                    st.metric("⚡ Speed", f"{avg_time_per_motif*1000:.1f}ms/motif")
-                with col4:
-                    st.metric("📊 Efficiency", f"{total_motifs/total_time:.1f} motifs/s" if total_time > 0 else "N/A")
-                
-                st.info("🔍 **Next Step:** Switch to the 'Results & Visualization' tab to explore your results!")
-                
-            except Exception as e:
-                st.session_state.analysis_running = False
-                st.error(f"❌ **Analysis Failed:** {str(e)}")
-                with st.expander("🔧 Error Details"):
-                    import traceback
-                    st.code(traceback.format_exc())
-
-def render_results_visualization_tab():
-    """
-    Render the Results & Visualization tab with comprehensive analysis display.
-    
-    Features:
-    - Interactive overview dashboard
-    - Multiple visualization types
-    - Data export capabilities
-    - Publication-ready figures
-    
-    Design: Scientific dashboard layout with Material Design components
-    """
-    if not st.session_state.results:
-        st.info("ℹ️ **No analysis results available.** Please run an analysis first in the 'Upload & Analyze' tab.")
-        
-        # Show helpful guidance
-        st.markdown("""
-        ### 🚀 Getting Started
-        1. **Upload sequences** using the 'Upload & Analyze' tab
-        2. **Configure analysis parameters** according to your research needs  
-        3. **Run the analysis** to detect non-B DNA structures
-        4. **Return here** to explore comprehensive visualizations and results
-        """)
-        return
-    
-    # Enhanced results display with multiple subtabs
-    result_tabs = st.tabs([
-        "📊 Overview", 
-        "📈 Distribution Analysis", 
-        "🗺️ Genomic Mapping", 
-        "📋 Detailed Tables", 
-        "🖼️ Publication Figures", 
-        "📥 Export & Download"
-    ])
-    
-    # Overview subtab with comprehensive metrics
-    with result_tabs[0]:
-        st.markdown("### 📊 Analysis Overview")
-        
-        # Key metrics dashboard
-        total_sequences = len(st.session_state.results)
-        total_motifs = sum(r['total_motifs'] for r in st.session_state.results)
-        total_bp = sum(r['sequence_length'] for r in st.session_state.results)
-        avg_motifs = total_motifs / total_sequences if total_sequences > 0 else 0
-        
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            st.metric("📋 Sequences Analyzed", total_sequences)
-        with col2:
-            st.metric("🧬 Total Motifs Found", f"{total_motifs:,}")
-        with col3:
-            st.metric("📏 Total Sequence Length", f"{total_bp:,} bp")
-        with col4:
-            st.metric("📊 Average Motifs/Sequence", f"{avg_motifs:.1f}")
-        
-        # Motif distribution visualization
-        motif_counts = process_motif_counts_vectorized(st.session_state.results)
-        
-        if motif_counts:
-            col1, col2 = st.columns([2, 1])
-            
-            with col1:
-                # Create enhanced distribution chart
-                fig = create_motif_distribution_chart(motif_counts)
-                if fig:
-                    st.plotly_chart(fig, use_container_width=True)
-            
-            with col2:
-                st.markdown("**🎯 Detection Summary**")
-                for motif_class, count in sorted(motif_counts.items(), key=lambda x: x[1], reverse=True)[:5]:
-                    percentage = (count / total_motifs) * 100 if total_motifs > 0 else 0
-                    st.metric(motif_class, f"{count:,}", f"{percentage:.1f}%")
-        
-        # Performance metrics
-        total_processing_time = sum(r.get('processing_time', 0) for r in st.session_state.results)
-        if total_processing_time > 0:
-            st.markdown("---")
-            st.markdown("### ⚡ Performance Metrics")
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("⏱️ Total Processing Time", f"{total_processing_time:.2f}s")
-            with col2:
-                avg_time_per_motif = total_processing_time / total_motifs if total_motifs > 0 else 0
-                st.metric("🎯 Time per Motif", f"{avg_time_per_motif*1000:.1f}ms")
-            with col3:
-                throughput = total_motifs / total_processing_time if total_processing_time > 0 else 0
-                st.metric("🚀 Analysis Throughput", f"{throughput:.1f} motifs/s")
-
-    # Additional tabs implementation continues...
-    # [Implementation for other tabs would follow similar pattern]
-
-def render_clinical_disease_tab():
-    """
-    Render the Clinical/Disease tab with medical genetics integration.
-    
-    Features:
-    - Disease association analysis
-    - Clinical variant interpretation
-    - Pathogenicity scoring
-    - Literature references
-    
-    Design: Medical informatics interface standards
-    """
-    st.markdown("### 🏥 Clinical & Disease Analysis")
-    
-    if not st.session_state.results:
-        st.info("ℹ️ **Clinical analysis requires motif detection results.** Please complete sequence analysis first.")
-        return
-    
-    # Clinical analysis implementation
-    # [Implementation would include disease association features]
-    st.markdown("*Clinical features coming soon...*")
-
-def render_documentation_tab():
-    """
-    Render the Documentation tab with comprehensive scientific documentation.
-    
-    Features:
-    - User manual and tutorials
-    - Scientific methodology
-    - Algorithm descriptions
-    - Best practices guide
-    - Troubleshooting section
-    
-    Design: Technical documentation following scientific writing standards
-    """
-    st.markdown("### 📚 Scientific Documentation & User Guide")
-    
-    doc_tabs = st.tabs([
-        "🚀 Quick Start", 
-        "🔬 Methodology", 
-        "📖 User Manual", 
-        "🛠️ Troubleshooting",
-        "📄 Best Practices",
-        "📚 References"
-    ])
-    
-    with doc_tabs[0]:
-        st.markdown("""
-        ## 🚀 Quick Start Guide
-        
-        ### 1. Upload Your Sequences
-        - **FASTA Files:** Use the upload feature for multi-sequence analysis
-        - **Direct Input:** Paste sequences directly for quick analysis
-        - **NCBI Integration:** Fetch sequences using accession numbers
-        - **Examples:** Try pre-loaded scientifically relevant sequences
-        
-        ### 2. Configure Analysis
-        - **Motif Classes:** Select which non-B DNA structures to detect
-        - **Sensitivity:** Balance between detection completeness and specificity
-        - **Size Limits:** Define minimum and maximum motif lengths
-        - **Performance:** Enable parallel processing for faster analysis
-        
-        ### 3. Run Analysis
-        - Click "Start Analysis" to begin motif detection
-        - Monitor progress in real-time
-        - Review performance metrics upon completion
-        
-        ### 4. Explore Results
-        - **Overview:** View summary statistics and distributions
-        - **Visualizations:** Explore interactive plots and genomic maps
-        - **Export:** Download results in multiple formats
-        """)
-    
-    with doc_tabs[1]:
-        st.markdown("""
-        ## 🔬 Scientific Methodology
-        
-        ### Non-B DNA Detection Algorithms
-        
-        NBDFinder employs a comprehensive suite of algorithms for detecting alternative DNA structures:
-        
-        #### 1. G-Quadruplex Detection
-        - **Algorithm:** Pattern-based sequence analysis with thermodynamic scoring
-        - **Sensitivity:** Configurable G-tract requirements and loop constraints
-        - **Validation:** Cross-referenced with experimental G4-seq data
-        
-        #### 2. Z-DNA Prediction
-        - **Method:** Alternating purine-pyrimidine sequence identification
-        - **Scoring:** Energy-based stability calculations
-        - **Refinement:** Machine learning-enhanced prediction accuracy
-        
-        #### 3. Cruciform Structure Analysis
-        - **Approach:** Inverted repeat detection with stem-loop modeling
-        - **Parameters:** Configurable stem length and loop size constraints
-        - **Validation:** Experimental structure correlation analysis
-        
-        #### 4. Slipped-DNA Detection
-        - **Algorithm:** Tandem repeat analysis with slip-prone motif identification
-        - **Features:** Dynamic repeat length assessment
-        - **Integration:** Disease association database linkage
-        
-        ### Quality Control & Validation
-        - **Statistical Significance:** P-value calculations for motif predictions
-        - **Conservation Analysis:** Cross-species sequence conservation scoring
-        - **Experimental Correlation:** Validation against published structural studies
-        """)
-    
-    with doc_tabs[3]:
-        st.markdown("""
-        ## 🛠️ Troubleshooting Guide
-        
-        ### Common Issues and Solutions
-        """)
-        
-        # Enhanced troubleshooting section
-        troubleshooting_issues = {
-            "No sequences loaded": {
-                "problem": "Upload appears successful but no sequences detected",
-                "solutions": [
-                    "**File Format:** Ensure proper FASTA headers (starting with '>')",
-                    "**Sequence Content:** Verify only ATCG nucleotides are used",
-                    "**File Size:** Check file is under 200MB limit",
-                    "**Encoding:** Try different input method if upload fails"
-                ]
-            },
-            "Analysis fails to start": {
-                "problem": "Start Analysis button remains disabled or analysis doesn't begin",
-                "solutions": [
-                    "**Sequence Validation:** Ensure sequences are properly loaded and displayed",
-                    "**Parameter Check:** Verify at least one motif class is selected",
-                    "**Settings Review:** Check all parameters are within valid ranges",
-                    "**Browser Refresh:** Try refreshing the page and reloading sequences"
-                ]
-            },
-            "Poor detection results": {
-                "problem": "Expected motifs not detected or too many false positives",
-                "solutions": [
-                    "**Sensitivity Adjustment:** Increase for more detection, decrease for specificity",
-                    "**Sequence Quality:** Verify input sequences are of good quality",
-                    "**Parameter Tuning:** Adjust length constraints and overlap thresholds",
-                    "**Method Selection:** Consider sequence-specific characteristics"
-                ]
-            },
-            "Performance issues": {
-                "problem": "Analysis runs slowly or encounters memory issues",
-                "solutions": [
-                    "**Memory Optimization:** Enable memory optimization in settings",
-                    "**Sequence Size:** Consider analyzing smaller sequences or fewer sequences",
-                    "**Parallel Processing:** Enable for multi-core acceleration",
-                    "**Browser Resources:** Close other browser tabs to free memory"
-                ]
-            }
-        }
-        
-        for issue, info in troubleshooting_issues.items():
-            with st.expander(f"❓ **{issue}**"):
-                st.markdown(f"**Problem:** {info['problem']}")
-                st.markdown("**Solutions:**")
-                for solution in info['solutions']:
-                    st.markdown(f"- {solution}")
-
-    with doc_tabs[4]:
-        st.markdown("""
-        ## 📄 Scientific Best Practices
-        
-        ### Data Quality Guidelines
-        
-        #### Sequence Preparation
-        - **Quality Control:** Use high-quality, validated genomic sequences
-        - **Length Considerations:** Optimal sequence length: 1kb - 100kb for comprehensive analysis
-        - **Preprocessing:** Remove low-complexity regions if focusing on specific motifs
-        - **Format Validation:** Ensure proper FASTA formatting with descriptive headers
-        
-        #### Parameter Selection
-        - **Start Conservative:** Begin with default parameters, then optimize based on initial results
-        - **Sensitivity Tuning:** Balance between discovery (high sensitivity) and precision (lower sensitivity)
-        - **Size Constraints:** Adjust based on known motif characteristics in your sequences
-        - **Validation Strategy:** Cross-validate findings with experimental data when available
-        
-        ### Analysis Workflow
-        
-        #### 1. Exploratory Analysis
-        - Run with high sensitivity to discover potential motifs
-        - Review distribution patterns and unexpected findings
-        - Identify sequences with unusual motif densities
-        
-        #### 2. Focused Analysis
-        - Refine parameters based on exploratory results
-        - Focus on specific motif classes of interest
-        - Apply stringent filtering for publication-quality results
-        
-        #### 3. Validation and Interpretation
-        - Cross-reference results with published literature
-        - Consider biological context and functional implications
-        - Validate key findings with experimental approaches when possible
-        
-        ### Publication Standards
-        - **Method Description:** Include algorithm versions and parameter settings
-        - **Statistical Analysis:** Report significance testing and multiple correction methods
-        - **Data Availability:** Provide access to analysis parameters and raw results
-        - **Reproducibility:** Document complete workflow for replication
-        """)
-
 # Main navigation tabs
 main_tabs = st.tabs(list(MAIN_PAGES.keys()))
 tab_dict = dict(zip(MAIN_PAGES.keys(), main_tabs))
 
-# =========================================================================
-# MAIN TAB ROUTING - MODULAR FUNCTION CALLS
-# =========================================================================
-# Clean separation of concerns with each tab implemented as a standalone function
-
-# Home / Welcome Page
+# =====================================================
+# HOME / WELCOME PAGE
+# =====================================================
 with tab_dict["Home"]:
-    render_home_tab()
-
-# Upload & Analyze Page  
-with tab_dict["Upload & Analyze"]:
-    render_upload_analyze_tab()
-
-# Results & Visualization Page
-with tab_dict["Results & Visualization"]:
-    render_results_visualization_tab()
-
-# Clinical/Disease Page
-with tab_dict["Clinical/Disease"]:
-    render_clinical_disease_tab()
-
-# Documentation Page
-with tab_dict["Documentation"]:
-    render_documentation_tab()
-
-# =========================================================================
-# FOOTER - PROFESSIONAL BRANDING
-# =========================================================================
+    col1, col2 = st.columns([1.2, 1])
     
     with col1:
         # Display main image
