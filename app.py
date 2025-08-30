@@ -1765,6 +1765,9 @@ with tab_dict["Documentation"]:
 # FOOTER - PROFESSIONAL BRANDING
 # =========================================================================
     
+    # Create two columns for the footer content
+    col1, col2 = st.columns(2)
+    
     with col1:
         # Display main image
         try:
@@ -1803,9 +1806,6 @@ with tab_dict["Documentation"]:
     
     # Create expandable sections for each class
     from motifs.classification_config import OFFICIAL_CLASSIFICATION
-    
-    # Organize classes in two columns
-    col1, col2 = st.columns(2)
     
     # Split classes between columns
     classes_list = list(OFFICIAL_CLASSIFICATION.items())
